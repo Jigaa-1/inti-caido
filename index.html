@@ -2665,7 +2665,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '21';
+const GAME_VERSION = '22';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3480,10 +3480,12 @@ function drawUnit(u, px, py, dim, now) {
   else if (u.boss) { const bs = 1.35, g = 0.55 + 0.45 * Math.abs(Math.sin(now / 400)); ctx.save(); ctx.shadowColor = 'rgba(255,212,90,' + g + ')'; ctx.shadowBlur = 14; ctx.drawImage(img, Math.round(px - 8 * US * bs), Math.round(py - 11 * US * bs - 4 + bob), img.width * US * bs, img.height * US * bs); ctx.restore(); }
   else { ctx.globalAlpha = dim ? 0.5 : 1; ctx.drawImage(img, Math.round(sx), Math.round(sy), img.width * US, img.height * US); ctx.globalAlpha = 1; }
   if (an && an.flash) { ctx.save(); ctx.globalCompositeOperation = 'source-atop'; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(Math.round(sx), Math.round(sy), img.width * US, img.height * US); ctx.restore(); }
-  // check: verde claro si ya hizo todo, verde oscuro si solo movió (tus tropas, en tu turno)
+  // check: verde claro si ya hizo todo, verde oscuro si solo movió (tus tropas, en tu turno). Dibujado en píxeles de arte.
   if (u.owner === me && S.cur === me && (u.moved || u.acted) && !an) {
-    const done = u.moved && (u.acted || !E.targets(S, u).length), col = done ? '#7cf08a' : '#35a04a', bx = px + 5 * US, by = py - 12 * US;
-    drawPixelRect('#0d0b0a', bx - 1, by - 1, 6, 6); drawPixelRect(col, bx, by + 2, 1, 1); drawPixelRect(col, bx + 1, by + 3, 1, 1); drawPixelRect(col, bx + 2, by + 2, 1, 1); drawPixelRect(col, bx + 3, by + 1, 1, 1); drawPixelRect(col, bx + 4, by, 1, 1);
+    const done = u.moved && (u.acted || !E.targets(S, u).length), col = done ? '#7cf08a' : '#35a04a';
+    const ax = Math.round((px + 4 * US) / P), ay = Math.round((py - 13 * US) / P);
+    const CHK = ['kkkkkkk', 'k.....k', 'k....ck', 'kc..cck', 'kcccc.k', 'k.cc..k', 'kkkkkkk'];
+    for (let j = 0; j < CHK.length; j++) for (let i = 0; i < CHK[j].length; i++) { const ch = CHK[j][i]; if (ch === '.') continue; drawPixelRect(ch === 'k' ? '#0d0b0a' : col, (ax + i) * P, (ay + j) * P, 1, 1); }
   }
   const rk = E.rankOf(u); if (rk) { ctx.fillStyle = '#f2b84b'; for (let i = 0; i < rk; i++) ctx.fillRect(Math.round(px + 6 * US - i * 6), Math.round(sy - 2), 4, 4); }
   // vida
