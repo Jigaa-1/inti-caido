@@ -4021,7 +4021,7 @@ function up(e) {
   if (pointers.size === 0) { if (wasTap) { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } else if (drag && drag.pinch) { const z = snapZoom(cam.z), c = $('#map'), mx = c.clientWidth / 2, my = c.clientHeight / 2; cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); } drag = null; }
 }
 cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', (e) => { pointers.delete(e.pointerId); if (!pointers.size) drag = null; });
-cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; const z = snapZoom(cam.z * (e.deltaY < 0 ? 1.2 : 0.83)); if (z === cam.z) return; cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); }, { passive: false });
+cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; const dir = e.deltaY < 0 ? 1 : -1; let z = snapZoom(cam.z * (dir > 0 ? 1.2 : 0.83)); if (z === cam.z) z = snapZoom(cam.z + dir * (1 / dpr)); if (dir < 0 && z === cam.z) z = snapZoom(0.4 / dpr); if (z === cam.z) return; cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); }, { passive: false });
 
 function onTap(sx, sy) {
   if (!S || S.winner >= 0 || endLock) return;
