@@ -496,7 +496,9 @@ body.big .tcard { flex-basis: 100px; }
 .profile-b .bar { --fc: var(--inti); }
 .facinfo-row.dim { opacity: .45; }
 /* panel de selección: compacto en celular (no tapa el mapa), acoplado a la izquierda en pantallas anchas */
-.sheet { max-height: 42vh; overflow-y: auto; }
+.sheet { max-height: 46vh; overflow-y: auto; }
+.sheet > * { flex-shrink: 0; } /* nada se aplasta cuando el panel hace scroll */
+.modal > * { flex-shrink: 0; }
 @media (max-width: 759px) { .sheet.compact > :not(.sheet-head):not(.hpbar):not(.fore):not(.quick) { display: none; } }
 .sheet .expand { margin-left: 4px; width: 36px; height: 36px; display: grid; place-items: center; color: var(--inti); font-family: var(--f-pixel); font-size: 12px; background: var(--edge); flex: none; }
 .quick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -4439,7 +4441,7 @@ function saveLocal() { if (!S || online) return; if (S.winner >= 0) { store.set(
 window.claude?.hot?.snapshot?.(() => ({ S, me, online: online ? online.code : null }));
 
 // ---------- pantallas ----------
-function show(html, bind) { const s = $('#screenScroll'); s.innerHTML = `<div class="wrap">${html}</div>`; $('#screen').hidden = false; s.scrollTop = 0; hydrate(s); startBg(); s.onclick = (e) => { const a = e.target.closest('[data-a]'); if (a) { beep(a.dataset.a === 'back' ? 'close' : 'tap'); bind && bind(a.dataset.a, a.dataset, a); } }; }
+function show(html, bind, keepScroll) { const s = $('#screenScroll'); const top = keepScroll ? s.scrollTop : 0; s.innerHTML = `<div class="wrap">${html}</div>`; $('#screen').hidden = false; s.scrollTop = top; hydrate(s); startBg(); s.onclick = (e) => { const a = e.target.closest('[data-a]'); if (a) { beep(a.dataset.a === 'back' ? 'close' : 'tap'); bind && bind(a.dataset.a, a.dataset, a); } }; }
 function hideScreen() { $('#screen').hidden = true; }
 // fondo animado del menú: Lima en ruinas bajo el Inti que cae
 let bgOn = false;
@@ -4606,8 +4608,10 @@ function factionPick(done, opts = {}) {
       if (a === 'mode') { mode = d.k; store.set('mode', mode); beep('tap'); draw(); }
       if (a === 'mod') { if (mods.has(d.k)) mods.delete(d.k); else mods.add(d.k); store.set('mods', [...mods]); draw(); }
       if (a === 'go') { seedCode = ($('#seedIn')?.value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); done(f, n, size, mode, [...mods], diff, { map: mapType, code: seedCode }); }
-    });
+    }, !first);
+    first = false;
   };
+  let first = true;
   draw();
 }
 
