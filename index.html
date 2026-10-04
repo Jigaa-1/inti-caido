@@ -672,7 +672,7 @@ const Engine = (() => {
     dron:         { name: 'Dron Cóndor',    cost: 5,  hp: 10, atk: 3,   def: 1.5, mov: 3, rng: 1, tech: 'drones', fly: true, desc: 'Vuela sobre mar y montaña. No toma ciudades.' },
     tanque:       { name: 'Tanque Chatarra',cost: 8,  hp: 20, atk: 3.5, def: 3,   mov: 2, rng: 1, tech: 'taller', desc: 'Blindado. Lento en montaña.' },
     mortero:      { name: 'Mortero',        cost: 7,  hp: 10, atk: 4,   def: 1,   mov: 1, rng: 3, tech: 'artilleria', noMoveAttack: true, desc: 'Alcance 3. No dispara si se movió.' },
-    apu:          { name: 'Mecha Apu',      cost: 15, hp: 40, atk: 5,   def: 4,   mov: 1, rng: 1, tech: 'apu', desc: 'Gigante andino. Casi imparable.' },
+    apu:         { name: 'Proyecto Apu', short: 'Mecha Apu',      cost: 15, hp: 40, atk: 5,   def: 4,   mov: 1, rng: 1, tech: 'apu', desc: 'Gigante andino. Casi imparable.' },
     // unidades únicas por facción (disponibles desde el inicio)
     vigia:        { name: 'Androide Vigía', cost: 6,  hp: 14, atk: 2.5, def: 3.5, mov: 1, rng: 2, faction: 'lima', desc: 'Robot centinela del búnker. Dispara a 2 y aguanta mucho.' },
     huaracero:    { name: 'Huaracero',      cost: 3,  hp: 8,  atk: 2.5, def: 1.5, mov: 2, rng: 2, faction: 'sierra', desc: 'Hondero andino. Alcance 2, barato y ágil.' },
@@ -692,23 +692,23 @@ const Engine = (() => {
   // árbol: 3 ramas × 3 niveles
   const TECHS = {
     // GUERRA
-    armeria:    { name: 'Armería',        branch: 'guerra', tier: 1, desc: 'Desbloquea el Francotirador.', unlock: 'francotirador' },
-    veterania:  { name: 'Veteranía',      branch: 'guerra', tier: 1, desc: 'Tus unidades se vuelven veteranas con 2 bajas en vez de 3.' },
-    artilleria: { name: 'Artillería',     branch: 'guerra', tier: 2, req: 'armeria', desc: 'Desbloquea el Mortero (alcance 3) y el Acorazado.', unlock: 'mortero' },
-    comandos:   { name: 'Comandos',       branch: 'guerra', tier: 2, req: 'veterania', desc: 'Ronderos y Francotiradores ganan +1 movimiento.' },
+    armeria:     { name: 'Armería del Rímac', short: 'Armería',        branch: 'guerra', tier: 1, desc: 'Desbloquea el Francotirador.', unlock: 'francotirador' },
+    veterania:   { name: 'Rondas Veteranas', short: 'Veteranía',      branch: 'guerra', tier: 1, desc: 'Tus unidades se vuelven veteranas con 2 bajas en vez de 3.' },
+    artilleria:  { name: 'Baterías del Morro', short: 'Artillería',     branch: 'guerra', tier: 2, req: 'armeria', desc: 'Desbloquea el Mortero (alcance 3) y el Acorazado.', unlock: 'mortero' },
+    comandos:    { name: 'Comandos Chasqui', short: 'Comandos',       branch: 'guerra', tier: 2, req: 'veterania', desc: 'Ronderos y Francotiradores ganan +1 movimiento.' },
     apu:        { name: 'Proyecto Apu',   branch: 'guerra', tier: 3, req: 'artilleria', req2: 'taller', desc: 'Desbloquea el Mecha Apu. Necesita Taller.', unlock: 'apu' },
     // INDUSTRIA
-    taller:     { name: 'Taller',         branch: 'industria', tier: 1, desc: 'Desbloquea el Tanque Chatarra y la Patrullera (barco).', unlock: 'tanque' },
-    mercado:    { name: 'Mercado Negro',  branch: 'industria', tier: 1, desc: '+1 chatarra por ciudad cada turno.' },
-    drones:     { name: 'Drones',         branch: 'industria', tier: 2, req: 'taller', desc: 'Desbloquea el Dron Cóndor.', unlock: 'dron' },
-    chatarreria:{ name: 'Chatarrería',    branch: 'industria', tier: 2, req: 'mercado', desc: 'Las ruinas dan el doble de chatarra. Mejorar ciudades cuesta 2 menos.' },
-    fabrica:    { name: 'Fábrica',        branch: 'industria', tier: 3, req: 'drones', desc: 'Cada ciudad entrena 2 unidades por turno.' },
+    taller:      { name: 'Taller de Chatarra', short: 'Taller',         branch: 'industria', tier: 1, desc: 'Desbloquea el Tanque Chatarra y la Patrullera (barco).', unlock: 'tanque' },
+    mercado:     { name: 'Mercado del Cono', short: 'Mercado Negro',  branch: 'industria', tier: 1, desc: '+1 chatarra por ciudad cada turno.' },
+    drones:      { name: 'Enjambre Cóndor', short: 'Drones',         branch: 'industria', tier: 2, req: 'taller', desc: 'Desbloquea el Dron Cóndor.', unlock: 'dron' },
+    chatarreria: { name: 'Chatarrería Central', short: 'Chatarrería',    branch: 'industria', tier: 2, req: 'mercado', desc: 'Las ruinas dan el doble de chatarra. Mejorar ciudades cuesta 2 menos.' },
+    fabrica:     { name: 'Fábrica del Búnker', short: 'Fábrica',        branch: 'industria', tier: 3, req: 'drones', desc: 'Cada ciudad entrena 2 unidades por turno.' },
     // SUPERVIVENCIA
-    murallas:   { name: 'Murallas',       branch: 'supervivencia', tier: 1, desc: 'Tus ciudades defienden mucho más.' },
-    medicina:   { name: 'Medicina',       branch: 'supervivencia', tier: 1, desc: 'Las unidades que descansan curan el doble.' },
-    bunker:     { name: 'Búnker',         branch: 'supervivencia', tier: 2, req: 'murallas', desc: 'Unidades en tus ciudades: +defensa y curan +4.' },
-    radio:      { name: 'Radio',          branch: 'supervivencia', tier: 2, req: 'medicina', desc: 'Todas tus unidades y ciudades ven 1 casilla más.' },
-    embajada:   { name: 'Embajada',       branch: 'supervivencia', tier: 3, req: 'bunker', desc: 'La IA acepta alianzas más fácil y te perdona la traición en 3 turnos.' },
+    murallas:    { name: 'Murallas de Sillar', short: 'Murallas',       branch: 'supervivencia', tier: 1, desc: 'Tus ciudades defienden mucho más.' },
+    medicina:    { name: 'Botiquín Andino', short: 'Medicina',       branch: 'supervivencia', tier: 1, desc: 'Las unidades que descansan curan el doble.' },
+    bunker:      { name: 'Búnker Profundo', short: 'Búnker',         branch: 'supervivencia', tier: 2, req: 'murallas', desc: 'Unidades en tus ciudades: +defensa y curan +4.' },
+    radio:       { name: 'Red de los Cerros', short: 'Radio',          branch: 'supervivencia', tier: 2, req: 'medicina', desc: 'Todas tus unidades y ciudades ven 1 casilla más.' },
+    embajada:    { name: 'Embajada de la Señal', short: 'Embajada',       branch: 'supervivencia', tier: 3, req: 'bunker', desc: 'La IA acepta alianzas más fácil y te perdona la traición en 3 turnos.' },
   };
   // protocolos: poderes que cuestan energía del Inti
   const POWERS = {
@@ -882,6 +882,17 @@ const Engine = (() => {
   }
 
   // ---------- creación de partida ----------
+  // La Señal del Inti: desafío semanal, misma semilla para todos
+  function weeklySignal(now = Date.now()) {
+    const d = new Date(now), onejan = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const week = Math.floor(((d - onejan) / 86400000 + onejan.getUTCDay() + 1) / 7), n = (d.getUTCFullYear() - 2026) * 53 + week;
+    let r = (n * 2654435761) >>> 0; const nx = () => { r = (r * 1664525 + 1013904223) >>> 0; return r / 4294967296; };
+    const facs = FACTION_KEYS, maps = Object.keys(MAPS), modsAll = Object.keys(MODS).filter((m) => m !== 'sincartas' && m !== 'sinheroes');
+    const f = facs[Math.floor(nx() * facs.length)], map = maps[Math.floor(nx() * maps.length)];
+    const mods = [modsAll[Math.floor(nx() * modsAll.length)]]; if (nx() < 0.5) { const m2 = modsAll[Math.floor(nx() * modsAll.length)]; if (!mods.includes(m2)) mods.push(m2); }
+    const rivals = 2 + Math.floor(nx() * 3), origin = ['Puno', 'Nazca', 'Iquitos', 'Callao', 'Cusco', 'Piura', 'Chimbote', 'Cajamarca', 'Cerro de Pasco'][Math.floor(nx() * 9)];
+    return { id: 'S' + String(n).padStart(3, '0'), seed: (r >>> 0) % 1e9, faction: f, map, mods, rivals, turns: 15, origin, week: n };
+  }
   function newGame(opts) {
     const size = SIZES[opts.size || 'mediano'];
     W = size.W; H = size.H;
@@ -1029,6 +1040,11 @@ const Engine = (() => {
         const t = st.tiles[idx(x, y)];
         if (dist(cap.x, cap.y, x, y) === 2 && t !== 'mar' && t !== 'lago' && !cityAt(st, x, y) && !unitAt(st, x, y) && t !== 'montana') st.ruins.push(idx(x, y));
       }
+      // primer contacto: un explorador enemigo herido a 3 casillas, para pelear en el primer minuto
+      const rk = st.ruins[0], rx = rk % W, ry = Math.floor(rk / W);
+      const spot = [];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const t = st.tiles[idx(x, y)]; if (dist(rx, ry, x, y) === 1 && dist(cap.x, cap.y, x, y) === 3 && t !== 'mar' && t !== 'lago' && t !== 'montana' && !cityAt(st, x, y) && !unitAt(st, x, y)) spot.push([x, y]); }
+      if (spot.length && st.players[1]) { const [x, y] = spot[0]; const e = spawn(st, 1, 'explorador', x, y); e.hp = 4; e.tutorialBait = true; }
     }
     for (let k = 0; k < size.ruins; k++) addRuin(st);
     // nodos del Inti: cráteres que dan energía a quien los controla
@@ -1228,6 +1244,7 @@ const Engine = (() => {
     return u;
   }
 
+  function setGuard(st, uid, on) { const u = st.units.find((v) => v.id === uid); if (!u || u.owner !== st.cur) return false; u.guard = !!on; return true; }
   function move(st, uid, x, y) {
     bind(st);
     const u = st.units.find((v) => v.id === uid);
@@ -1560,7 +1577,7 @@ const Engine = (() => {
     if (P.traitor > 0) P.traitor--;
     if (P.moral > 0) P.moral--;
     for (const u of st.units) if (u.owner === p && u.hero && u.cd > 0) u.cd--;
-    for (const u of st.units) if (u.owner === p) { u.moved = false; u.acted = false; }
+    for (const u of st.units) if (u.owner === p) { u.moved = false; u.acted = false; if (u.guard && enemiesNear(st, p, u.x, u.y, 2).length) { u.guard = false; event(st, { k: 'wake', x: u.x, y: u.y, p }); } }
     for (const c of st.cities) if (c.owner === p) c.built = 0;
     reveal(st, p);
   }
@@ -1928,6 +1945,18 @@ const Engine = (() => {
   // ---------- IA ----------
   // dificultad: facil (pasiva y torpe), normal, dificil (ingresos +1, prevé, defiende, usa protocolos)
   // dificultad: fácil es de verdad relajada; locura es solo para expertos
+  // doctrinas: no cambian la fuerza, cambian el carácter (y así el jugador aprende a temer a cada líder por algo distinto)
+  const AI_DOCTRINE = {
+    lima:     { assault: 1.5, expand: 0, ruins: 0, name: 'Protocolo', desc: 'Fortifica y espera. Golpea cuando tiene superioridad.' },
+    sierra:   { assault: 1, expand: 0, ruins: 0, name: 'Cumbre', desc: 'Defiende la montaña y castiga a quien sube.' },
+    selva:    { assault: -0.5, expand: 0.5, ruins: 0, name: 'Emboscada', desc: 'Ataca desde la selva y se repliega.' },
+    desierto: { assault: 0, expand: -0.5, ruins: -1.5, name: 'Saqueo', desc: 'Va por ruinas y ciudades débiles. No la dejes suelta.' },
+    culto:    { assault: -1.5, expand: 0, ruins: 0, name: 'Marcha', desc: 'Se lanza en masa, sin medir pérdidas.' },
+    flota:    { assault: 0, expand: -1, ruins: 0, name: 'Litoral', desc: 'Toma toda la costa antes que nadie.' },
+    callao:   { assault: -0.5, expand: -0.5, ruins: 0, name: 'Marea', desc: 'Sale del mar donde menos lo esperas.' },
+    chasquis: { assault: 0, expand: -1, ruins: -0.5, name: 'Relevo', desc: 'Corre por los caminos y se expande rápido.' },
+    mineros:  { assault: 0.5, expand: -0.5, ruins: -1, name: 'Socavón', desc: 'Acumula metal y mejora ciudades antes de pelear.' },
+  };
   const DIFF = {
     facil:   { name: 'Fácil',   bonus: 0, malus: 0.35, look: 1, retreat: 0.55, passiveUntil: 10, techChance: 0.2, betray: 0.05, attackMin: 0.6, trainSkip: 0.45, noAlly: false, desc: 'La IA se lo toma con calma: ataca poco, entrena lento y no te asalta la capital antes del turno 10.' },
     normal:  { name: 'Normal',  bonus: 0, malus: 0, look: 2, retreat: 0.4, passiveUntil: 0, techChance: 0.5, betray: 0.25, attackMin: 0, trainSkip: 0, desc: 'Juego parejo: la IA expande, pacta y traiciona como un jugador medio.' },
@@ -2056,12 +2085,16 @@ const Engine = (() => {
         for (const c of st.cities) if (c.owner !== p && !(c.owner >= 0 && allied(st, p, c.owner)) && !(passive && c.owner >= 0)) {
           const guard = unitAt(st, c.x, c.y);
           let w = (c.owner === -1 ? 0 : 2) + (c.throne ? -3 : 0);
+          // doctrina de cada facción: Lima espera y fortifica, Sechura saquea, el Culto se lanza, la Sierra defiende cumbres
+          const doc = AI_DOCTRINE[P.faction] || {};
+          if (c.owner >= 0) w += doc.assault || 0;
+          if (c.owner === -1) w += doc.expand || 0;
           if (guard && D.look >= 2) w += Math.min(4, UNITS[guard.type].def);
           if (c.capital && c.owner >= 0 && power(st, c.owner) < power(st, p) * 0.6) w -= 2;  // rematar al débil
           if (c.capital && c.owner >= 0 && st.turn < 5 && !D.bonus) w += 6;                 // tregua inicial: no se asalta capitales antes del turno 5
           goals.push([c.x, c.y, w]);
         }
-        for (const k of st.ruins) goals.push([k % W, Math.floor(k / W), (u.type === 'explorador' || u.type === 'buggy') ? -1 : 1]);
+        for (const k of st.ruins) goals.push([k % W, Math.floor(k / W), ((u.type === 'explorador' || u.type === 'buggy') ? -1 : 1) + ((AI_DOCTRINE[P.faction] || {}).ruins || 0)]);
         for (const nd of st.nodes || []) if (nd.owner !== p && !P.horde) goals.push([nd.x, nd.y, st.gameMode === 'nodos' ? -2 : 0.5]);
         if (!passive) for (const e of st.units) if (e.owner !== p && relation(st, p, e.owner) === 'guerra') { const coastal = neighbors(e.x, e.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar'); if (!U.naval || coastal || UNITS[e.type].naval) goals.push([e.x, e.y, 1.5 - (e.hp < maxHp(e) * 0.4 ? 1 : 0) - (U.naval && coastal ? 1 : 0)]); }
         if (U.naval) { goals.length = goals.filter((g) => { const [gx, gy] = g; return st.tiles[idx(gx, gy)] === 'mar' || neighbors(gx, gy).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar'); }).length; }
@@ -2143,7 +2176,7 @@ const Engine = (() => {
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, setGuard, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
     idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
@@ -2715,7 +2748,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '25';
+const GAME_VERSION = '26';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3551,6 +3584,7 @@ function drawUnit(u, px, py, dim, now) {
     const CHK = ['kkkkkkk', 'k.....k', 'k....ck', 'kc..cck', 'kcccc.k', 'k.cc..k', 'kkkkkkk'];
     for (let j = 0; j < CHK.length; j++) for (let i = 0; i < CHK[j].length; i++) { const ch = CHK[j][i]; if (ch === '.') continue; drawPixelRect(ch === 'k' ? '#0d0b0a' : col, (ax + i) * P, (ay + j) * P, 1, 1); }
   }
+  if (u.guard) { const ax = Math.round((px - 9 * US) / P), ay = Math.round((py - 13 * US) / P); const SH = ['kkkkk', 'kwwwk', 'kwwwk', '.kwk.', '..k..']; for (let j = 0; j < SH.length; j++) for (let i = 0; i < SH[j].length; i++) { const ch = SH[j][i]; if (ch === '.') continue; drawPixelRect(ch === 'k' ? '#0d0b0a' : '#8fd0ff', (ax + i) * P, (ay + j) * P, 1, 1); } }
   const rk = E.rankOf(u); if (rk) { ctx.fillStyle = '#f2b84b'; for (let i = 0; i < rk; i++) ctx.fillRect(Math.round(px + 6 * US - i * 6), Math.round(sy - 2), 4, 4); }
   // vida
   const mh = E.maxHp(u), w = 12, f = Math.max(1, Math.round(w * u.hp / mh));
@@ -3820,7 +3854,8 @@ function consumeEvents() {
       if (e.state === 'done') { flash('¡MISIÓN CUMPLIDA!', e.text + ' · +' + e.reward + ' chatarra', '#7cc46a'); beep('ach'); const cap = S.cities.find((c) => c.owner === me && c.capital) || S.cities.find((c) => c.owner === me); if (cap) fx.push({ k: 'confetti', x: cap.x, y: cap.y, c: '#7cc46a', t0: now + 200, dur: 1500 }); if (typeof addXp === 'function') addXp(15, 'misión'); }
       if (e.state === 'fail') toast('Misión fallida: ' + e.text, 'red');
     }
-    if (e.k === 'herodown' && e.p !== me) setTimeout(() => leaderBubble(e.p, 'hero'), 700);
+    if (e.k === 'herodown') { const Q = S.players[e.p]; setTimeout(() => { flash((Q.name || 'EL LÍDER').toUpperCase() + ' HA CAÍDO', e.p === me ? 'Tu facción pierde la moral 3 turnos' : E.FACTIONS[Q.faction].name + ' pierde la moral', e.p === me ? '#ff6a4d' : '#ffd45a'); shake = { t0: performance.now(), dur: 700, amp: 8 }; beep('lose'); }, 500); if (e.p !== me) setTimeout(() => leaderBubble(e.p, 'hero'), 2600); }
+    if (e.k === 'wake' && e.p === me) toast('Una tropa en guardia despierta: enemigo cerca.', 'gold');
     if (e.k === 'betray' && e.a === me) setTimeout(() => leaderBubble(e.b, 'betrayed'), 700);
     if (e.k === 'ally' && (e.a === me || e.b === me)) setTimeout(() => leaderBubble(e.a === me ? e.b : e.a, 'ally'), 500);
     if (e.k === 'capture' && e.capital && e.p === me) { flash('¡CAPITAL TOMADA!', e.name + ' cae ante ti', '#ffd45a'); shake = { t0: now, dur: 500, amp: 6 }; }
@@ -3881,6 +3916,7 @@ cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundi
 
 function onTap(sx, sy) {
   if (!S || S.winner >= 0 || endLock) return;
+  Net.logEvent('first_tap');
   const h = pickHex(sx, sy);
   if (!h) { setSel(null); return; }
   const [x, y] = h, k = E.idx(x, y);
@@ -3924,7 +3960,7 @@ function undoMove() {
   S = JSON.parse(snap.json); E.bind(S); viewCache = null; sel = { kind: 'unit', id: snap.uid }; pendingTarget = null;
   beep('close'); renderHud(); renderSheet(); renderUndo(); saveSoon(); toast('Movimiento deshecho.');
 }
-function doMove(u, x, y) {
+function doMove(u, x, y) { Net.logEvent('first_move'); if (S.ruins.includes(E.idx(x, y))) Net.logEvent('first_ruin');
   const onRuin = S.ruins.includes(E.idx(x, y));
   const json = JSON.stringify(S);
   if (!E.move(S, u.id, x, y)) return;
@@ -3934,8 +3970,8 @@ function doMove(u, x, y) {
   const still = S.units.find((v) => v.id === u.id);
   if (still && !E.targets(S, still).length && !E.canCapture(S, still)) { /* mantener selección para ver estado */ }
 }
-function doAttack(a, d) { if (!E.attack(S, a.id, d.id)) return; clearUndo(); pendingTarget = null; afterAction(); tutCheck('attack'); }
-function doCapture(uid) { if (!E.capture(S, uid)) return; clearUndo(); afterAction(); tutCheck('capture'); }
+function doAttack(a, d) { if (!E.attack(S, a.id, d.id)) return; Net.logEvent('first_attack'); if (!S.units.includes(d)) Net.logEvent('first_kill'); clearUndo(); pendingTarget = null; afterAction(); tutCheck('attack'); }
+function doCapture(uid) { if (!E.capture(S, uid)) return; Net.logEvent('first_city'); clearUndo(); afterAction(); tutCheck('capture'); }
 function doTrain(cid, type) { if (!E.train(S, cid, type)) return; clearUndo(); beep('buy'); const c = S.cities[cid]; const u = E.unitAt(S, c.x, c.y); afterAction(); tutCheck('train'); }
 function doUpgrade(cid) { if (!E.upgrade(S, cid)) return; clearUndo(); beep('capture'); afterAction(); tutCheck('upgrade'); setTimeout(openReward, 350); }
 
@@ -3960,7 +3996,7 @@ function renderHud() {
   const end = $('#endBtn');
   end.disabled = !isMyTurn();
   end.textContent = S.winner >= 0 ? 'Partida terminada' : isMyTurn() ? 'Terminar turno' : busy ? 'Jugando…' : 'Esperando…';
-  const pendingUnits = S.units.filter((u) => u.owner === me && (!u.moved || (!u.acted && E.targets(S, u).length))).length;
+  const pendingUnits = S.units.filter((u) => u.owner === me && !u.guard && (!u.moved || (!u.acted && E.targets(S, u).length))).length;
   const idle = isMyTurn() && pendingUnits === 0 && !S.cities.some((c) => c.owner === me && E.canTrain(S, c.id, 'rondero'));
   end.classList.remove('pulse');
   end.classList.toggle('ready', isMyTurn() && pendingUnits === 0);
@@ -4033,6 +4069,7 @@ function renderSheet() {
       if (u.hero && E.canHeroAbility(S, u)) q.push(`<button class="act" data-a="hero">${esc(E.HERO[S.players[me].faction].name)}</button>`);
       const nb = E.buildOptions(S, u).filter((o) => o.can).length; if (nb) q.push(`<button class="act ghost" data-a="expand">Construir (${nb})</button>`);
       const ng = E.gearOptions(S, u).filter((o) => o.can).length; if (ng) q.push(`<button class="act ghost" data-a="expand">Equipar (${ng})</button>`);
+      if (!u.hero && isMyTurn()) q.push(`<button class="act ghost ${u.guard ? 'on' : ''}" data-a="guard" title="En guardia: no cuenta como pendiente y despierta si se acerca un enemigo">${u.guard ? '🛡 En guardia' : '🛡 Guardia'}</button>`);
       if (!q.length && !t) q.push(`<span class="chip-s ${u.moved ? 'off' : 'on'}">${u.moved ? (u.acted ? '✓ Actuó' : '✓ Movió') : '→ Puede moverse'}</span>`);
       html += `<div class="quick">${q.join('')}</div>`;
       if (t) { const f = E.forecast(S, u, t); html += `<div class="fore"><div class="ftgt"><span data-spr="${t.hero ? E.FACTIONS[S.players[t.owner].faction].unique : t.type}" data-col="${fcol(t.owner)}" data-size="28"></span><div><b>${esc(t.hero ? t.name || 'Líder' : E.UNITS[t.type].name)}</b><br>de ${esc(S.players[t.owner].name)} · ${t.hp} vida</div></div><div class="fbox ${f.kills ? 'kill' : 'hit'}"><small>Causas</small><b>${f.dmg}${f.kills ? ' ☠' : ''}</b><small>${f.kills ? 'lo destruyes' : 'de daño'}</small></div><div class="fbox ret ${f.ret ? '' : 'none'}"><small>Recibes</small><b>${f.ret}</b><small>${f.ret ? 'de vuelta' : 'nada'}</small></div><div class="fhint">Toca el objetivo otra vez para atacar.</div></div>`; }
@@ -4115,6 +4152,7 @@ function renderSheet() {
     const a = e.target.closest('[data-a]'); if (!a) return;
     if (a.dataset.a === 'close') setSel(null);
     if (a.dataset.a === 'expand') { sheetOpen = !sheetOpen; renderSheet(); beep('tap'); return; }
+    if (a.dataset.a === 'guard') { const u = S.units.find((v) => v.id === sel.id); if (u) { E.setGuard(S, u.id, !u.guard); beep(u.guard ? 'capture' : 'close'); toast(u.guard ? 'En guardia: descansa y despierta si se acerca un enemigo.' : 'Guardia cancelada.'); renderHud(); renderSheet(); saveSoon(); } return; }
     if (a.dataset.a === 'goto') { const x = +a.dataset.x, y = +a.dataset.y; centerOn(x, y); setSel({ kind: 'tile', x, y }); return; }
     if (a.dataset.a === 'capture') doCapture(sel.id);
     if (a.dataset.a === 'gear') { const u = S.units.find((v) => v.id === sel.id); const o = E.gearOptions(S, u).find((x) => x.type === a.dataset.t); if (o && !o.can) { toast('Necesitas ' + o.cost + ' de chatarra.', 'red'); beep('error'); return; } if (E.equip(S, u.id, a.dataset.t)) { beep('buy'); fx.push({ k: 'buff', x: u.x, y: u.y, kind: 'gear', t0: performance.now(), dur: 900 }); toast(E.GEAR[a.dataset.t].name + ' equipado.', 'gold'); afterAction(); } return; }
@@ -4180,7 +4218,7 @@ function openArsenal(focus) {
         const done = P.techs.includes(k), can = E.canResearch(S, me, k) && isMyTurn(), reqs = E.techReqsMet(S, me, k);
         const cls = done ? 'done' : !reqs ? 'lock' : can ? 'can' : 'poor';
         const cost = E.techCost(S, me, k);
-        h += `<button class="tnode ${cls} ${focus === k ? 'focus' : ''}" data-a="pick" data-t="${k}"><span class="tn-ico" data-spr="${TECH_ICON[k]}" data-col="${fcol(me)}" data-size="32"></span><b>${esc(T.name)}</b><small>${done ? '✓ LISTA' : cost + ' chat.'}</small></button>`;
+        h += `<button class="tnode ${cls} ${focus === k ? 'focus' : ''}" data-a="pick" data-t="${k}"><span class="tn-ico" data-spr="${TECH_ICON[k]}" data-col="${fcol(me)}" data-size="32"></span><b>${esc(T.short || T.name)}</b><small>${done ? '✓ LISTA' : cost + ' chat.'}</small></button>`;
       });
       h += '</div>';
     }
@@ -4197,7 +4235,7 @@ function openArsenal(focus) {
 function techDetail(k) {
   const P = S.players[me], T = E.TECHS[k];
   const done = P.techs.includes(k), can = E.canResearch(S, me, k) && isMyTurn(), reqs = E.techReqsMet(S, me, k);
-  let h = `<div class="td-head"><b>${esc(T.name)}</b><span class="pill ${done ? 'alianza' : 'guerra'}">${E.BRANCHES[T.branch]} · nivel ${T.tier}</span></div><p>${esc(T.desc)}</p>`;
+  let h = `<div class="td-head"><b>${esc(T.name)}</b>${T.short ? `<small class="muted" style="display:block">${esc(T.short)}</small>` : ""}<span class="pill ${done ? 'alianza' : 'guerra'}">${E.BRANCHES[T.branch]} · nivel ${T.tier}</span></div><p>${esc(T.desc)}</p>`;
   if (T.unlock) { const U = E.UNITS[T.unlock]; h += `<div class="td-unit"><span data-unit="${T.unlock}" data-fac="${S.players[me].faction}"></span><div><b>${esc(U.name)}</b><small>Vida ${U.hp} · Ataque ${U.atk} · Defensa ${U.def} · Mov. ${U.mov} · Alcance ${U.rng} · ${E.unitCost(S, me, T.unlock)} chat.</small><small>${esc(U.desc)}</small></div></div>`; }
   const req = [T.req, T.req2].filter(Boolean);
   if (req.length && !done) h += `<p class="muted">Requiere: ${req.map((r) => (P.techs.includes(r) ? '✓ ' : '✗ ') + E.TECHS[r].name).join(', ')}</p>`;
@@ -4312,18 +4350,18 @@ async function endTurn() {
   if (!isMyTurn()) return;
   if (S.players[me].cityReward) { openReward(); return; }
   if (S.players[me].card) { openCard(); return; }
-  const idle = S.units.filter((u) => u.owner === me && !u.moved).length;
-  if (idle > 0 && !endTurn.confirm) { endTurn.confirm = true; const idles = S.units.filter((u) => u.owner === me && !u.moved); const now = performance.now(); for (const u of idles) fx.push({ k: 'arrow', x: u.x, y: u.y, t0: now, dur: 3000 }); setSel({ kind: 'unit', id: idles[0].id }); centerOn(idles[0].x, idles[0].y); toast(`Te falta${idle > 1 ? 'n' : ''} ${idle} unidad${idle > 1 ? 'es' : ''} por mover (flechas). Toca otra vez para terminar igual.`, 'gold'); beep('error'); setTimeout(() => { endTurn.confirm = false; }, 3500); return; }
+  const idle = S.units.filter((u) => u.owner === me && !u.moved && !u.guard).length;
+  if (idle > 0 && !endTurn.confirm) { endTurn.confirm = true; const idles = S.units.filter((u) => u.owner === me && !u.moved && !u.guard); const now = performance.now(); for (const u of idles) fx.push({ k: 'arrow', x: u.x, y: u.y, t0: now, dur: 3000 }); setSel({ kind: 'unit', id: idles[0].id }); centerOn(idles[0].x, idles[0].y); toast(`Te falta${idle > 1 ? 'n' : ''} ${idle} unidad${idle > 1 ? 'es' : ''} por mover (flechas). Toca otra vez para terminar igual.`, 'gold'); beep('error'); setTimeout(() => { endTurn.confirm = false; }, 3500); return; }
   endTurn.confirm = false;
   clearUndo(); setSel(null); closeModal();
   lastSeenTurn = S.turn;
-  E.endTurn(S);
+  E.endTurn(S); Net.logEvent('first_end_turn'); if (S.turn === 3) Net.logEvent('turn3'); if (S.turn === 5) Net.logEvent('turn5'); if (S.turn === 10) Net.logEvent('turn10');
   try { tutCheck('endturn'); } catch (err) { console.error(err); }
   try { await runAIs(); } catch (err) { console.error(err); busy = false; }
   if (online) await pushState(true);
   else saveLocal();
 }
-const aiSpeed = () => ({ normal: 1, rapida: 0.4, instantanea: 0 }[store.get('aispeed', 'normal')] ?? 1);
+const aiSpeed = () => ({ normal: 1, rapida: 0.4, instantanea: 0 }[store.get('aispeed', 'rapida')] ?? 0.4);
 let aiRun = 0; // identificador de la corrida actual: si cambia la partida, la corrida vieja se detiene sola
 async function runAIs() {
   const myRun = ++aiRun, G = S;
@@ -4371,7 +4409,7 @@ function watchAiTurns() {
 }
 function nextUnit() {
   if (!S || !isMyTurn()) return;
-  const mine = S.units.filter((u) => u.owner === me && (!u.moved || (!u.acted && E.targets(S, u).length)));
+  const mine = S.units.filter((u) => u.owner === me && !u.guard && (!u.moved || (!u.acted && E.targets(S, u).length)));
   if (!mine.length) { toast('Todas tus unidades ya actuaron.'); beep('error'); return; }
   const curIdx = sel && sel.kind === 'unit' ? mine.findIndex((u) => u.id === sel.id) : -1;
   const u = mine[(curIdx + 1) % mine.length];
@@ -4441,6 +4479,7 @@ function objectiveText() {
   return '';
 }
 function shutdownMatch() {
+  if (S) Net.logEvent(S.winner === me ? 'first_win' : 'first_loss', S.mode);
   // cierra toda la partida: la IA deja de jugar, no se puede tocar el mapa ni los botones
   aiRun++; busy = false; powerMode = null; sel = null; pendingTarget = null; tut = null; clearUndo();
   document.body.classList.remove('panel-open'); $('#sheet').hidden = true; $('#duel').hidden = true; $('#coach').hidden = true; $('#banner').hidden = true; $('#toasts').innerHTML = ''; $('#flash').innerHTML = '';
@@ -4475,10 +4514,12 @@ function checkEnd() {
     if (won && ch && ch.n) { const done = store.get('chapters', {}); done[S.chapter] = 1; store.set('chapters', done); store.set('progress', Math.max(store.get('progress', 1), ch.n + 1)); if (CHAPTER_KEYS.every((k) => done[k])) unlock('camp'); }
     if (won && ch && ch.outro) h = (ch.next ? '' : `<div class="brief">Fin de la campaña</div>`) + h + `<p class="muted outro">${esc(ch.outro)}</p>`;
     checkAch('end');
+    if (S.signal) { const sc = E.score(S, me), prev = store.get('signal:' + S.signal, null); store.set('signal:' + S.signal, { score: Math.max(sc, prev ? prev.score : 0), tries: (prev ? prev.tries : 0) + 1 }); h = `<div class="rank">La Señal ${esc(S.signal)} · tu puntaje: <b>${sc}</b></div>` + h; Net.init().then(() => Net.submitSignal(S.signal, sc, P.faction)).catch(() => {}); }
     Net.init().then(() => Net.logStat({ faction: P.faction, winner_faction: S.players[S.winner].faction, game_mode: S.gameMode, mods: Object.keys(S.mods || {}), size: S.size, diff: (S.players.find((q) => q.kind === 'ai') || {}).diff || null, turns: S.turn, players: S.players.length, won })).catch(() => {});
     if (won && S.mode === 'coop' && S.chapter && COOP[S.chapter]) { const d = store.get('coop', {}); d[S.chapter] = 1; store.set('coop', d); if (COOP[S.chapter].next) h += `<p class="muted">Capítulo superado. El anfitrión puede crear la sala del siguiente desde Historia cooperativa.</p>`; }
+    if (online && online.g && online.g.host === online.uid && !S.chapter) h += `<button class="menu-btn btn-gold" data-a="rematch"><div><b>Revancha</b><small>Misma configuración, nueva sala · avisa el código a los demás</small></div><span class="arrow">›</span></button>`;
     h += `<button class="menu-btn box press" data-a="menu"><div><b>Volver al menú</b></div><span class="arrow">›</span></button>`;
-    openModal(h, (a) => { if (a === 'next') { leaveGame(true); showStory(ch.next); } else leaveGame(); });
+    openModal(h, (a) => { if (a === 'next') { leaveGame(true); showStory(ch.next); } else if (a === 'rematch') { const g = online.g; const seats = g.seats; leaveGame(true); createRoom({ f: seats[0].faction, n: seats.length, seatsFacs: seats.map((x) => x.faction), humanSeats: seats.map((x, i) => (x.human !== false ? i : -1)).filter((i) => i >= 0), size: g.size, mode: g.gameMode, mods: g.mods, diff: g.diff, map: g.map }); } else leaveGame(); });
     endLock = true;
     $('#modal').onclick = ((orig) => (e) => { if (e.target === $('#modal')) return; orig(e); })($('#modal').onclick);
     if (!online) store.set('save', null);
@@ -4487,16 +4528,16 @@ function checkEnd() {
 
 // ---------- tutorial ----------
 const TUT = [
-  { t: 'Toca a tu Motorizado, la unidad con flechas junto a Lima.', on: 'select', ok: () => sel && sel.kind === 'unit' && S.units.find((u) => u.id === sel.id)?.type === 'explorador', mark: () => { const u = S.units.find((v) => v.owner === me && v.type === 'explorador'); return u && [u.x, u.y]; } },
-  { t: 'Las casillas claras son a dónde puede ir. Llévalo a las ruinas doradas marcadas. Si no llega, acércate y sigue el próximo turno.', on: 'move', ok: () => !S.ruins.includes(TUT._ruin), mark: () => [TUT._ruin % E.W, Math.floor(TUT._ruin / E.W)], adv: 'ruin' },
-  { t: 'Toca tu ciudad, Lima. Si hay una unidad encima, tócala dos veces.', on: 'select', ok: () => sel && sel.kind === 'city' && S.cities[sel.id].owner === me, mark: () => { const c = S.cities.find((cc) => cc.owner === me && cc.capital); return [c.x, c.y]; } },
-  { t: 'Entrena un Rondero. Para eso la ciudad debe estar libre: mueve antes la unidad que esté encima.', on: 'train', ok: () => true },
-  { t: 'Abre el Arsenal y desarrolla una tecnología. Cada una abre armas o mejoras nuevas.', on: 'research', ok: () => true },
-  { t: 'Bien. Pulsa «Terminar turno». Tus unidades que no se movieron se curan.', on: 'endturn', ok: () => true },
-  { t: 'Las ciudades grises son neutrales. Lleva una unidad encima de una y toca «Tomar». Trujillo e Ica están cerca.', on: 'capture', ok: () => true },
-  { t: 'Abre Diplomacia. Ahí propones alianzas, envías tributos o traicionas. Con 3 o más facciones es lo más divertido.', on: 'diplo', ok: () => true },
-  { t: 'Los cráteres dorados son nodos del Inti. Termina tu turno con una unidad encima y ganarás energía ⚡ cada turno para activar Protocolos en el Arsenal.', on: 'none3', ok: () => false, info: true, mark: () => { const nd = S.nodes && S.nodes[0]; return nd && [nd.x, nd.y]; } },
-  { t: 'Tu unidad única es el Androide Vigía: dispara a 2 casillas y aguanta mucho. Cada facción tiene la suya. Entrénalo cuando puedas.', on: 'none2', ok: () => false, info: true },
+  { t: 'Comandante, tenemos una señal. Toca a tu Motorizado, la unidad con flechas junto a Lima.', on: 'select', ok: () => sel && sel.kind === 'unit' && S.units.find((u) => u.id === sel.id)?.type === 'explorador', mark: () => { const u = S.units.find((v) => v.owner === me && v.type === 'explorador'); return u && [u.x, u.y]; } },
+  { t: 'Las casillas claras son a dónde puede ir. Entra a las ruinas doradas: hay restos del Inti.', on: 'move', ok: () => !S.ruins.includes(TUT._ruin), mark: () => [TUT._ruin % E.W, Math.floor(TUT._ruin / E.W)], adv: 'ruin' },
+  { t: '¡Contacto! Un explorador de Sechura, herido. Toca a tu unidad, luego al enemigo y pulsa ¡ATACAR!', on: 'attack', ok: () => true, mark: () => { const e = S.units.find((v) => v.tutorialBait); return e && [e.x, e.y]; } },
+  { t: 'Así se pelea. Ahora toca tu ciudad, Lima (si hay una unidad encima, tócala dos veces).', on: 'select', ok: () => sel && sel.kind === 'city' && S.cities[sel.id].owner === me, mark: () => { const c = S.cities.find((cc) => cc.owner === me && cc.capital); return [c.x, c.y]; } },
+  { t: 'Entrena un Rondero. La ciudad debe estar libre: mueve antes la unidad que esté encima.', on: 'train', ok: () => true },
+  { t: 'Pulsa «Terminar turno». Las unidades que no se movieron se curan.', on: 'endturn', ok: () => true },
+  { t: 'Las ciudades grises son neutrales: lleva una unidad encima y toca «Tomar». Trujillo e Ica están cerca.', on: 'capture', ok: () => true },
+  { t: 'Abre el Arsenal y elige una tecnología. Cada una abre armas o mejoras nuevas.', on: 'research', ok: () => true },
+  { t: 'Abre Diplomacia: alianzas, tributos o traiciones. Con 3 o más facciones es lo más divertido.', on: 'diplo', ok: () => true },
+  { t: 'Los cráteres dorados son nodos del Inti. Termina tu turno con una unidad encima: ganarás energía ⚡ para Protocolos.', on: 'none3', ok: () => false, info: true, mark: () => { const nd = S.nodes && S.nodes[0]; return nd && [nd.x, nd.y]; } },
   { t: 'Ya sabes lo básico. Meta del capítulo: controla 6 ciudades. Mejora ciudades para tener más chatarra.', on: 'none', ok: () => false, last: true },
 ];
 // consejos contextuales: aparecen una sola vez, cuando la situación lo pide
@@ -4642,7 +4683,9 @@ function mainMenu() {
     <div class="profile box"><span data-por="${playerAvatar()}" data-size="44"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div><button class="act ghost" data-a="profile" style="flex:none;padding:8px 10px">Ver</button></div>
     ${hasSave ? card('cont', 'Continuar', `${esc(E.FACTIONS[save.S.players[save.me].faction].name)} · turno ${save.S.turn}`, 'th_cont', E.FACTIONS[save.S.players[save.me].faction].color, 'data-gold="1"') : ''}
     ${card('camp', 'Campaña', prog > 10 ? 'Campaña completada · vuelve a jugar' : prog >= 2 ? 'Capítulo ' + Math.min(prog, 10) + ' de 10 disponible' : 'Empieza aquí: incluye tutorial', 'th_camp', '#3fb6c9')}
-    ${card('suyos', 'Guerra de los Suyos', '6 modos · 9 facciones · hasta 8 rivales · 4 mapas', 'th_suyos', '#e8a93a')}
+    ${card('quick', 'Guerra rápida', 'Partida equilibrada · 3 rivales · Perú pequeño · Normal', 'th_suyos', '#e8a93a')}
+    ${(() => { const sg = E.weeklySignal(); return card('signal', 'La Señal del Inti · ' + sg.id, 'Desafío semanal: ' + E.FACTIONS[sg.faction].short + ' · ' + E.MAPS[sg.map].name + ' · ' + sg.mods.map((m) => E.MODS[m].name).join(' + ') + ' · ' + sg.turns + ' turnos', 'th_retos', '#ffd45a'); })()}
+    ${card('suyos', 'Personalizar partida', '6 modos · 9 facciones · hasta 8 rivales · 4 mapas · modificadores', 'th_modos', '#b3a490')}
     ${card('online', 'Partida online', 'Con amigos, cada uno en su celular · código de sala', 'th_online', '#7a86e8')}
     ${card('retos', 'Retos', `${Object.keys(store.get('retos', {})).length} de ${RETOS.length} superados · escenarios con reglas únicas`, 'th_retos', '#e5533d')}
     ${card('codex', 'Códice', 'Las 9 facciones, sus unidades y el árbol de tecnología', 'th_codex', '#c76b8f')}
@@ -4654,6 +4697,8 @@ function mainMenu() {
     if (a === 'suyos') factionPick((f, n, size, mode, mods, diff, mapOpts) => { showStory('suyos', () => startLocal(f, n, size, mode, mods, diff, mapOpts)); });
     if (a === 'retos') retosScreen();
     if (a === 'online') onlineMenu();
+    if (a === 'quick') { const f = store.get('fac', null) || E.FACTION_KEYS[Math.floor(Math.random() * E.FACTION_KEYS.length)]; startLocal(f, 4, 'pequeno', 'clasico', [], 'normal', { map: 'peru', code: '' }); }
+    if (a === 'signal') signalScreen();
     if (a === 'codex') codexScreen();
     if (a === 'ach') achScreen();
     if (a === 'profile') profileScreen();
@@ -4741,6 +4786,34 @@ function factionPick(done, opts = {}) {
 
 function seedFromCode(code) { let h = 7; for (const ch of code) h = (h * 31 + ch.charCodeAt(0)) | 0; return h; }
 function randomCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; return Array.from({ length: 6 }, () => A[Math.floor(Math.random() * A.length)]).join(''); }
+// La Señal del Inti: todos juegan la misma semilla esta semana; gana quien más puntos saque al turno final
+async function signalScreen() {
+  const sg = E.weeklySignal(), F = E.FACTIONS[sg.faction];
+  const played = store.get('signal:' + sg.id, null);
+  show(`<button class="back" data-a="back">‹ Volver</button><div class="brief">Transmisión semanal · origen: ${esc(sg.origin)}</div><div class="h2" style="color:#ffd45a">La Señal del Inti · ${sg.id}</div>
+    <div class="facinfo box" style="--fc:${F.color}"><div class="facinfo-top"><span data-por="${sg.faction}" data-size="48"></span><div><b>${esc(F.name)}</b><small>Mapa ${esc(E.MAPS[sg.map].name)} · ${sg.rivals} rivales en Normal · ${sg.turns} turnos</small></div></div>
+      <div class="chips-s">${sg.mods.map((m) => `<span class="chip-s hot">${esc(E.MODS[m].name)}</span>`).join('')}</div>
+      <p>Misma semilla para todos los comandantes del mundo. Al terminar el turno ${sg.turns} se cuenta tu puntaje: ciudades, tropas, tecnologías y bajas.</p></div>
+    ${played ? `<div class="status-grid"><div class="stile box"><span data-spr="i_trophy" data-col="#ffd45a" data-size="22"></span><b>${played.score}</b><small>tu mejor puntaje</small></div><div class="stile box"><span data-spr="flag" data-col="#ffd45a" data-size="22"></span><b>${played.tries || 1}</b><small>intentos</small></div></div>` : ''}
+    <button class="menu-btn btn-gold" data-a="play"><div><b>${played ? 'Volver a intentar' : 'Responder a la señal'}</b><small>Mismo mapa, misma suerte: solo cuenta tu estrategia</small></div><span class="arrow">›</span></button>
+    <div class="label">Tabla de la semana</div><div id="sigBoard"><p class="muted">Cargando…</p></div>`,
+  (a) => { if (a === 'back') mainMenu(); if (a === 'play') startSignal(sg); });
+  try {
+    const k = await Net.init(); const rows = k === 'supabase' ? await Net.signalBoard(sg.id) : [];
+    const el = $('#sigBoard'); if (!el) return;
+    el.innerHTML = rows.length ? `<div class="scores">${rows.map((r, i) => `<div class="scorerow ${r.uid === Net.uid() ? 'me' : ''}" style="--fc:#ffd45a"><span class="pos">${i + 1}</span><span data-por="${r.faction || sg.faction}" data-size="28"></span><span class="nm">${esc(r.name || '?')}</span><span class="bar"><i style="width:${Math.round(r.score / rows[0].score * 100)}%"></i></span><b>${r.score}</b></div>`).join('')}</div>` : '<p class="muted">Nadie ha respondido todavía esta semana. Sé el primero.</p>';
+    hydrate(el);
+  } catch (e) { console.error(e); const el = $('#sigBoard'); if (el) el.innerHTML = '<p class="muted">Sin conexión: la tabla aparece cuando haya internet.</p>'; }
+}
+function startSignal(sg) {
+  const others = E.FACTION_KEYS.filter((k) => k !== sg.faction);
+  let r = sg.seed; const nx = () => { r = (r * 1664525 + 1013904223) >>> 0; return r / 4294967296; };
+  const rivals = []; while (rivals.length < sg.rivals) { const k = others[Math.floor(nx() * others.length)]; if (!rivals.includes(k)) rivals.push(k); }
+  const st = E.newGame({ mode: 'signal', size: 'pequeno', gameMode: 'clasico', mods: sg.mods, map: sg.map, seed: sg.seed, maxTurns: sg.turns, players: [{ name: playerName(), faction: sg.faction, kind: 'human' }, ...rivals.map((k) => ({ name: LEADERS[k], faction: k, kind: 'ai', diff: 'normal' }))] });
+  st.signal = sg.id; st.mapCode = sg.id;
+  loadGame(st, 0);
+  flash('LA SEÑAL ' + sg.id, sg.turns + ' turnos · misma semilla para todos', '#ffd45a');
+}
 function startLocal(f, n, size, gameMode, mods, diff, mapOpts = {}) {
   const others = E.FACTION_KEYS.filter((k) => k !== f).sort(() => Math.random() - 0.5).slice(0, n - 1);
   const code = mapOpts.code || randomCode();
@@ -4982,8 +5055,12 @@ const Net = (() => {
     return () => { stopped = true; clearInterval(poll); try { sb.removeChannel(ch); } catch {} };
   }
   async function logStat(row) { if (kind !== 'supabase') return; try { await sb.from('inti_stats').insert({ ...row, uid: uidP, name: playerName(), room: online ? online.code : null, winner_name: S && S.winner >= 0 ? S.players[S.winner].name : null, online: !!online }); } catch {} }
+  async function submitSignal(id, score, faction) { if (kind !== 'supabase') return; try { await sb.from('inti_signal').insert({ signal: id, uid: uidP, name: playerName(), faction, score }); } catch (e) { console.error(e); } }
+  async function signalBoard(id) { if (kind !== 'supabase') return []; const { data } = await sb.from('inti_signal').select('uid,name,faction,score').eq('signal', id).order('score', { ascending: false }).limit(50); const best = new Map(); for (const r of data || []) if (!best.has(r.uid)) best.set(r.uid, r); return [...best.values()].slice(0, 10); }
+  const evDone = new Set(store.get('evdone', []));
+  async function logEvent(ev, extra) { if (evDone.has(ev)) return; evDone.add(ev); store.set('evdone', [...evDone]); if (kind !== 'supabase') return; try { await sb.from('inti_events').insert({ uid: uidP, ev, extra: extra || null, version: GAME_VERSION }); } catch {} }
   async function stats() { if (kind !== 'supabase') return []; const { data } = await sb.from('inti_stats').select('faction,winner_faction,won,players,turns,game_mode,uid,name,room,winner_name,online,created_at').order('created_at', { ascending: false }).limit(400); return data || []; }
-  return { init, get kind() { return kind; }, uid, get, create, update, mine, subscribe, logStat, stats };
+  return { init, get kind() { return kind; }, uid, get, create, update, mine, subscribe, logStat, stats, submitSignal, signalBoard, logEvent };
 })();
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const newCode = () => Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
@@ -5121,6 +5198,7 @@ function lobbyView(g) {
     <p class="muted">Comparte este código${Net.kind === 'supabase' ? ' y el enlace del juego' : ''}. Quien entre toma un asiento libre y elige su facción tocando su asiento. ${g.coop ? 'Los demás asientos los juega la IA aliada.' : 'Los asientos vacíos los juega la IA: el anfitrión decide cuántos y la dificultad de cada uno.'}</p>
     <p class="muted">${esc([E.MODES[g.gameMode || 'clasico'].name, ...(g.mods || []).map((k) => E.MODS[k] ? E.MODS[k].name : k)].join(' · '))} · mapa ${esc(E.SIZES[g.size || 'mediano'].name.toLowerCase())}</p>
     <div class="seats">${g.seats.map(seatHtml).join('')}</div>
+    <button class="menu-btn box press" data-a="invite"><div><b>Invitar a un amigo</b><small>Comparte el enlace con el código ${esc(g.code)} ya puesto</small></div><span class="arrow">›</span></button>
     ${host && !g.coop && g.seats.length < 4 ? `<button class="act ghost" data-a="addseat">+ Añadir asiento (${g.seats.length}/4)</button>` : ''}
     ${host ? `<button class="menu-btn btn-gold" data-a="start"><div><b>Empezar partida</b><small>${humans} humano${humans === 1 ? '' : 's'} · los asientos libres serán IA</small></div><span class="arrow">›</span></button>` : '<p class="muted">Esperando a que el anfitrión empiece… Puedes cambiar tu facción mientras tanto.</p>'}
     ${'Notification' in window && Notification.permission === 'default' ? '<button class="menu-btn box press" data-a="notif"><div><b>Avisarme cuando sea mi turno</b><small>Activa las notificaciones del navegador</small></div><span class="arrow">›</span></button>' : ''}`,
@@ -5128,6 +5206,7 @@ function lobbyView(g) {
     const save = async (seats) => { try { await Net.update(g.code, { seats, version: (g.version || 0) + 1 }, g.version || 0); g.seats = seats; g.version = (g.version || 0) + 1; online.g = g; lobbyView(g); } catch (e) { console.error(e); if (e.code === 'stale') { const fresh = await Net.get(g.code); if (fresh) { online.g = fresh; lobbyView(fresh); } toast('Alguien cambió la sala al mismo tiempo. Vuelve a intentarlo.', 'gold'); } else toast('No pude guardar el cambio. Inténtalo otra vez.', 'red'); } };
     if (a === 'back') mainMenu();
     if (a === 'notif') { try { await Notification.requestPermission(); } catch {} lobbyView(g); }
+    if (a === 'invite') { const url = location.origin + location.pathname + '#' + g.code, text = 'Únete a mi guerra en Inti Caído — código ' + g.code; try { if (navigator.share) await navigator.share({ title: 'Inti Caído', text, url }); else { await navigator.clipboard.writeText(text + ' ' + url); toast('Enlace copiado. Pégalo donde quieras.', 'gold'); } } catch {} }
     if (a === 'pick') { const i = +d.i; lobbyPick = lobbyPick === i ? null : i; lobbyView(g); }
     if (a === 'setfac') {
       const i = +d.i, k = d.k; if (!canEdit(i)) return;
