@@ -2672,7 +2672,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '23';
+const GAME_VERSION = '24';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3430,16 +3430,17 @@ function buildHighlight(su) {
   if (!su || !isMyTurn() || su.owner !== me) return;
   const g = hlLayer.getContext('2d'), t = tgtLayer.getContext('2d');
   // zona de peligro: casillas donde un enemigo visible podría pegarte el próximo turno (rayas rojas)
+  const reach = E.reachable(S, su);
   if (store.get('danger', true)) {
+    // peligro: solo en las casillas a las que PUEDES ir, un borde rojo punteado = "si te paras aquí, te pueden pegar"
     const danger = dangerZone();
-    g.fillStyle = 'rgba(229,83,61,.5)';
-    for (const k of danger) for (const i of HEXPIX[k]) { const x = i % LW, y = (i / LW) | 0; if ((x - y) % 5 === 0) g.fillRect(x, y, 1, 1); }
+    g.fillStyle = '#e5533d';
+    for (const [k] of reach) if (danger.has(k)) for (const i of HEXEDGE[k]) { const x = i % LW, y = (i / LW) | 0; if ((x + y) % 2 === 0) g.fillRect(x, y, 1, 1); }
   }
-  for (const [k] of E.reachable(S, su)) {
+  for (const [k] of reach) {
     g.fillStyle = 'rgba(239,230,216,.55)';
     for (const i of HEXPIX[k]) { const x = i % LW, y = (i / LW) | 0; if ((x + y) % 4 === 0) g.fillRect(x, y, 1, 1); }
-    g.fillStyle = 'rgba(239,230,216,.75)';
-    for (const i of HEXEDGE[k]) { const x = i % LW, y = (i / LW) | 0; if ((x + y) % 2 === 0) g.fillRect(x, y, 1, 1); }
+    if (!(store.get('danger', true) && dangerZone().has(k))) { g.fillStyle = 'rgba(239,230,216,.75)'; for (const i of HEXEDGE[k]) { const x = i % LW, y = (i / LW) | 0; if ((x + y) % 2 === 0) g.fillRect(x, y, 1, 1); } }
   }
   t.fillStyle = '#ff4a32';
   for (const e of E.targets(S, su)) {
@@ -3594,18 +3595,6 @@ function render(now) {
     if (o) corner(Math.round(hexX(o.x, o.y) / P) * P, Math.round(hexY(o.x, o.y) / P) * P, Math.floor(now / 300) % 2 ? '#f2b84b' : '#ffe08a');
   }
   if (tut && tut.mark) { const [mx, my] = tut.mark; if (Math.floor(now / 400) % 2) corner(Math.round(hexX(mx, my) / P) * P, Math.round(hexY(mx, my) / P) * P, '#efe6d8'); }
-  // unidades
-  for (const u of S.units) {
-    const k = E.idx(u.x, u.y);
-    if (!view.vis.has(k)) { disp.delete(u.id); continue; }
-    const tx = hexX(u.x, u.y), ty = hexY(u.x, u.y);
-    let d = disp.get(u.id); if (!d) { d = { x: tx, y: ty }; disp.set(u.id, d); }
-    d.x += (tx - d.x) * 0.22; d.y += (ty - d.y) * 0.22;
-    if (Math.abs(tx - d.x) < 0.5) d.x = tx; if (Math.abs(ty - d.y) < 0.5) d.y = ty;
-    drawUnit(u, d.x, d.y, u.owner === me && u.moved && u.acted && S.cur === me, now);
-  }
-  // corona del trono
-  for (const c of S.cities) if (c.throne && view.seen[E.idx(c.x, c.y)] === '1') { const cx = hexX(c.x, c.y), cy = hexY(c.x, c.y); drawSprite(PX.sprite('crown'), cx - 3 * P - P, cy - 22 * P + (Math.floor(now / 400) % 2 ? -P : 0), P); }
   // nombres de ciudades
   if (cam.z > 0.6) {
     ctx.font = '8px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3636,6 +3625,18 @@ function render(now) {
       ctx.fillStyle = fcol(b.owner); ctx.fillText(nm, Math.round(cx), Math.round(cy));
     }
   }
+  // unidades
+  for (const u of S.units) {
+    const k = E.idx(u.x, u.y);
+    if (!view.vis.has(k)) { disp.delete(u.id); continue; }
+    const tx = hexX(u.x, u.y), ty = hexY(u.x, u.y);
+    let d = disp.get(u.id); if (!d) { d = { x: tx, y: ty }; disp.set(u.id, d); }
+    d.x += (tx - d.x) * 0.22; d.y += (ty - d.y) * 0.22;
+    if (Math.abs(tx - d.x) < 0.5) d.x = tx; if (Math.abs(ty - d.y) < 0.5) d.y = ty;
+    drawUnit(u, d.x, d.y, u.owner === me && u.moved && u.acted && S.cur === me, now);
+  }
+  // corona del trono
+  for (const c of S.cities) if (c.throne && view.seen[E.idx(c.x, c.y)] === '1') { const cx = hexX(c.x, c.y), cy = hexY(c.x, c.y); drawSprite(PX.sprite('crown'), cx - 3 * P - P, cy - 22 * P + (Math.floor(now / 400) % 2 ? -P : 0), P); }
   // efectos
   fx = fx.filter((f) => now - f.t0 < f.dur);
   for (const f of fx) {
@@ -4214,7 +4215,7 @@ function openPause() {
     <button class="menu-btn box press" data-a="how"><div><b>Cómo jugar</b><small>Reglas en un minuto</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="codex"><div><b>Códice</b><small>Facciones, unidades y tecnologías</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="snd"><div><b>Sonido: ${sound ? 'activado' : 'apagado'}</b><small>Toca para cambiar</small></div><span class="arrow">›</span></button>
-    <button class="menu-btn box press" data-a="danger"><div><b>Zonas de peligro: ${store.get('danger', true) ? 'activadas' : 'apagadas'}</b><small>Rayas rojas donde un enemigo puede atacarte el próximo turno</small></div><span class="arrow">›</span></button>
+    <button class="menu-btn box press" data-a="danger"><div><b>Zonas de peligro: ${store.get('danger', true) ? 'activadas' : 'apagadas'}</b><small>Borde rojo punteado en las casillas a las que puedes ir y donde un enemigo podría pegarte</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="amb"><div><b>Ambiente: ${store.get('ambient', true) ? 'activado' : 'apagado'}</b><small>Olas, viento, pájaros y grillos según dónde estés</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="music"><div><b>Música: ${musicOn ? 'activada' : 'apagada'}</b><small>Suena solo en el menú. En la partida solo oyes el ambiente</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="speed"><div><b>Velocidad de la IA: ${{ normal: 'normal', rapida: 'rápida', instantanea: 'instantánea' }[store.get('aispeed', 'normal')]}</b><small>Cuánto se detiene a mostrar los turnos rivales</small></div><span class="arrow">›</span></button>
