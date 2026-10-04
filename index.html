@@ -126,6 +126,18 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .mission .mk { font-family: var(--f-pixel); font-size: 7px; color: var(--inti); letter-spacing: .05em; }
 .mission .mp { font-family: var(--f-pixel); font-size: 8px; color: var(--good); margin-left: auto; flex: none; }
 .mission.done { border-color: var(--good); animation: popnum .35s steps(5); }
+.toast.sum { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .toast.sum .act { padding: 4px 8px; font-size: 12px; }
+.quote { font-style: italic; color: var(--fc, var(--inti)); font-size: 14px; margin-top: 4px; }
+.insight { text-align: left; padding: 8px 10px; margin: 8px 0; border-color: var(--inti); }
+.insight.up { border-color: var(--good); } .insight b { font-family: var(--f-pixel); font-size: 10px; color: var(--inti); display: block; margin: 2px 0 4px; } .insight.up b { color: var(--good); }
+.insight ul { margin: 0; padding-left: 14px; font-size: 14px; color: var(--bone); } .insight li { margin: 1px 0; }
+.row2 { display: flex; gap: 6px; } .row2 .menu-btn { flex: 1; min-width: 0; } .row2 .menu-btn small { white-space: normal; }
+.beacon { position: absolute; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 10; padding: 4px 8px; font-family: var(--f-pixel); font-size: 7px; color: var(--inti); border-color: var(--inti); letter-spacing: .04em; display: flex; gap: 5px; align-items: center; animation: pulse 1.6s steps(4) infinite; }
+.beacon.mine { color: var(--good); border-color: var(--good); } .beacon .bn { font-size: 10px; }
+.mission .mc { display: block; font-size: 12px; color: var(--muted); line-height: 1.1; }
+.mission.offer { border-color: var(--good); animation: pulse 1.2s steps(4) infinite; }
+.card-opt.mo .mrw { display: block; font-family: var(--f-pixel); font-size: 7px; margin-top: 4px; letter-spacing: .04em; }
+.card-opt.mo.safe .mrw { color: var(--good); } .card-opt.mo.risk .mrw { color: var(--inti); } .card-opt.mo.risk { border-color: var(--inti); }
 @media (min-width: 760px) { .mission { left: 340px; } }
 .banner { display: flex; align-items: center; gap: 6px; }
 .banner .think canvas { display: block; }
@@ -622,6 +634,7 @@ body.big .tcard { flex-basis: 100px; }
   </div>
   <div id="banner" class="banner box" hidden></div>
   <button id="mission" class="mission box" hidden></button>
+  <button id="beacon" class="beacon box" hidden></button>
   <div id="coach" class="coach box" hidden></div>
   <div id="sheet" class="sheet box" hidden></div>
   <div id="duel" class="duel box" hidden></div>
@@ -749,8 +762,8 @@ const Engine = (() => {
   const MODES = {
     clasico: { name: 'Clásico',            tag: 'Conquista total',
       desc: 'La partida completa: explora, conquista ciudades, pacta y traiciona.',
-      win: 'Elimina a todos los rivales, o que todos los vivos sean aliados. Si se acaba el tiempo, gana quien tenga más puntos.',
-      how: ['Ciudades y ruinas por todo el mapa', 'Alianzas: solo una a la vez', 'Nodos del Inti para energía y protocolos'] },
+      win: 'Elimina a todos los rivales, o que todos los vivos sean aliados. Con 3 o más jugadores, desde el turno 24 quien controle la mayoría de los nodos del Inti 4 rondas seguidas gana. Si se acaba el tiempo, gana quien tenga más puntos.',
+      how: ['Ciudades y ruinas por todo el mapa', 'Alianzas: solo una a la vez', 'La Señal (3+ jugadores): mayoría de nodos 4 rondas desde el turno 24'] },
     rey:     { name: 'Rey de la Colina',   tag: 'Un Trono en el centro',
       desc: 'Aparece un Trono en el centro del mapa y todos lo quieren.',
       win: 'Controla el Trono 8 turnos seguidos (la corona marca quién lo tiene).',
@@ -897,15 +910,26 @@ const Engine = (() => {
 
   // ---------- creación de partida ----------
   // La Señal del Inti: desafío semanal, misma semilla para todos
+  // La Señal semanal: semana ISO (lunes a domingo, igual en todo el mundo), siempre 2 modificadores compatibles
+  const SIGNAL_MODS = ['niebla', 'subita', 'escasez', 'temblor', 'veteranos', 'sinpactos', 'marea', 'ricos'];
+  const SIGNAL_CLASH = [['escasez', 'ricos']];
+  const SIGNAL_BRAG = { lima: 'El búnker registró el resultado.', sierra: 'Desde la cumbre se vio todo.', selva: 'El río se llevó el resto.', desierto: 'Pagaron en chatarra.', culto: 'La transmisión fue escuchada.', flota: 'La sirena sonó una sola vez.', callao: 'Llegamos por el agua.', chasquis: 'El mensaje cruzó el país.', mineros: 'Turno cumplido.' };
+  function isoWeek(now) {
+    const d = new Date(Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), new Date(now).getUTCDate()));
+    const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return { year: d.getUTCFullYear(), week: Math.ceil(((d - y0) / 86400000 + 1) / 7) };
+  }
   function weeklySignal(now = Date.now()) {
-    const d = new Date(now), onejan = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const week = Math.floor(((d - onejan) / 86400000 + onejan.getUTCDay() + 1) / 7), n = (d.getUTCFullYear() - 2026) * 53 + week;
+    const { year, week } = isoWeek(now), n = (year - 2026) * 53 + week;
     let r = (n * 2654435761) >>> 0; const nx = () => { r = (r * 1664525 + 1013904223) >>> 0; return r / 4294967296; };
-    const facs = FACTION_KEYS, maps = Object.keys(MAPS), modsAll = Object.keys(MODS).filter((m) => m !== 'sincartas' && m !== 'sinheroes');
+    const facs = FACTION_KEYS, maps = Object.keys(MAPS);
     const f = facs[Math.floor(nx() * facs.length)], map = maps[Math.floor(nx() * maps.length)];
-    const mods = [modsAll[Math.floor(nx() * modsAll.length)]]; if (nx() < 0.5) { const m2 = modsAll[Math.floor(nx() * modsAll.length)]; if (!mods.includes(m2)) mods.push(m2); }
+    const m1 = SIGNAL_MODS[Math.floor(nx() * SIGNAL_MODS.length)];
+    const okWith = SIGNAL_MODS.filter((m) => m !== m1 && !SIGNAL_CLASH.some((pair) => pair.includes(m) && pair.includes(m1)));
+    const mods = [m1, okWith[Math.floor(nx() * okWith.length)]];
     const rivals = 2 + Math.floor(nx() * 3), origin = ['Puno', 'Nazca', 'Iquitos', 'Callao', 'Cusco', 'Piura', 'Chimbote', 'Cajamarca', 'Cerro de Pasco'][Math.floor(nx() * 9)];
-    return { id: 'S' + String(n).padStart(3, '0'), seed: (r >>> 0) % 1e9, faction: f, map, mods, rivals, turns: 15, origin, week: n };
+    return { id: 'S' + String(n).padStart(3, '0'), seed: (r >>> 0) % 1e9, faction: f, map, mods, rivals, turns: 15, origin, week: n, isoWeek: week, year, brag: SIGNAL_BRAG[f] };
   }
   function newGame(opts) {
     const size = SIZES[opts.size || 'mediano'];
@@ -1108,7 +1132,7 @@ const Engine = (() => {
   const buildAt = (st, x, y) => st.builds && st.builds.find((b) => b.x === x && b.y === y);
   const nearestOwnCity = (st, p, x, y, r = 2) => st.cities.filter((c) => c.owner === p && dist(c.x, c.y, x, y) <= r).sort((a, b) => dist(a.x, a.y, x, y) - dist(b.x, b.y, x, y))[0];
   const alivePlayers = (st) => st.players.map((P, i) => (P.alive && !P.horde ? i : -1)).filter((i) => i >= 0);
-  function log(st, msg) { st.log.push({ t: st.turn, m: msg }); if (st.log.length > 40) st.log.shift(); }
+  function log(st, msg) { st.log.push({ t: st.turn, m: msg }); if (st.log.length > 300) st.log.shift(); }
   function event(st, e) { st.events.push(e); }
 
   function unitMov(st, u) {
@@ -1118,7 +1142,7 @@ const Engine = (() => {
     return m;
   }
   // cuanto más grande tu imperio, más caro todo (chatarra): mantiene la partida estable
-  const TUNE = { scaleRate: 0.12, scaleFree: 1, scaleMax: 2.2 };
+  const TUNE = { scaleRate: 0.12, scaleFree: 1, scaleMax: 2.2, get signalFrom() { return SIGNAL_FROM; }, set signalFrom(v) { SIGNAL_FROM = v; } };
   function cityScale(st, p) { const n = st.cities.filter((c) => c.owner === p).length; return Math.min(TUNE.scaleMax, 1 + TUNE.scaleRate * Math.max(0, n - TUNE.scaleFree)); }
   // cosecha: cada cultivo alimenta a las tropas → +4% ataque y defensa a todas (máx. 5 cultivos)
   function harvest(st, p) { return Math.min(5, (st.builds || []).filter((b) => b.owner === p && b.type === 'cultivo').length) * 0.04; }
@@ -1534,24 +1558,30 @@ const Engine = (() => {
   // ---------- turnos ----------
   // ---------- misiones secundarias (encargos cortos con premio, solo para humanos en partida libre u online) ----------
   const MISSION_KINDS = ['capture', 'kill', 'build', 'node', 'train', 'tech', 'hold'];
+  const MISSION_TITLE = { capture: 'Abrir el camino', kill: 'Romper la columna', build: 'Volver al socavón', node: 'Responder al Inti', train: 'Completar la cuadrilla', tech: 'Recuperar los planos', hold: 'No ceder la plaza' };
+  const MISSION_PREFIX = { lima: 'Orden', sierra: 'Ronda', selva: 'Ruta', desierto: 'Frecuencia', culto: 'Transmisión', flota: 'Bitácora', callao: 'Desembarco', chasquis: 'Relevo', mineros: 'Parte de turno' };
+  const SIGNAL_ROUNDS = 4; let SIGNAL_FROM = 24; // La Señal: mayoría de nodos sostenida gana (Clásico)
+  const SAFE_KINDS = ['train', 'tech', 'build'], RISK_KINDS = ['capture', 'node', 'kill', 'hold'];
   function missionSnapshot(st, p) { const P = st.players[p]; return { kills: P.kills, captures: P.stats.captures, builds: P.stats.builds || 0, trained: Object.values(P.stats.trained || {}).reduce((a, b) => a + b, 0), techs: P.techs.length }; }
-  function newMission(st, p) {
+  function newMission(st, p, pool) {
     const P = st.players[p];
-    const kinds = MISSION_KINDS.filter((k) => k !== (P.lastMission || ''));
+    const kinds = (pool || MISSION_KINDS).filter((k) => k !== (P.lastMission || ''));
+    if (!kinds.length) return null;
+    const deco = (m) => { if (!m) return m; m.title = MISSION_TITLE[m.kind]; m.prefix = (MISSION_PREFIX[P.faction] || 'Orden') + ' ' + ((P.missionN || 0) + 1); m.risk = RISK_KINDS.includes(m.kind); if (m.risk) m.reward = Math.round(m.reward * 1.4); return m; };
     for (let tries = 0; tries < 8; tries++) {
       const kind = pick(st, kinds), snap = missionSnapshot(st, p), due = st.turn + 7;
       if (kind === 'capture') {
         const mine = st.cities.filter((c) => c.owner === p); if (!mine.length) continue;
         const cand = st.cities.filter((c) => c.owner !== p && !(c.owner >= 0 && allied(st, p, c.owner)) && mine.some((m) => dist(m.x, m.y, c.x, c.y) <= 5));
         if (!cand.length) continue; const c = pick(st, cand);
-        return { kind, text: `Toma ${c.name}`, city: c.id, due, reward: 8 + c.level * 2, snap };
+        return deco({ kind, text: `Toma ${c.name}`, city: c.id, due, reward: 8 + c.level * 2, snap });
       }
-      if (kind === 'kill') return { kind, text: 'Destruye 3 unidades enemigas', n: 3, due, reward: 9, snap };
-      if (kind === 'build') return { kind, text: 'Levanta una construcción (cultivo, mina…)', n: 1, due, reward: 6, snap };
-      if (kind === 'node') { if (!(st.nodes || []).length) continue; return { kind, text: 'Termina un turno sobre un nodo del Inti', due, reward: 7, snap }; }
-      if (kind === 'train') return { kind, text: 'Entrena 3 tropas', n: 3, due, reward: 6, snap };
-      if (kind === 'tech') return { kind, text: 'Investiga 2 tecnologías', n: 2, due, reward: 7, snap };
-      if (kind === 'hold') { const mine = st.cities.filter((c) => c.owner === p && !c.capital); if (!mine.length) continue; const c = pick(st, mine); return { kind, text: `Conserva ${c.name} hasta el turno ${due}`, city: c.id, due, reward: 6, snap }; }
+      if (kind === 'kill') return deco({ kind, text: 'Destruye 3 unidades enemigas', n: 3, due, reward: 9, snap });
+      if (kind === 'build') return deco({ kind, text: 'Levanta una construcción (cultivo, mina…)', n: 1, due, reward: 6, snap });
+      if (kind === 'node') { if (!(st.nodes || []).length) continue; return deco({ kind, text: 'Termina un turno sobre un nodo del Inti', due, reward: 7, snap }); }
+      if (kind === 'train') return deco({ kind, text: 'Entrena 3 tropas', n: 3, due, reward: 6, snap });
+      if (kind === 'tech') return deco({ kind, text: 'Investiga 2 tecnologías', n: 2, due, reward: 7, snap });
+      if (kind === 'hold') { const mine = st.cities.filter((c) => c.owner === p && !c.capital); if (!mine.length) continue; const c = pick(st, mine); return deco({ kind, text: `Conserva ${c.name} hasta el turno ${due}`, city: c.id, due, reward: 6, snap }); }
     }
     return null;
   }
@@ -1567,6 +1597,12 @@ const Engine = (() => {
     if (m.kind === 'hold') return { cur: st.turn >= m.due && st.cities[m.city].owner === p ? 1 : 0, n: 1, lost: st.cities[m.city].owner !== p };
     return null;
   }
+  function chooseMission(st, p, i) {
+    const P = st.players[p]; if (!P.missionOffer) return false;
+    const m = P.missionOffer[i] || P.missionOffer[0]; P.mission = m; P.missionOffer = null; P.missionN = (P.missionN || 0) + 1;
+    event(st, { k: 'mission', p, state: 'new', text: m.text, reward: m.reward, due: m.due });
+    return true;
+  }
   function checkMissions(st, p) {
     const P = st.players[p];
     if (P.kind !== 'human' || P.horde || st.mode === 'campaign' || st.mode === 'coop' || (st.mods && st.mods.sincartas)) return;
@@ -1575,10 +1611,12 @@ const Engine = (() => {
       if (pr && pr.cur >= pr.n && !pr.lost) { P.scrap += P.mission.reward; P.stats.missions = (P.stats.missions || 0) + 1; log(st, `Misión cumplida: ${P.mission.text}. +${P.mission.reward} chatarra.`); event(st, { k: 'mission', p, state: 'done', text: P.mission.text, reward: P.mission.reward }); P.lastMission = P.mission.kind; P.mission = null; P.missionCd = 2; }
       else if (st.turn > P.mission.due || (pr && pr.lost)) { log(st, `Misión fallida: ${P.mission.text}.`); event(st, { k: 'mission', p, state: 'fail', text: P.mission.text }); P.lastMission = P.mission.kind; P.mission = null; P.missionCd = 2; }
     }
-    if (!P.mission) {
+    if (!P.mission && !P.missionOffer) {
       if (P.missionCd > 0) { P.missionCd--; return; }
       if (st.turn < 3) return;
-      const m = newMission(st, p); if (m) { P.mission = m; event(st, { k: 'mission', p, state: 'new', text: m.text, reward: m.reward, due: m.due }); }
+      const a = newMission(st, p, SAFE_KINDS), b = newMission(st, p, RISK_KINDS);
+      if (a && b) { P.missionOffer = [a, b]; event(st, { k: 'missionoffer', p }); }
+      else { const m = a || b; if (m) { P.mission = m; P.missionN = (P.missionN || 0) + 1; event(st, { k: 'mission', p, state: 'new', text: m.text, reward: m.reward, due: m.due }); } }
     }
   }
   // caravanas neutrales: avanzan solas hacia su destino; si llegan, premian a quien las dejó pasar
@@ -1634,6 +1672,7 @@ const Engine = (() => {
     const p = st.cur;
     if (st.players[p].card) chooseCard(st, p, 0);
     if (st.players[p].cityReward) chooseCityReward(st, st.players[p].cityReward.city, 0);
+    if (st.players[p].missionOffer) chooseMission(st, p, 0);
     for (const u of st.units) if (u.owner === p && !u.moved && !u.acted) {
       const c = cityAt(st, u.x, u.y);
       const t = st.tiles[idx(u.x, u.y)];
@@ -1677,6 +1716,17 @@ const Engine = (() => {
     const m = st.mods || {};
     if (st.turn % (m.escasez ? 2 : 4) === 0) { addRuin(st); addRuin(st); log(st, 'Una lluvia de chatarra orbital dejó nuevas ruinas.'); }
     for (const nd of st.nodes || []) if (nd.blocked > 0) nd.blocked--;
+    // historial de puntaje por ronda (para el resumen final: "la guerra cambió en el turno X")
+    if (!st.hist) st.hist = [];
+    st.hist.push(st.players.map((P, i) => (P.alive && !P.horde ? score(st, i) : 0)));
+    // LA SEÑAL (Clásico sin objetivo): desde el turno 20, quien controle la mayoría absoluta de los nodos 3 rondas seguidas gana
+    if (st.gameMode === 'clasico' && !st.objective && st.players.length >= 3 && (st.nodes || []).length >= 3 && st.turn >= SIGNAL_FROM) {
+      const cnt = {}; for (const nd of st.nodes) if (nd.owner >= 0 && st.players[nd.owner].alive && !st.players[nd.owner].horde) cnt[nd.owner] = (cnt[nd.owner] || 0) + 1;
+      const lead = Object.keys(cnt).map(Number).find((q) => cnt[q] * 2 > st.nodes.length);
+      if (lead === undefined) { if (st.beacon) { event(st, { k: 'signal', state: 'lost', p: st.beacon.owner }); st.beacon = null; } }
+      else if (st.beacon && st.beacon.owner === lead) { st.beacon.n++; if (st.beacon.n >= SIGNAL_ROUNDS) { st.winner = lead; st.winText = 'Respondió a la Señal del Inti: mayoría de nodos ' + SIGNAL_ROUNDS + ' rondas seguidas.'; return; } event(st, { k: 'signal', state: 'tick', p: lead, n: st.beacon.n }); log(st, `${st.players[lead].name} sostiene la Señal (${st.beacon.n}/${SIGNAL_ROUNDS}).`); }
+      else { st.beacon = { owner: lead, n: 1 }; event(st, { k: 'signal', state: 'tick', p: lead, n: 1 }); log(st, `${st.players[lead].name} controla la mayoría de los nodos. Si la sostiene ${SIGNAL_ROUNDS} rondas, gana.`); }
+    } else if (st.beacon) st.beacon = null;
     // trono
     if (st.throne) {
       const t = st.cities.find((c) => c.throne);
@@ -2144,7 +2194,7 @@ const Engine = (() => {
           goals.push([c.x, c.y, w]);
         }
         for (const k of st.ruins) goals.push([k % W, Math.floor(k / W), ((u.type === 'explorador' || u.type === 'buggy') ? -1 : 1) + ((AI_DOCTRINE[P.faction] || {}).ruins || 0)]);
-        for (const nd of st.nodes || []) if (nd.owner !== p && !P.horde) goals.push([nd.x, nd.y, st.gameMode === 'nodos' ? -2 : 0.5]);
+        for (const nd of st.nodes || []) if (nd.owner !== p && !P.horde) goals.push([nd.x, nd.y, st.gameMode === 'nodos' ? -2 : (st.beacon && st.beacon.owner !== p ? -3.5 : (st.gameMode === 'clasico' && st.turn >= SIGNAL_FROM - 4 ? -0.5 : 0.5))]);
         if (!passive) for (const e of st.units) if (e.owner !== p && relation(st, p, e.owner) === 'guerra') { const coastal = neighbors(e.x, e.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar'); if (!U.naval || coastal || UNITS[e.type].naval) goals.push([e.x, e.y, 1.5 - (e.hp < maxHp(e) * 0.4 ? 1 : 0) - (U.naval && coastal ? 1 : 0)]); }
         if (U.naval) { goals.length = goals.filter((g) => { const [gx, gy] = g; return st.tiles[idx(gx, gy)] === 'mar' || neighbors(gx, gy).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar'); }).length; }
         if (P.horde) for (const c of st.cities) if (c.owner >= 0) goals.push([c.x, c.y, 1]);
@@ -2225,8 +2275,8 @@ const Engine = (() => {
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, setGuard, runScripts, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
-    idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, chooseMission, setGuard, runScripts, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    SIGNAL_ROUNDS, SIGNAL_FROM, SIGNAL_BRAG, isoWeek, idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
     forecast, score, power, playerView, defBonus, adviseTech, log, lastStand, losing, DIFF, CARDS, cardText, chooseCard,
@@ -2797,7 +2847,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '27';
+const GAME_VERSION = '28';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -2845,14 +2895,14 @@ SPEAKER['Comandante'] = 'lima';
 const ai = (f, diff) => ({ name: LEADERS[f], faction: f, kind: 'ai', diff });
 const human = (f) => ({ name: playerName(), faction: f || 'lima', kind: 'human' });
 const CHAPTERS = {
-  c1: { n: 1, title: 'Cenizas de Lima', brief: 'Transmisión entrante · Búnker de Lima · 2087', color: '#3fb6c9', goal: 'Controla 6 ciudades', size: 'pequeno',
+  c1: { n: 1, title: 'Cenizas de Lima', brief: 'Transmisión entrante · Búnker de Lima · 2087', color: '#3fb6c9', goal: 'Controla 4 ciudades', size: 'pequeno',
     lines: [
       ['', 'Hace treinta años el satélite Inti se desplomó sobre la costa. Lo llamaban el sol artificial del Perú. Cuando cayó, se apagó todo.'],
       ['', 'Lima sobrevivió bajo tierra. Hoy los búnkeres vuelven a abrirse y la ciudad necesita chatarra, agua y aliados.'],
-      ['Directora Vargas', 'Comandante, el desierto del norte está lleno de restos del Inti. Los Saqueadores de Sechura ya bajan por la Panamericana. Tome cinco ciudades antes que ellos.'],
+      ['Directora Vargas', 'Comandante, el desierto del norte está lleno de restos del Inti. Los Saqueadores de Sechura ya bajan por la Panamericana. Tome cuatro ciudades antes que ellos.'],
     ],
-    setup: () => ({ mode: 'campaign', chapter: 'c1', size: 'pequeno', tutorialRuin: true, objective: { type: 'cities', player: 0, n: 6 }, players: [human(), ai('desierto', 'facil')] }),
-    fantasy: 'La señal', tutorial: true, next: 'c2' },
+    setup: () => ({ mode: 'campaign', chapter: 'c1', size: 'pequeno', tutorialRuin: true, objective: { type: 'cities', player: 0, n: 4 }, players: [human(), ai('desierto', 'facil')] }),
+    fantasy: 'La señal', tutorial: true, outro: 'LA SEÑAL SIGUE HACIA EL SUR. Tenemos una ruta. Y alguien más la está escuchando.', next: 'c2' },
   c2: { n: 2, title: 'La Ruta del Sol', brief: 'Transmisión entrante · Huancayo · 2087', color: '#d6543a', goal: 'Toma Cusco', size: 'mediano',
     lines: [
       ['', 'Con el norte asegurado, llegan señales desde el sur. Alguien encendió un fragmento del Inti en lo alto de Cusco.'],
@@ -3903,6 +3953,8 @@ function consumeEvents() {
     if (e.k === 'pillage') { fx.push({ k: 'boom', x: e.x, y: e.y, t0: now, dur: 600 }); if (S.builds && e.p !== me) toast(S.players[e.p].name + ' saqueó tu ' + E.BUILDS[e.type].name + '.', 'red'); }
     if (e.k === 'capture') { fx.push({ k: 'flagrise', x: e.x, y: e.y, c: fcol(e.p), t0: now, dur: 700 }); fx.push({ k: 'confetti', x: e.x, y: e.y, c: fcol(e.p), t0: now + 150, dur: 1400 }); if (e.p === me) shake = { t0: now, dur: 200, amp: 2 }; }
     if (e.k === 'capture') { if (e.p === me && e.prev >= 0 && e.prev !== me) setTimeout(() => leaderBubble(e.prev, 'lost'), 900); else if (e.prev === me) setTimeout(() => leaderBubble(e.p, 'took'), 900); }
+    if (e.k === 'signal') { const Q = S.players[e.p]; if (e.state === 'lost') { toast((e.p === me ? 'Perdiste la mayoría de los nodos: la Señal se apaga.' : 'La Señal de ' + Q.name + ' se apaga: perdió la mayoría de los nodos.'), e.p === me ? 'red' : 'gold'); } else if (e.n === 1) { setTimeout(() => { flash('LA SEÑAL', e.p === me ? 'Sostén la mayoría de los nodos ' + E.SIGNAL_ROUNDS + ' rondas y ganas' : Q.name + ' domina los nodos · ' + E.SIGNAL_ROUNDS + ' rondas y gana', e.p === me ? '#7cc46a' : '#ff6a4d'); beep(e.p === me ? 'ach' : 'betray'); if (e.p !== me) shake = { t0: performance.now(), dur: 400, amp: 4 }; }, 400); } else { setTimeout(() => { flash('LA SEÑAL · ' + e.n + '/' + E.SIGNAL_ROUNDS, e.p === me ? 'Una ronda más cerca' : Q.name + ' sigue en los nodos', e.p === me ? '#7cc46a' : '#ff6a4d'); beep('select'); }, 400); } }
+    if (e.k === 'missionoffer' && e.p === me) { setTimeout(() => { if (S && S.players[me].missionOffer && isMyTurn() && $('#modal').hidden && typeof openMissionOffer === 'function') openMissionOffer(); }, 1600); }
     if (e.k === 'mission' && e.p === me) {
       if (e.state === 'new') { setTimeout(() => { toast('Nueva misión: ' + e.text + ' · +' + e.reward + ' chatarra antes del turno ' + e.due, 'gold'); beep('select'); }, 600); }
       if (e.state === 'done') { flash('¡MISIÓN CUMPLIDA!', e.text + ' · +' + e.reward + ' chatarra', '#7cc46a'); beep('ach'); const cap = S.cities.find((c) => c.owner === me && c.capital) || S.cities.find((c) => c.owner === me); if (cap) fx.push({ k: 'confetti', x: cap.x, y: cap.y, c: '#7cc46a', t0: now + 200, dur: 1500 }); if (typeof addXp === 'function') addXp(15, 'misión'); }
@@ -4062,7 +4114,14 @@ function renderHud() {
   const nb = $('#nextBtn .nx'); if (nb) nb.textContent = isMyTurn() && pendingUnits ? String(pendingUnits) : '»';
   // misión secundaria
   const mEl = $('#mission'), M = P.mission;
-  if (mEl) { if (M && S.winner < 0) { const pr = E.missionProgress(S, me) || { cur: 0, n: 1 }; mEl.hidden = false; mEl.innerHTML = `<span class="mk">MISIÓN</span><span>${esc(M.text)}</span><span class="mp">${pr.n > 1 ? pr.cur + '/' + pr.n : 'T' + M.due}</span>`; mEl.onclick = () => { toast(`${M.text}. Premio: +${M.reward} chatarra. Plazo: turno ${M.due}.` + (pr.n > 1 ? ` Llevas ${pr.cur}/${pr.n}.` : ''), 'gold'); beep('tap'); }; } else mEl.hidden = true; }
+  if (mEl) {
+    if (P.missionOffer && S.winner < 0 && isMyTurn()) { mEl.hidden = false; mEl.classList.add('offer'); mEl.innerHTML = `<span class="mk">MISIÓN</span><span>Dos encargos esperan tu orden</span><span class="mp">ELEGIR</span>`; mEl.onclick = () => { beep('tap'); openMissionOffer(); }; }
+    else if (M && S.winner < 0) { const pr = E.missionProgress(S, me) || { cur: 0, n: 1 }; mEl.hidden = false; mEl.classList.remove('offer'); mEl.innerHTML = `<span class="mk">${esc(M.prefix || 'MISIÓN')}</span><span>${esc(M.title || M.text)}<small class="mc">${esc(M.text)}</small></span><span class="mp">${pr.n > 1 ? pr.cur + '/' + pr.n : 'T' + M.due}</span>`; mEl.onclick = () => { toast(`${M.text}. Premio: +${M.reward} chatarra. Plazo: turno ${M.due}.` + (pr.n > 1 ? ` Llevas ${pr.cur}/${pr.n}.` : ''), 'gold'); beep('tap'); }; }
+    else mEl.hidden = true;
+  }
+  // La Señal (Clásico): quién sostiene la mayoría de nodos y cuántas rondas le faltan
+  const bEl = $('#beacon');
+  if (bEl) { const B = S.beacon; if (B && S.winner < 0 && S.players[B.owner]) { const mine = B.owner === me; bEl.hidden = false; bEl.className = 'beacon box' + (mine ? ' mine' : ''); bEl.innerHTML = `<span>LA SEÑAL</span><span class="bn">${B.n}/${E.SIGNAL_ROUNDS}</span>`; bEl.onclick = () => { toast((mine ? 'Sostienes la mayoría de los nodos del Inti. ' : esc(S.players[B.owner].name) + ' sostiene la mayoría de los nodos del Inti. ') + `Si llega a ${E.SIGNAL_ROUNDS} rondas seguidas, gana. Quítale un nodo para cortar la cuenta.`, mine ? 'gold' : 'red'); beep('tap'); }; } else bEl.hidden = true; }
   const b = $('#banner');
   if (S.winner < 0 && S.cur !== me) {
     b.hidden = false; b.innerHTML = 'Turno de <b>' + esc(S.players[S.cur].name) + '</b>' + (online && S.players[S.cur].kind === 'human' ? ' · te aviso cuando juegue' : '');
@@ -4119,6 +4178,7 @@ function renderSheet() {
     html += `<div class="sheet-head"><span id="uicon"></span><div><div class="title">${u.hero ? esc(u.name || 'Líder') : esc(U.name)}</div>${u.hero ? '<div class="sub vetline">★ LÍDER DE LA FACCIÓN</div>' : ''}<div class="sub">${mine ? 'Tuya' : esc(P_u.name)} · ${esc(F.short)}${U.faction ? ' · ÚNICA' : ''}</div>${E.rankOf(u) ? `<div class="sub vetline">${'★'.repeat(E.rankOf(u))} ${esc(E.RANKS[E.rankOf(u)].name.toUpperCase())} · +${E.RANKS[E.rankOf(u)].hp} vida, +${E.RANKS[E.rankOf(u)].atk} ataque${E.RANKS[E.rankOf(u)].def ? ', +' + E.RANKS[E.rankOf(u)].def + ' defensa' : ''}</div>` : `<div class="sub">${u.kills || 0} baja${u.kills === 1 ? '' : 's'} · asciende con ${(E.hasTech(S, u.owner, 'veterania') ? 2 : 3) * (E.rankOf(u) + 1)}</div>`}</div><button class="expand" data-a="expand" aria-label="Más">${sheetOpen ? '▾' : '▸'}</button><button class="x" data-a="close" aria-label="Cerrar">×</button></div>`;
     html += `<div class="hpbar"><span class="hp-l">VIDA</span><span class="hp-t"><i style="width:${hpPct}%;background:${hpPct > 50 ? 'var(--good)' : hpPct > 25 ? 'var(--inti)' : 'var(--bad)'}"></i></span><span class="hp-n">${u.hp}/${mh}</span></div>`;
     html += `<div class="stats"><span class="stat"><span data-spr="i_medal" data-size="12"></span> Ataque <b>${U.atk}</b></span><span class="stat"><span data-spr="i_wall" data-size="12"></span> Defensa <b>${U.def}</b></span><span class="stat"><span data-spr="i_boots" data-size="12"></span> Mov. <b>${E.unitMov(S, u)}</b></span><span class="stat"><span data-spr="i_eye" data-size="12"></span> Alcance <b>${U.rng}</b></span>${u.gear ? `<span class="stat gear" title="${esc(E.GEAR[u.gear].desc)}"><span data-spr="${GEAR_ICON[u.gear]}" data-size="12"></span> ${esc(E.GEAR[u.gear].name)}</span>` : ''}${E.harvest(S, u.owner) > 0 ? `<span class="stat harvest"><span data-spr="b_cultivo" data-size="12"></span> Cosecha <b>+${Math.round(E.harvest(S, u.owner) * 100)}%</b></span>` : ''}</div>`;
+    if (u.caravan) { const tgt = S.cities[u.caravan.to]; const by = S.players[u.caravan.by]; html += `<div class="sub" style="color:var(--inti);margin:2px 0 4px">🐪 Caravana rumbo a <b>${esc(tgt ? tgt.name : '?')}</b> · ${tgt ? Math.max(0, E.dist(u.x, u.y, tgt.x, tgt.y) - 1) : '?'} casillas · le quedan ${u.caravan.turns} turno${u.caravan.turns === 1 ? '' : 's'}${by ? ' · si llega, ' + (u.caravan.by === me ? 'ganas tú' : 'gana ' + esc(by.name)) : ''}. Cualquiera puede asaltarla.</div>`; }
     const road = (S.roads || []).includes(E.idx(u.x, u.y));
     html += `<div class="terrain-line"><span class="t-sw t-${tk}"></span>${esc(TERRAIN_TIP[tk] || terr)}${road ? ' Carretera: mover cuesta la mitad.' : ''}${E.riverAt(S, u.x, u.y) ? (E.bridgeAt(S, u.x, u.y) ? ' Sobre un puente.' : ' En el río: −20% defensa.') : ''}${E.nodeAt(S, u.x, u.y) ? ' Está sobre un nodo del Inti.' : ''}${E.buildAt(S, u.x, u.y) ? ' Hay ' + E.BUILDS[E.buildAt(S, u.x, u.y).type].name + ' aquí.' : ''}</div>`;
     if (mine && isMyTurn()) {
@@ -4408,6 +4468,7 @@ function howtoHtml(modal) {
 async function endTurn() {
   if (!isMyTurn()) return;
   if (S.players[me].cityReward) { openReward(); return; }
+  if (S.players[me].missionOffer) { openMissionOffer(); return; }
   if (S.players[me].card) { openCard(); return; }
   const idle = S.units.filter((u) => u.owner === me && !u.moved && !u.guard).length;
   if (idle > 0 && !endTurn.confirm) { endTurn.confirm = true; const idles = S.units.filter((u) => u.owner === me && !u.moved && !u.guard); const now = performance.now(); for (const u of idles) fx.push({ k: 'arrow', x: u.x, y: u.y, t0: now, dur: 3000 }); setSel({ kind: 'unit', id: idles[0].id }); centerOn(idles[0].x, idles[0].y); toast(`Te falta${idle > 1 ? 'n' : ''} ${idle} unidad${idle > 1 ? 'es' : ''} por mover (flechas). Toca otra vez para terminar igual.`, 'gold'); beep('error'); setTimeout(() => { endTurn.confirm = false; }, 3500); return; }
@@ -4485,6 +4546,17 @@ function openReward() {
   $('#modal').onclick = ((orig) => (e) => { if (e.target === $('#modal')) return; orig(e); })($('#modal').onclick);
   const sp = $('#rwcity'); if (sp) { const img = PX.city(R.level, fcol(me), c.id + 1, c.capital, S.players[me].faction); const cv2 = document.createElement('canvas'); cv2.width = 60; cv2.height = 57; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 60, 57); cv2.className = 'px-art'; sp.appendChild(cv2); }
 }
+// misión secundaria: elige 1 de 2 (una segura, una en zona en disputa con premio mayor)
+function openMissionOffer() {
+  const O = S.players[me].missionOffer; if (!O) return;
+  const h = `<div class="card-ev"><div class="card-ev-head"><span data-por="vargas" data-size="64"></span><div><div class="brief">Encargos · turno ${S.turn}</div><div class="h2" style="font-size:16px">Elige tu misión</div></div></div>
+    <p class="card-ev-text">Dos encargos llegaron al búnker. Solo puedes aceptar uno; el otro se pierde.</p>
+    ${O.map((m, i) => `<button class="card-opt box press mo ${m.risk ? 'risk' : 'safe'}" data-a="pick" data-i="${i}"><b>${esc(m.prefix)} · ${esc(m.title)}</b><small>${esc(m.text)} · antes del turno ${m.due}</small><span class="mrw">${m.risk ? '⚠ EN DISPUTA · ' : '✓ SEGURA · '}+${m.reward} chatarra</span></button>`).join('')}
+    <p class="muted">Si terminas el turno sin elegir, se toma la primera.</p></div>`;
+  openModal(h, (a, d) => { if (a === 'pick') { E.chooseMission(S, me, +d.i); beep('select'); closeModal(); renderHud(); } });
+  $('#modal').onclick = ((orig) => (e) => { if (e.target === $('#modal')) return; orig(e); })($('#modal').onclick);
+  beep('select');
+}
 // carta de evento con decisión
 function openCard() {
   const c = E.cardText(S, me); if (!c) return;
@@ -4545,6 +4617,38 @@ function shutdownMatch() {
   for (const id of ['#endBtn', '#techBtn', '#diploBtn', '#nextBtn', '#undoBtn']) { const b = $(id); if (b) b.disabled = true; }
   Ambient.stop(); renderHud();
 }
+// resumen final: el turno en que la guerra cambió de mano (según el historial de puntajes) y lo que pasó ese turno
+// online: resumen de lo que pasó desde tu último turno + botón para saltar la repetición animada
+function replaySummary(ev) {
+  if (!ev || ev.length < 4) return;
+  const lost = ev.filter((e) => e.k === 'kill' && e.owner === me).length, killed = ev.filter((e) => e.k === 'kill' && e.by === me).length;
+  const cLost = ev.filter((e) => e.k === 'capture' && e.prev === me), cTook = ev.filter((e) => e.k === 'capture' && e.p === me);
+  const hits = ev.filter((e) => e.k === 'hit' && S.units.some((u) => u.id === e.did && u.owner === me)).length;
+  const parts = [];
+  if (cLost.length) parts.push('perdiste ' + cLost.map((c) => c.name).join(', '));
+  if (lost) parts.push(lost + ' baja' + (lost > 1 ? 's' : '') + ' tuya' + (lost > 1 ? 's' : ''));
+  if (killed) parts.push('causaste ' + killed + ' baja' + (killed > 1 ? 's' : ''));
+  if (!lost && hits) parts.push(hits + ' ataque' + (hits > 1 ? 's' : '') + ' contra ti');
+  if (cTook.length) parts.push('tomaste ' + cTook.map((c) => c.name).join(', '));
+  if (ev.some((e) => e.k === 'betray' && e.b === me)) parts.push('¡te traicionaron!');
+  if (ev.some((e) => e.k === 'ally' && (e.a === me || e.b === me))) parts.push('nueva alianza');
+  const txt = parts.length ? 'Desde tu último turno: ' + parts.join(' · ') + '.' : 'Desde tu último turno: sin bajas ni cambios en tus ciudades.';
+  const t = document.createElement('div'); t.className = 'toast box ' + (lost || cLost.length ? 'red' : 'gold') + ' sum'; t.innerHTML = `<span>${esc(txt)}</span><button class="act ghost" id="skipRp">Saltar repetición</button>`;
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 9000);
+  $('#skipRp').onclick = () => { fx.length = 0; shake = null; $('#flash').innerHTML = ''; t.remove(); beep('tap'); };
+}
+function warInsight() {
+  const H = S.hist || []; if (H.length < 4) return '';
+  const rivals = S.players.map((_, i) => i).filter((i) => i !== me && !S.players[i].horde);
+  const lead = H.map((row) => row[me] - Math.max(0, ...rivals.map((i) => row[i])));
+  let bestK = -1, bestV = 0;
+  for (let k = 1; k < lead.length; k++) { const flip = (lead[k - 1] >= 0) !== (lead[k] >= 0); const v = Math.abs(lead[k] - lead[k - 1]) + (flip ? 150 : 0); if (v > bestV) { bestV = v; bestK = k; } }
+  if (bestK < 0) return '';
+  const turn = bestK + 1; // hist[k] = puntajes al empezar el turno k+2; el cambio ocurrió durante el turno k+1
+  const up = lead[bestK] > lead[bestK - 1];
+  const lines = (S.log || []).filter((l) => l.t === turn && !/Misión|carta|Carta|chatarra orbital/.test(l.m)).map((l) => l.m).slice(0, 3);
+  return `<div class="insight box ${up ? 'up' : 'down'}"><div class="brief">${up ? 'Tu mejor momento' : 'La guerra cambió'}</div><b>TURNO ${turn}</b>${lines.length ? `<ul>${lines.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : `<small class="muted">${up ? 'Ahí tomaste la delantera.' : 'Ahí perdiste la delantera.'}</small>`}</div>`;
+}
 function checkEnd() {
   if (S && S.winner < 0 && !S._shown && S.players[me] && !S.players[me].alive) {
     S._shown = true; beep('lose');
@@ -4565,20 +4669,22 @@ function checkEnd() {
   setTimeout(() => {
     const P = S.players[me], st = P.stats || {};
     const rank = !won ? 'Caído' : S.turn < 15 ? 'Relámpago' : st.betrayals ? 'Puñal de oro' : !st.lost ? 'Intocable' : (st.powers || 0) >= 4 ? 'Ingeniero del Inti' : 'Comandante';
-    let h = `<div class="endhead ${won ? 'won' : 'lost'}"><span data-por="${P.faction}" data-size="64"></span><div><div class="brief">${won ? 'Victoria' : 'Derrota'} · turno ${S.turn}</div><div class="h2" style="font-size:30px">${won ? (S.winner === me ? 'El Perú es tuyo' : 'Ganó tu alianza') : 'Cayó tu bandera'}</div><div class="muted">${esc(S.winText)} ${S.winner !== me ? 'Lidera ' + esc(S.players[S.winner].name) + '.' : ''}</div></div></div>
+    let h = `<div class="endhead ${won ? 'won' : 'lost'}"><span data-por="${P.faction}" data-size="64"></span><div><div class="brief">${won ? 'Victoria' : 'Derrota'} · turno ${S.turn}</div><div class="h2" style="font-size:30px">${won ? (S.winner === me ? 'El Perú es tuyo' : 'Ganó tu alianza') : 'Cayó tu bandera'}</div><div class="muted">${esc(S.winText)} ${S.winner !== me ? 'Lidera ' + esc(S.players[S.winner].name) + '.' : ''}</div>${(LEADER_REACT[S.players[S.winner].faction] || {}).win && !S.players[S.winner].horde ? `<div class="quote" style="--fc:${E.FACTIONS[S.players[S.winner].faction].color}">${esc(LEADER_REACT[S.players[S.winner].faction].win)}</div>` : ''}</div></div>
       <div class="rank">Rango: <b>${rank}</b></div>
       <div class="status-grid">${[['flag', S.cities.filter((c) => c.owner === me).length, 'ciudades'], ['i_medal', P.kills, 'bajas causadas'], ['i_skull', st.lost || 0, 'bajas sufridas'], ['shard', st.ruins || 0, 'ruinas'], ['i_energy', st.powers || 0, 'protocolos'], ['wrench', P.techs.length, 'tecnologías']].map(([ic, v, l]) => `<div class="stile box"><span data-spr="${ic}" data-col="var(--fc)" data-size="22"></span><b>${v}</b><small>${l}</small></div>`).join('')}</div>
       <div class="label">Puntajes</div><div class="scores">${S.players.map((Q, i) => ({ Q, i, s: E.score(S, i) })).sort((a, b) => b.s - a.s).map(({ Q, i, s }, k) => `<div class="scorerow ${i === me ? 'me' : ''}" style="--fc:${Q.horde ? '#a8322a' : E.FACTIONS[Q.faction].color}"><span class="pos">${k + 1}</span><span data-por="${Q.faction}" data-size="28"></span><span class="nm">${esc(Q.name)}${!Q.alive && !Q.horde ? ' ✝' : ''}</span><span class="bar"><i style="width:${Math.round(s / Math.max(1, E.score(S, S.players.map((_, j) => j).sort((a, b) => E.score(S, b) - E.score(S, a))[0])) * 100)}%"></i></span><b>${s}</b></div>`).join('')}</div>`;
+    h += warInsight();
     if (won && ch && ch.next) h += `<button class="menu-btn btn-gold" data-a="next"><div><b>Siguiente capítulo</b><small>${esc(CHAPTERS[ch.next].title)}</small></div><span class="arrow">›</span></button>`;
     if (won && ch && ch.n) { const done = store.get('chapters', {}); done[S.chapter] = 1; store.set('chapters', done); store.set('progress', Math.max(store.get('progress', 1), ch.n + 1)); if (CHAPTER_KEYS.every((k) => done[k])) unlock('camp'); }
     if (won && ch && ch.outro) h = (ch.next ? '' : `<div class="brief">Fin de la campaña</div>`) + h + `<p class="muted outro">${esc(ch.outro)}</p>`;
     checkAch('end');
-    if (S.signal) { const sc = E.score(S, me), prev = store.get('signal:' + S.signal, null); store.set('signal:' + S.signal, { score: Math.max(sc, prev ? prev.score : 0), tries: (prev ? prev.tries : 0) + 1 }); h = `<div class="rank">La Señal ${esc(S.signal)} · tu puntaje: <b>${sc}</b></div>` + h; Net.init().then(() => Net.submitSignal(S.signal, sc, P.faction)).catch(() => {}); }
+    if (S.signal) { const sc = E.score(S, me), prev = store.get('signal:' + S.signal, null); const best = Math.max(sc, prev ? prev.score : 0); store.set('signal:' + S.signal, { score: best, tries: (prev ? prev.tries : 0) + 1, faction: P.faction, won }); const arc = store.get('signals', []); if (!arc.includes(S.signal)) { arc.unshift(S.signal); store.set('signals', arc.slice(0, 12)); } h = `<div class="rank">La Señal ${esc(S.signal)} · tu puntaje: <b>${sc}</b>${prev && sc > prev.score ? ' · ¡récord!' : ''}</div>` + h + `<button class="menu-btn box press" data-a="share"><div><b>Compartir resultado</b><small>Reta a tus amigos con el mismo mapa</small></div><span class="arrow">›</span></button>`; S._sigScore = sc; Net.init().then(() => Net.submitSignal(S.signal, sc, P.faction)).catch(() => {}); }
     Net.init().then(() => Net.logStat({ faction: P.faction, winner_faction: S.players[S.winner].faction, game_mode: S.gameMode, mods: Object.keys(S.mods || {}), size: S.size, diff: (S.players.find((q) => q.kind === 'ai') || {}).diff || null, turns: S.turn, players: S.players.length, won })).catch(() => {});
     if (won && S.mode === 'coop' && S.chapter && COOP[S.chapter]) { const d = store.get('coop', {}); d[S.chapter] = 1; store.set('coop', d); if (COOP[S.chapter].next) h += `<p class="muted">Capítulo superado. El anfitrión puede crear la sala del siguiente desde Historia cooperativa.</p>`; }
     if (online && online.g && online.g.host === online.uid && !S.chapter) h += `<button class="menu-btn btn-gold" data-a="rematch"><div><b>Revancha</b><small>Misma configuración, nueva sala · avisa el código a los demás</small></div><span class="arrow">›</span></button>`;
+    if (!online && S.mode === 'skirmish' && S.localCfg) h += `<div class="row2"><button class="menu-btn ${won ? 'box press' : 'btn-gold'}" data-a="retry"><div><b>Reintentar este mapa</b><small>Misma semilla, mismos rivales</small></div><span class="arrow">›</span></button><button class="menu-btn ${won ? 'btn-gold' : 'box press'}" data-a="again"><div><b>Nueva guerra</b><small>Misma configuración, otro mapa</small></div><span class="arrow">›</span></button></div>`;
     h += `<button class="menu-btn box press" data-a="menu"><div><b>Volver al menú</b></div><span class="arrow">›</span></button>`;
-    openModal(h, (a) => { if (a === 'next') { leaveGame(true); showStory(ch.next); } else if (a === 'rematch') { const g = online.g; const seats = g.seats; leaveGame(true); createRoom({ f: seats[0].faction, n: seats.length, seatsFacs: seats.map((x) => x.faction), humanSeats: seats.map((x, i) => (x.human !== false ? i : -1)).filter((i) => i >= 0), size: g.size, mode: g.gameMode, mods: g.mods, diff: g.diff, map: g.map }); } else leaveGame(); });
+    openModal(h, async (a) => { if (a === 'share') { shareSignal(S.signal, S._sigScore, P.faction, won); return; } if (a === 'next') { leaveGame(true); showStory(ch.next); } else if (a === 'retry' || a === 'again') { const L = S.localCfg; leaveGame(true); startLocal(L.f, L.n, L.size, L.gameMode, L.mods, L.diff, { map: L.map, code: a === 'retry' ? L.code : undefined, rivals: a === 'retry' ? L.rivals : undefined }); } else if (a === 'rematch') { const g = online.g; const seats = g.seats; leaveGame(true); createRoom({ f: seats[0].faction, n: seats.length, seatsFacs: seats.map((x) => x.faction), humanSeats: seats.map((x, i) => (x.human !== false ? i : -1)).filter((i) => i >= 0), size: g.size, mode: g.gameMode, mods: g.mods, diff: g.diff, map: g.map }); } else leaveGame(); });
     endLock = true;
     $('#modal').onclick = ((orig) => (e) => { if (e.target === $('#modal')) return; orig(e); })($('#modal').onclick);
     if (!online) store.set('save', null);
@@ -4594,10 +4700,8 @@ const TUT = [
   { t: 'Entrena un Rondero. La ciudad debe estar libre: mueve antes la unidad que esté encima.', on: 'train', ok: () => true },
   { t: 'Pulsa «Terminar turno». Las unidades que no se movieron se curan.', on: 'endturn', ok: () => true },
   { t: 'Las ciudades grises son neutrales: lleva una unidad encima y toca «Tomar». Trujillo e Ica están cerca.', on: 'capture', ok: () => true },
-  { t: 'Abre el Arsenal y elige una tecnología. Cada una abre armas o mejoras nuevas.', on: 'research', ok: () => true },
-  { t: 'Abre Diplomacia: alianzas, tributos o traiciones. Con 3 o más facciones es lo más divertido.', on: 'diplo', ok: () => true },
-  { t: 'Los cráteres dorados son nodos del Inti. Termina tu turno con una unidad encima: ganarás energía ⚡ para Protocolos.', on: 'none3', ok: () => false, info: true, mark: () => { const nd = S.nodes && S.nodes[0]; return nd && [nd.x, nd.y]; } },
-  { t: 'Ya sabes lo básico. Meta del capítulo: controla 6 ciudades. Mejora ciudades para tener más chatarra.', on: 'none', ok: () => false, last: true },
+  { t: 'Tu primera decisión: abre el Arsenal y elige una tecnología. Cada una abre armas o mejoras nuevas.', on: 'research', ok: () => true },
+  { t: 'Ya sabes lo básico. Meta: controla 4 ciudades. Lo demás (diplomacia, nodos, protocolos) te lo iré contando cuando aparezca.', on: 'none', ok: () => false, last: true },
 ];
 // consejos contextuales: aparecen una sola vez, cuando la situación lo pide
 const TIPS = [
@@ -4643,13 +4747,14 @@ function tutShow() {
   if (!tut) { c.hidden = true; $('#toasts').style.top = ''; return; }
   const st = TUT[tut.i];
   tut.mark = st.mark ? st.mark() : null;
-  c.innerHTML = `<span data-por="lima" data-size="48"></span><div><span class="who">Directora Vargas · ${tut.i + 1}/${TUT.length}</span><p class="typing-p"></p></div><button class="skip" id="tutSkip">${st.last ? 'CERRAR' : 'SALTAR'}</button><span class="arrowdown"></span>`; hydrate(c);
+  c.innerHTML = `<span data-por="lima" data-size="48"></span><div><span class="who">Directora Vargas · ${tut.i + 1}/${TUT.length}</span><p class="typing-p"></p></div><button class="skip" id="tutSkip">${st.last ? 'CERRAR' : 'SIGUIENTE ›'}</button>${st.last ? '' : '<button class="skip" id="tutOff" title="Omitir el tutorial">✕</button>'}<span class="arrowdown"></span>`; hydrate(c);
   typeInto(c.querySelector('p'), st.t, c.querySelector('canvas'));
   c.classList.remove('urgent'); void c.offsetWidth; if (st.on === 'endturn' || st.on === 'capture') c.classList.add('urgent');
   c.hidden = false;
   $('#toasts').style.top = 'calc(env(safe-area-inset-top, 0px) + ' + (c.offsetHeight + 72) + 'px)';
   $('#tutSkip').textContent = st.info ? 'OK' : $('#tutSkip').textContent;
   $('#tutSkip').onclick = () => { if (st.last || tut.i >= TUT.length - 1) { tut = null; tutShow(); } else { tut.i++; tutShow(); } };
+  const off = $('#tutOff'); if (off) off.onclick = () => { tut = null; tutShow(); toast('Tutorial omitido. Los consejos seguirán apareciendo cuando haga falta.'); };
 }
 function tutCheck(ev) {
   if (!tut) return;
@@ -4733,7 +4838,7 @@ function drawBg(now) {
   if (flash > 0) { g.fillStyle = 'rgba(255,240,200,' + flash + ')'; g.fillRect(0, 0, W, H); c.style.transform = 'translate(' + ((Math.random() - 0.5) * 12 * flash) + 'px,' + ((Math.random() - 0.5) * 12 * flash) + 'px)'; } else c.style.transform = '';
 }
 
-function gameUI(on) { document.body.classList.remove('panel-open'); for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
+function gameUI(on) { document.body.classList.remove('panel-open'); for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#beacon').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
 
 // tarjeta de menú con miniatura pixel y franja de color
 function card(a, title, sub, thumb, color, extra = '') {
@@ -4797,15 +4902,15 @@ function startChapter(key) {
 // prólogo: 60 segundos de película con el propio motor del fondo; se puede saltar; termina en el capítulo 1
 function prologue() {
   const steps = [
-    { t: 1800, html: `<div class="pro-line pro-small">2057</div><div class="pro-line">EL SOL CAYÓ.</div>`, fx: 'radio' },
-    { t: 3200, html: ``, fx: 'fall' },
-    { t: 1600, html: `<div class="pro-line pro-small">TREINTA AÑOS DE SILENCIO</div>`, fx: 'dark' },
-    { t: 2600, html: `<div class="pro-line pro-small">2087</div><div class="pro-line">LAS COMPUERTAS SE ABREN.</div>`, fx: 'open' },
-    { t: 2600, html: `<div class="pro-say"><span data-por="lima" data-size="56"></span><div><b>Directora Vargas</b><p>Comandante. Tenemos una señal.</p></div></div>`, fx: 'none' },
-    { t: 2200, html: `<div class="pro-title">INTI<br><span>CAÍDO</span></div>`, fx: 'title' },
+    { t: 2000, html: `<div class="pro-line pro-small">2057</div><div class="pro-line">EL SOL CAYÓ.</div>`, fx: 'radio' },
+    { t: 3000, html: ``, fx: 'fall' },
+    { t: 2000, html: `<div class="pro-line pro-small">TREINTA AÑOS SIN RESPUESTA.</div>`, fx: 'dark' },
+    { t: 2500, html: `<div class="pro-line pro-small">2087</div><div class="pro-line">LIMA ABRE SUS COMPUERTAS.</div>`, fx: 'open' },
+    { t: 2500, html: `<div class="pro-say"><span data-por="lima" data-size="56"></span><div><b>Directora Vargas</b><p>La señal viene de esas ruinas.</p></div></div>`, fx: 'none' },
+    { t: 2600, html: `<div class="pro-title">INTI<br><span>CAÍDO</span></div><div class="pro-say"><span data-por="lima" data-size="56"></span><div><b>Directora Vargas</b><p>Comandante. Sáquenos de aquí.</p></div></div>`, fx: 'title' },
   ];
   let i = -1, timer = null, done = false;
-  const finish = () => { if (done) return; done = true; clearTimeout(timer); bgFx = null; store.set('prologue', 1); beep('capture'); startChapter('c1'); };
+  const finish = () => { if (done) return; done = true; clearTimeout(timer); bgFx = null; const firstTime = !store.get('prologue', 0); store.set('prologue', 1); beep('capture'); if (window.__afterPrologue) { const f = window.__afterPrologue; window.__afterPrologue = null; f(); } else startChapter('c1'); if (firstTime) setTimeout(() => toast('Te llamarás ' + playerName() + '. Cámbialo cuando quieras en tu perfil.', 'gold'), 2500); };
   const next = () => {
     i++; if (i >= steps.length) { finish(); return; }
     const st = steps[i];
@@ -4817,7 +4922,7 @@ function prologue() {
     if (st.fx === 'title') { beep('win'); }
     clearTimeout(timer); timer = setTimeout(next, st.t);
   };
-  show(`<div class="pro-wrap"><div id="proBox" class="pro-box"></div><button class="skip pro-skip" data-a="skip">SALTAR ›</button><div class="pro-hint">toca para avanzar</div></div>`, (a) => { if (a === 'skip') finish(); else next(); });
+  show(`<div class="pro-wrap" data-a="tap"><div id="proBox" class="pro-box"></div><button class="skip pro-skip" data-a="skip">SALTAR ›</button><div class="pro-hint">toca para avanzar</div></div>`, (a) => { if (a === 'skip') finish(); else next(); });
   $('#screenScroll').classList.add('pro-mode');
   const orig = finish; const cleanup = () => $('#screenScroll').classList.remove('pro-mode');
   setTimeout(next, 200);
@@ -4892,13 +4997,14 @@ function randomCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; return Array.from(
 async function signalScreen() {
   const sg = E.weeklySignal(), F = E.FACTIONS[sg.faction];
   const played = store.get('signal:' + sg.id, null);
-  show(`<button class="back" data-a="back">‹ Volver</button><div class="brief">Transmisión semanal · origen: ${esc(sg.origin)}</div><div class="h2" style="color:#ffd45a">La Señal del Inti · ${sg.id}</div>
+  show(`<button class="back" data-a="back">‹ Volver</button><div class="brief">Transmisión semanal · semana ${sg.isoWeek} de ${sg.year} · origen: ${esc(sg.origin)}</div><div class="h2" style="color:#ffd45a">La Señal del Inti · ${sg.id}</div>
     <div class="facinfo box" style="--fc:${F.color}"><div class="facinfo-top"><span data-por="${sg.faction}" data-size="48"></span><div><b>${esc(F.name)}</b><small>Mapa ${esc(E.MAPS[sg.map].name)} · ${sg.rivals} rivales en Normal · ${sg.turns} turnos</small></div></div>
       <div class="chips-s">${sg.mods.map((m) => `<span class="chip-s hot">${esc(E.MODS[m].name)}</span>`).join('')}</div>
       <p>Misma semilla para todos los comandantes del mundo. Al terminar el turno ${sg.turns} se cuenta tu puntaje: ciudades, tropas, tecnologías y bajas.</p></div>
     ${played ? `<div class="status-grid"><div class="stile box"><span data-spr="i_trophy" data-col="#ffd45a" data-size="22"></span><b>${played.score}</b><small>tu mejor puntaje</small></div><div class="stile box"><span data-spr="flag" data-col="#ffd45a" data-size="22"></span><b>${played.tries || 1}</b><small>intentos</small></div></div>` : ''}
     <button class="menu-btn btn-gold" data-a="play"><div><b>${played ? 'Volver a intentar' : 'Responder a la señal'}</b><small>Mismo mapa, misma suerte: solo cuenta tu estrategia</small></div><span class="arrow">›</span></button>
-    <div class="label">Tabla de la semana</div><div id="sigBoard"><p class="muted">Cargando…</p></div>`,
+    <div class="label">Tabla de la semana</div><div id="sigBoard"><p class="muted">Cargando…</p></div>
+    ${(() => { const arc = store.get('signals', []).filter((k) => k !== sg.id); if (!arc.length) return ''; return `<div class="label">Archivo de señales</div><div class="scores">${arc.map((k) => { const r = store.get('signal:' + k, {}) || {}; return `<div class="scorerow" style="--fc:#ffd45a"><span class="pos">${esc(k)}</span>${r.faction ? `<span data-por="${r.faction}" data-size="28"></span>` : ''}<span class="nm">${r.won ? 'Victoria' : 'Jugada'} · ${r.tries || 1} intento${(r.tries || 1) > 1 ? 's' : ''}</span><b>${r.score || 0}</b></div>`; }).join('')}</div>`; })()}`,
   (a) => { if (a === 'back') mainMenu(); if (a === 'play') startSignal(sg); });
   try {
     const k = await Net.init(); const rows = k === 'supabase' ? await Net.signalBoard(sg.id) : [];
@@ -4906,6 +5012,11 @@ async function signalScreen() {
     el.innerHTML = rows.length ? `<div class="scores">${rows.map((r, i) => `<div class="scorerow ${r.uid === Net.uid() ? 'me' : ''}" style="--fc:#ffd45a"><span class="pos">${i + 1}</span><span data-por="${r.faction || sg.faction}" data-size="28"></span><span class="nm">${esc(r.name || '?')}</span><span class="bar"><i style="width:${Math.round(r.score / rows[0].score * 100)}%"></i></span><b>${r.score}</b></div>`).join('')}</div>` : '<p class="muted">Nadie ha respondido todavía esta semana. Sé el primero.</p>';
     hydrate(el);
   } catch (e) { console.error(e); const el = $('#sigBoard'); if (el) el.innerHTML = '<p class="muted">Sin conexión: la tabla aparece cuando haya internet.</p>'; }
+}
+async function shareSignal(id, score, faction, won) {
+  const url = location.origin + location.pathname + '#senal';
+  const text = `La Señal ${id} · Inti Caído\n${playerName()} · ${E.FACTIONS[faction].name} · ${score} pts${won ? ' · victoria' : ''}\n«${E.SIGNAL_BRAG[faction] || ''}»\n¿Puedes superarlo? Mismo mapa para todos:`;
+  try { if (navigator.share) await navigator.share({ title: 'La Señal ' + id, text, url }); else { await navigator.clipboard.writeText(text + ' ' + url); toast('Resultado copiado. Pégalo donde quieras.', 'gold'); } } catch {}
 }
 function startSignal(sg) {
   const others = E.FACTION_KEYS.filter((k) => k !== sg.faction);
@@ -4917,10 +5028,10 @@ function startSignal(sg) {
   flash('LA SEÑAL ' + sg.id, sg.turns + ' turnos · misma semilla para todos', '#ffd45a');
 }
 function startLocal(f, n, size, gameMode, mods, diff, mapOpts = {}) {
-  const others = E.FACTION_KEYS.filter((k) => k !== f).sort(() => Math.random() - 0.5).slice(0, n - 1);
+  const others = mapOpts.rivals || E.FACTION_KEYS.filter((k) => k !== f).sort(() => Math.random() - 0.5).slice(0, n - 1);
   const code = mapOpts.code || randomCode();
   const st = E.newGame({ mode: 'skirmish', size, gameMode, mods, map: mapOpts.map, seed: seedFromCode(code), players: [{ name: playerName(), faction: f, kind: 'human' }, ...others.map((k) => ({ name: LEADERS[k], faction: k, kind: 'ai', diff: diff || 'normal' }))] });
-  st.mapCode = code;
+  st.mapCode = code; st.localCfg = { f, n, size, gameMode, mods, diff, map: mapOpts.map, code, rivals: others };
   if (perkActive('relic1')) st.players[0].scrap += 1;
   if (perkActive('relic2')) st.players[0].energy += 1;
   if (perkActive('relic3')) st.players[0].relic3 = true;
@@ -5031,15 +5142,15 @@ const LEADER_LINES = {
 };
 // reacciones de los líderes en el mapa: aparecen como burbuja con su retrato
 const LEADER_REACT = {
-  lima:     { lost: '"Nos quitan una ciudad. El búnker toma nota."', took: '"Otra calle para la luz. Sigan."', hero: '"La Directora cae… pero el búnker sigue en pie."', betrayed: '"¿Traición? Lo esperábamos. Lo registramos."', ally: '"Hecho. Compartimos luz y radar."', kill3: '"Limpio. Así se hace."' },
-  sierra:   { lost: '"Esa ciudad volverá a ser nuestra. Las piedras tienen memoria."', took: '"La cumbre es nuestra. Siempre lo fue."', hero: '"¡El Apu ha caído! Las montañas lloran."', betrayed: '"Rompiste tu palabra en nuestra tierra. Mal lugar."', ally: '"Mi gente cuida tus espaldas. No lo olvides."', kill3: '"Las hondas no fallan."' },
-  selva:    { lost: '"Entraron a la selva. No saldrán dos veces."', took: '"El río crece. Y se lleva tu ciudad."', hero: '"Yacumama vuelve al río… por ahora."', betrayed: '"La serpiente recuerda cada mordida."', ally: '"La selva te deja pasar. Camina despacio."', kill3: '"Los jaguares comieron hoy."' },
-  desierto: { lost: '"Me cobraré esa ciudad en chatarra. Con intereses."', took: '"Todo lo que brilla en el desierto es mío."', hero: '"La Viuda cae… alguien se queda sin pagar."', betrayed: '"Nadie me traiciona dos veces. Pregunta por ahí."', ally: '"Buen negocio. No lo arruines."', kill3: '"Más chatarra para mi caravana."' },
-  culto:    { lost: '"Un templo menos. El sol lo verá."', took: '"El Inti bendice esta ciudad. Arrodíllense."', hero: '"El Profeta vuelve al sol. Nosotros seguimos."', betrayed: '"Tu traición ya está escrita en las Líneas."', ally: '"Caminemos juntos hacia la luz."', kill3: '"Los mártires no mueren. Se multiplican."' },
-  chasquis: { lost: '"Perdimos un tambo. Los corredores ya avisan al resto."', took: '"Esta ciudad entra en la Ruta Real. Más caminos para nosotros."', hero: '"Quispe cae en la ruta… otro recoge el mensaje."', betrayed: '"Lo que hiciste ya corre por todos los caminos."', ally: '"Correremos juntos. Avisa y llego."', kill3: '"Rápidos. Como debe ser."' },
-  mineros:  { lost: '"Que disfruten la superficie. El socavón sigue siendo mío."', took: '"Otra boca de mina. Empiecen a cavar."', hero: '"La Ingeniera baja al socavón… de ahí volvió una vez."', betrayed: '"Dinamita para quien rompe tratos."', ally: '"Trato hecho: tú arriba, yo abajo."', kill3: '"Taladros limpios. Buen turno."' },
-  flota:    { lost: '"Perdimos un puerto. No perdimos el mar."', took: '"Otra costa para la Flota. Icen la bandera."', hero: '"El Almirante se hunde con honor."', betrayed: '"Ni los piratas hacen lo que hiciste."', ally: '"Puerto seguro para los tuyos."', kill3: '"Cañones calientes. Buena jornada."' },
-  callao:   { lost: '"La marea volverá por esa ciudad."', took: '"El Callao sube. Y no baja."', hero: '"La Sirena vuelve al fondo. A esperar."', betrayed: '"El mar devuelve todo. También esto."', ally: '"Nadaremos juntos hasta donde llegue tu aire."', kill3: '"Los tritones no dejan rastro."' },
+  lima:     { lost: '"Sector perdido. Repliegue autorizado."', took: '"Sector asegurado. Restablezcan el perímetro."', hero: '"La Directora cae… pero el búnker sigue en pie."', betrayed: '"Convenio anulado. Quedan declarados hostiles."', ally: '"Acuerdo registrado. Mantengan sus posiciones."', kill3: '"Limpio. Así se hace."', win: '"Emergencia contenida. El Perú vuelve a tener mando."' },
+  sierra:   { lost: '"Cayó esa plaza. Las alturas siguen nuestras."', took: '"Aseguren la subida. Nadie entrará sin ser visto."', hero: '"¡El Apu ha caído! Las montañas lloran."', betrayed: '"Les abrimos el camino. Volvieron con armas."', ally: '"Cuidaremos este paso juntos."', kill3: '"Las hondas no fallan."', win: '"Desde la cumbre vemos un país que todavía puede levantarse."' },
+  selva:    { lost: '"Se quedan con las casas. Nosotros conocemos las salidas."', took: '"Aseguren el río. Que nuestra gente pueda volver."', hero: '"Yacumama vuelve al río… por ahora."', betrayed: '"Vinieron como huéspedes. Ahora los seguiremos como enemigos."', ally: '"Compartimos la ruta. Respeten a quienes viven en ella."', kill3: '"Los jaguares comieron hoy."', win: '"Los caminos vuelven a ser de quienes los conocen."' },
+  desierto: { lost: '"Nos quitaron el taller. Los motores siguen vivos."', took: '"Portón abierto. Repartan el botín."', hero: '"La Viuda cae… alguien se queda sin pagar."', betrayed: '"Nos vendieron humo. Ahora van a tragar polvo."', ally: '"Frecuencia compartida. No se crucen en nuestra ruta."', kill3: '"Más chatarra para mi caravana."', win: '"De costa a costa, solo suena nuestro motor."' },
+  culto:    { lost: '"Han apagado un altar. La señal no termina allí."', took: '"Otro silencio ha aprendido a responder."', hero: '"El Profeta vuelve al sol. Nosotros seguimos."', betrayed: '"Su voz era ruido. El Inti ya la ha separado."', ally: '"Aceptamos su frecuencia. Escuchen sin interrumpir."', kill3: '"Los mártires no mueren. Se multiplican."', win: '"No queda nadie fuera de la transmisión."' },
+  chasquis: { lost: '"Puesto perdido. El mensaje sigue en camino."', took: '"Relevo asegurado. Que salga el siguiente."', hero: '"Quispe cae en la ruta… otro recoge el mensaje."', betrayed: '"Cortaron la posta. El aviso llegará de todos modos."', ally: '"Una ruta, dos destinos. Cumpliremos el recorrido."', kill3: '"Rápidos. Como debe ser."', win: '"El último mensaje cruzó el país: la guerra terminó."' },
+  mineros:  { lost: '"Ese acceso cayó. Busquen otra veta."', took: '"Abrimos otro frente. Aseguren los puntales."', hero: '"La Ingeniera baja al socavón… de ahí volvió una vez."', betrayed: '"Nos dejaron bajo el derrumbe. Sabemos quién soltó la carga."', ally: '"Compartimos turno. Cada cuadrilla cuida su galería."', kill3: '"Taladros limpios. Buen turno."', win: '"Terminó el turno. El país sigue en pie sobre nuestras manos."' },
+  flota:    { lost: '"Muelle perdido. Salven máquinas y tripulación."', took: '"Puerto asegurado. Que vuelvan a sonar los astilleros."', hero: '"El Almirante se hunde con honor."', betrayed: '"Cortaron nuestras amarras. No volverán a puerto."', ally: '"Navegaremos juntos. Cada casco conserva su bandera."', kill3: '"Cañones calientes. Buena jornada."', win: '"La costa responde a una sola sirena."' },
+  callao:   { lost: '"Perdimos el barrio. La entrada por el agua sigue abierta."', took: '"Desembarco completo. Cubran las calles."', hero: '"La Sirena vuelve al fondo. A esperar."', betrayed: '"Les cuidamos la espalda. Ahí mismo clavaron el cuchillo."', ally: '"Nos cubrimos la espalda. Cumplan su parte."', kill3: '"Los tritones no dejan rastro."', win: '"Llegamos por el agua. Nos quedamos con el horizonte."' },
 };
 let bubbleT = 0;
 function leaderBubble(q, kind) {
@@ -5115,7 +5226,7 @@ const Net = (() => {
       if (db && id) { kind = 'claude'; uidP = id; return kind; }
     }
     if (window.supabase && window.supabase.createClient) {
-      try { sb = window.supabase.createClient(SB_URL, SB_KEY, { realtime: { params: { eventsPerSecond: 5 } } }); kind = 'supabase'; uidP = deviceId(); return kind; } catch (e) { console.error(e); }
+      try { sb = window.supabase.createClient(SB_URL, SB_KEY, { realtime: { params: { eventsPerSecond: 5 } } }); kind = 'supabase'; uidP = deviceId(); setTimeout(() => flushEvents().catch(() => {}), 1500); return kind; } catch (e) { console.error(e); }
     }
     kind = 'none'; return kind;
   }
@@ -5159,8 +5270,9 @@ const Net = (() => {
   async function logStat(row) { if (kind !== 'supabase') return; try { await sb.from('inti_stats').insert({ ...row, uid: uidP, name: playerName(), room: online ? online.code : null, winner_name: S && S.winner >= 0 ? S.players[S.winner].name : null, online: !!online }); } catch {} }
   async function submitSignal(id, score, faction) { if (kind !== 'supabase') return; try { await sb.from('inti_signal').insert({ signal: id, uid: uidP, name: playerName(), faction, score }); } catch (e) { console.error(e); } }
   async function signalBoard(id) { if (kind !== 'supabase') return []; const { data } = await sb.from('inti_signal').select('uid,name,faction,score').eq('signal', id).order('score', { ascending: false }).limit(50); const best = new Map(); for (const r of data || []) if (!best.has(r.uid)) best.set(r.uid, r); return [...best.values()].slice(0, 10); }
-  const evDone = new Set(store.get('evdone', []));
-  async function logEvent(ev, extra) { if (evDone.has(ev)) return; evDone.add(ev); store.set('evdone', [...evDone]); if (kind !== 'supabase') return; try { await sb.from('inti_events').insert({ uid: uidP, ev, extra: extra || null, version: GAME_VERSION }); } catch {} }
+  const evDone = new Set(store.get('evdone', [])), evPending = store.get('evpending', []);
+  async function flushEvents() { if (kind !== 'supabase' || !evPending.length) return; const batch = evPending.splice(0, evPending.length); try { await sb.from('inti_events').insert(batch.map((e) => ({ uid: uidP, ev: e.ev, extra: e.extra, version: e.version, created_at: new Date(e.t).toISOString() }))); for (const e of batch) evDone.add(e.ev); store.set('evdone', [...evDone]); } catch { evPending.push(...batch); } store.set('evpending', evPending); }
+  async function logEvent(ev, extra) { if (evDone.has(ev) || evPending.some((e) => e.ev === ev)) return; evPending.push({ ev, extra: extra || null, version: GAME_VERSION, t: Date.now() }); store.set('evpending', evPending); if (!kind) { try { await init(); } catch {} } await flushEvents(); }
   async function stats() { if (kind !== 'supabase') return []; const { data } = await sb.from('inti_stats').select('faction,winner_faction,won,players,turns,game_mode,uid,name,room,winner_name,online,created_at').order('created_at', { ascending: false }).limit(400); return data || []; }
   return { init, get kind() { return kind; }, uid, get, create, update, mine, subscribe, logStat, stats, submitSignal, signalBoard, logEvent };
 })();
@@ -5264,8 +5376,9 @@ async function openRoom(code) {
         const last = online.seen[rp.by] || 0, fresh = rp.ev.filter((e) => e.seq > last);
         if (fresh.length) { online.seen[rp.by] = fresh[fresh.length - 1].seq; window.__replayN = (window.__replayN || 0) + fresh.length; const vis = E.visibleSet(S, me); const first = fresh.find((e) => e.x != null && vis.has(E.idx(e.x, e.y))); if (first) centerOn(first.x, first.y); S.events = fresh.map((e) => { const c = { ...e }; delete c.seq; return c; }); }
       }
+      const fresh = S.events.slice();
       replaying = true; try { consumeEvents(); } finally { replaying = false; }
-      renderHud(); renderSheet(); if (S.cur === me && !wasMine && S.winner < 0) { startMyTurn(); notifyTurn(); } checkEnd();
+      renderHud(); renderSheet(); if (S.cur === me && !wasMine && S.winner < 0) { startMyTurn(); notifyTurn(); replaySummary(fresh); } checkEnd();
     }
     renderChat(g);
   }, () => toast('Se perdió la conexión con la sala.', 'red'));
@@ -5385,7 +5498,7 @@ function coopMenu() {
 }
 
 // ---------- arranque ----------
-window.__inti = { get S() { return S; }, get busy() { return busy; }, get pushing() { return pushing; }, get endLock() { return endLock; }, cam, hexX, hexY, get me() { return me; }, checkEnd: () => checkEnd(), afterAction: () => afterAction(), doMove: (u, x, y) => doMove(u, x, y), undo: () => undoMove(), setSel: (s) => setSel(s) };
+window.__inti = { get S() { return S; }, get busy() { return busy; }, get pushing() { return pushing; }, get endLock() { return endLock; }, cam, hexX, hexY, get me() { return me; }, checkEnd: () => checkEnd(), afterAction: () => afterAction(), doMove: (u, x, y) => doMove(u, x, y), undo: () => undoMove(), setSel: (s) => setSel(s), E, startLocal, runAIs: () => runAIs(), renderHud: () => renderHud(), renderSheet: () => renderSheet(), leaveGame: (s) => leaveGame(s), signalScreen: () => signalScreen(), openMissionOffer: () => openMissionOffer() };
 function boot(data) {
   const kick = () => { try { Music.setOn(musicOn && sound); Ambient.setOn(store.get('ambient', true) && sound); } catch {} document.removeEventListener('pointerdown', kick); };
   document.addEventListener('pointerdown', kick);
@@ -5402,7 +5515,8 @@ function boot(data) {
   if (data && data.S && !data.online) { loadGame(data.S, data.me); return; }
   if (data && data.online) { openRoom(data.online); return; }
   if (location.hash && /^#[A-Z]{4}$/.test(location.hash)) { Net.init().then((k) => { if (k !== 'none') joinRoom(location.hash.slice(1)); else mainMenu(); }); return; }
-  if (!store.get('welcomed', 0) && !window.__skipWelcome) { welcomeScreen(); return; }
+  if (!store.get('welcomed', 0) && !window.__skipWelcome) { store.set('welcomed', 1); if (!store.get('avatar', null)) store.set('avatar', AVATARS[Math.floor(Math.random() * AVATARS.length)]); playerName(); if (location.hash === '#senal') window.__afterPrologue = signalScreen; prologue(); return; }
+  if (location.hash === '#senal') { signalScreen(); return; }
   mainMenu();
 }
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
