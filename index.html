@@ -244,6 +244,21 @@ body.panel-open .sheet { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); m
 .seat .seat-av { margin-left: 4px; flex: none; }
 .profile.press { cursor: pointer; }
 .profile .arrow { margin-left: auto; color: var(--inti); font-size: 24px; }
+.upg { display: grid; grid-template-columns: auto auto auto 1fr; align-items: center; gap: 6px 8px; padding: 8px 10px; text-align: left; border-color: var(--hi); }
+.upg.can { border-color: var(--inti); background: linear-gradient(180deg, #2a2014, var(--panel) 70%); animation: pulse2 1.6s steps(3) infinite; }
+.upg[disabled] { opacity: .7; }
+.upg .upg-city canvas { width: 40px; height: 38px; display: block; }
+.upg .upg-arrow { font-family: var(--f-pixel); font-size: 10px; color: var(--inti); }
+.upg .upg-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.upg .upg-cost { display: inline-flex; align-items: center; gap: 4px; font-family: var(--f-pixel); font-size: 10px; color: #ff8a73; }
+.upg .upg-cost.ok { color: var(--good); }
+.upg .upg-bar { display: block; height: 6px; background: #1a1512; border: 2px solid var(--edge); }
+.upg .upg-bar i { display: block; height: 100%; background: var(--inti); transition: width .4s steps(8); }
+.upg .upg-gain { font-size: 16px; color: var(--dust); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.rw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rw { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; text-align: center; border-color: var(--inti); animation: up .3s steps(5) both; }
+.rw b { font-family: var(--f-pixel); font-size: 10px; font-weight: 400; color: var(--inti-hi); }
+.rw small { font-size: 17px; color: var(--bone); line-height: 1.1; }
 .lands { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 2px; }
 .lands .land { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 2px solid var(--cc, var(--fc)); background: #1a1512; font-size: 17px; cursor: pointer; }
 .lands small { width: 100%; font-size: 15px; }
@@ -1099,7 +1114,7 @@ const Engine = (() => {
   function income(st, p) {
     if (st.players[p].horde) return 0;
     let s = 0;
-    for (const c of st.cities) if (c.owner === p) s += c.level + (c.capital ? (fac(st, p) === 'lima' ? 2 : 1) : 0) + (hasTech(st, p, 'mercado') ? 1 : 0) + (fac(st, p) === 'selva' && st.tiles[idx(c.x, c.y)] === 'selva' ? 1 : 0) + 0;
+    for (const c of st.cities) if (c.owner === p) s += c.level + (c.prod || 0) + (c.capital ? (fac(st, p) === 'lima' ? 2 : 1) : 0) + (hasTech(st, p, 'mercado') ? 1 : 0) + (fac(st, p) === 'selva' && st.tiles[idx(c.x, c.y)] === 'selva' ? 1 : 0) + 0;
     if (fac(st, p) === 'flota' || fac(st, p) === 'callao') s += Math.min(fac(st, p) === 'flota' ? 5 : 3, st.cities.filter((c) => c.owner === p && neighbors(c.x, c.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar')).length);
     for (const b of st.builds || []) if (b.owner === p) s += (b.type === 'mina' ? (fac(st, p) === 'mineros' ? 3 : 2) : b.type === 'puerto' ? 2 : b.type === 'antena' ? 0 : 1) + (b.type === 'cultivo' && riverAt(st, b.x, b.y) ? 1 : 0);
     if (st.mods && st.mods.escasez) s = Math.ceil(s / 2);
@@ -1261,6 +1276,7 @@ const Engine = (() => {
     const c = cityAt(st, d.x, d.y);
     if (c && c.owner === d.owner) {
       b = Math.max(b, hasTech(st, d.owner, 'murallas') ? 2.2 : 1.5);
+      if (c.wall) b += 0.4;
       if ((st.builds || []).some((bb) => bb.owner === d.owner && bb.type === 'aserradero' && bb.city === c.id)) b += 0.3;
       if (hasTech(st, d.owner, 'bunker')) b += 0.5;
     }
@@ -1388,6 +1404,28 @@ const Engine = (() => {
     event(st, { k: 'train', x: c.x, y: c.y, type, id: nu.id });
     return true;
   }
+  const CITY_REWARDS = {
+    2: [{ k: 'scrap', n: 5, name: 'Botín', icon: 'scrap', desc: '+5 chatarra ahora mismo' }, { k: 'unit', type: 'explorador', name: 'Patrulla', icon: 'explorador', desc: 'Un Motorizado gratis' }],
+    3: [{ k: 'wall', name: 'Muralla', icon: 'i_wall', desc: '+40% defensa en esta ciudad' }, { k: 'prod', name: 'Taller', icon: 'i_gear', desc: '+1 chatarra por turno aquí' }],
+    4: [{ k: 'vet', name: 'Guardia', icon: 'i_medal', desc: 'Un Rondero veterano gratis' }, { k: 'energy', n: 4, name: 'Reactor', icon: 'i_energy', desc: '+4 energía del Inti' }],
+  };
+  function cityRewardOptions(level) { return CITY_REWARDS[level] || CITY_REWARDS[4]; }
+  function chooseCityReward(st, cityId, i) {
+    bind(st);
+    const c = st.cities[cityId]; if (!c || c.owner < 0) return false;
+    const P = st.players[c.owner];
+    if (P.cityReward && P.cityReward.city !== cityId) return false;
+    const o = cityRewardOptions(c.level)[i] || cityRewardOptions(c.level)[0];
+    if (o.k === 'scrap') P.scrap += o.n;
+    if (o.k === 'energy') P.energy = (P.energy || 0) + o.n;
+    if (o.k === 'wall') c.wall = true;
+    if (o.k === 'prod') c.prod = (c.prod || 0) + 1;
+    if (o.k === 'unit' || o.k === 'vet') { const sp = [[c.x, c.y], ...neighbors(c.x, c.y)].find(([x, y]) => !unitAt(st, x, y) && passable(st, 'rondero', c.owner, x, y)); if (sp) { const u = spawn(st, c.owner, o.k === 'vet' ? 'rondero' : o.type, sp[0], sp[1], c.id); if (o.k === 'vet') { u.vet = true; u.rank = 1; u.hp = maxHp(u); } u.moved = false; u.acted = false; } else P.scrap += 4; }
+    P.cityReward = null;
+    log(st, `${c.name}: ${o.name} (${o.desc}).`);
+    event(st, { k: 'reward', x: c.x, y: c.y, p: c.owner, name: o.name });
+    return true;
+  }
   function upgrade(st, cityId) {
     const c = st.cities[cityId];
     if (!c || c.owner !== st.cur || c.level >= 4) return false;
@@ -1397,6 +1435,10 @@ const Engine = (() => {
     c.level++;
     event(st, { k: 'upgrade', x: c.x, y: c.y });
     log(st, `${c.name} creció a nivel ${c.level}.`);
+    // premio a elegir (estilo Polytopia): dos opciones, una decisión
+    const P = st.players[st.cur];
+    if (P.kind === 'human') P.cityReward = { city: c.id, level: c.level };
+    else chooseCityReward(st, c.id, rng(st) < 0.5 ? 0 : 1);
     return true;
   }
   function research(st, t) {
@@ -1528,6 +1570,7 @@ const Engine = (() => {
     if (st.winner >= 0) return;
     const p = st.cur;
     if (st.players[p].card) chooseCard(st, p, 0);
+    if (st.players[p].cityReward) chooseCityReward(st, st.players[p].cityReward.city, 0);
     for (const u of st.units) if (u.owner === p && !u.moved && !u.acted) {
       const c = cityAt(st, u.x, u.y);
       const t = st.tiles[idx(u.x, u.y)];
@@ -2100,7 +2143,7 @@ const Engine = (() => {
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
     idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
@@ -2672,7 +2715,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '24';
+const GAME_VERSION = '25';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3177,7 +3220,12 @@ function pickHex(sx, sy) {
 // en pantallas anchas el panel va acoplado a la izquierda (340px): centramos en el espacio libre
 function centerOn(x, y) { const c = $('#map'); const dock = c.clientWidth >= 760 && sel ? 170 : 0; cam.x = c.clientWidth / 2 + dock - hexX(x, y) * cam.z; cam.y = c.clientHeight / 2 - hexY(x, y) * cam.z; clampCam(); }
 // zoom nítido: cada pixel de arte ocupa un número entero de píxeles de pantalla (nada de bordes borrosos)
-function snapZoom(z) { const step = 1 / (P * dpr); const k = Math.max(1, Math.round(z / step)); return Math.max(0.3, Math.min(2.4, k * step)); }
+function snapZoom(z) {
+  // píxeles enteros tanto para el terreno (3 unidades) como para las tropas (2 unidades): z·dpr debe ser entero
+  const step = 1 / dpr; let k = Math.round(z / step);
+  if (k < 1) return Math.max(0.3, 0.5 / dpr); // vista lejana: medio paso, solo para ver el mapa entero
+  return Math.min(2.4, k * step);
+}
 function clampCam() {
   const c = $('#map'), w = c.clientWidth, h = c.clientHeight;
   cam.z = Math.max(0.3, Math.min(2.4, cam.z));
@@ -3257,9 +3305,9 @@ function buildBase() {
     const i = y * LW + x, k = PIXHEX[i];
     if (k < 0) { put(i, [11, 9, 8]); continue; }
     const t = S.tiles[k], pal = TPALRGB[t];
-    let n = vnoise(x, y, 5, 3) * 0.7 + vnoise(x, y, 2, 7) * 0.3;
+    let n = vnoise(x, y, 7, 3) * 0.85 + vnoise(x, y, 3, 7) * 0.15;
     if (t === 'mar') n = n * 0.6 + (y / LH) * 0.2;
-    const v = n * 2 + (bay(x, y) - 0.5) * 0.9;
+    const v = n * 2 + (bay(x, y) - 0.5) * 0.5;
     put(i, pal[Math.max(0, Math.min(2, Math.floor(v + 0.5)))]);
   }
   // espuma en la costa y bordes de hexágono
@@ -3889,7 +3937,7 @@ function doMove(u, x, y) {
 function doAttack(a, d) { if (!E.attack(S, a.id, d.id)) return; clearUndo(); pendingTarget = null; afterAction(); tutCheck('attack'); }
 function doCapture(uid) { if (!E.capture(S, uid)) return; clearUndo(); afterAction(); tutCheck('capture'); }
 function doTrain(cid, type) { if (!E.train(S, cid, type)) return; clearUndo(); beep('buy'); const c = S.cities[cid]; const u = E.unitAt(S, c.x, c.y); afterAction(); tutCheck('train'); }
-function doUpgrade(cid) { if (!E.upgrade(S, cid)) return; clearUndo(); beep('capture'); afterAction(); tutCheck('upgrade'); }
+function doUpgrade(cid) { if (!E.upgrade(S, cid)) return; clearUndo(); beep('capture'); afterAction(); tutCheck('upgrade'); setTimeout(openReward, 350); }
 
 // ---------- HUD ----------
 function renderHud() {
@@ -4028,7 +4076,7 @@ function renderSheet() {
     const inc = c.owner >= 0 ? c.level + (c.capital ? 1 : 0) + (E.hasTech(S, c.owner, 'mercado') ? 1 : 0) : c.level;
     const def = c.owner >= 0 ? Math.round(((E.hasTech(S, c.owner, 'murallas') ? 2.2 : 1.5) + (E.hasTech(S, c.owner, 'bunker') ? 0.5 : 0)) * 100) : 100;
     const troops = E.unitsOfCity(S, c), cap = E.cityCap(c);
-    html += `<div class="gstats"><span class="gstat" title="Nivel"><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= c.level ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat good" title="Chatarra por turno"><span data-spr="scrap" data-size="14"></span><b>+${inc}</b></span><span class="gstat" title="Tropas de esta ciudad"><span class="pips troops">${Array.from({ length: cap }, (_, i) => `<i class="${i < troops ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat" title="Defensa"><span data-spr="i_wall" data-size="14"></span><b>${def}%</b></span></div>`;
+    html += `<div class="gstats"><span class="gstat" title="Nivel"><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= c.level ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat good" title="Chatarra por turno"><span data-spr="scrap" data-size="14"></span><b>+${inc}</b></span><span class="gstat" title="Tropas de esta ciudad"><span class="pips troops">${Array.from({ length: cap }, (_, i) => `<i class="${i < troops ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat" title="Defensa"><span data-spr="i_wall" data-size="14"></span><b>${def + (c.wall ? 40 : 0)}%</b></span>${c.prod ? `<span class="gstat good" title="Taller"><span data-spr="i_gear" data-size="14"></span><b>+${c.prod}</b></span>` : ''}</div>`;
     const lands = (S.builds || []).filter((b) => b.city === c.id);
     if (lands.length) html += `<div class="lands">${lands.map((b) => `<span class="land" data-a="goto" data-x="${b.x}" data-y="${b.y}"><span data-spr="b_${b.type}" data-size="18"></span>${esc(E.BUILDS[b.type].name)}</span>`).join('')}<small class="muted">Tierras de ${esc(c.name)}</small></div>`;
     if (c.capital && mine && S.mods.subita) html += `<div class="hint cap-hint short">Muerte súbita: si cae tu capital, pierdes.</div>`;
@@ -4036,13 +4084,16 @@ function renderSheet() {
     if (mine && isMyTurn()) {
       const left = E.trainsPerTurn(S, me) - (c.built | 0);
       html += `<div class="label">${left <= 0 ? '✓ Ya entrenó' : E.unitAt(S, c.x, c.y) ? '⛔ Ocupada: mueve la tropa de encima' : 'Entrenar' + (E.trainsPerTurn(S, me) > 1 ? ' (' + left + ' restantes)' : '')}</div><div class="trainer" id="trainer"></div>`;
-      html += c.level < 4 ? `<button class="act ghost" data-a="upgrade" ${S.players[me].scrap < E.upgradeCost(S, c) ? 'disabled' : ''}>Mejorar a nivel ${c.level + 1} · ${E.upgradeCost(S, c)} chatarra <small>(+1 chatarra/turno, +1 tropa)</small></button>` : '<div class="hint">Nivel máximo.</div>';
+      if (c.level < 4) { const cost = E.upgradeCost(S, c), have = S.players[me].scrap, can = have >= cost, pct = Math.min(100, Math.round(have / cost * 100)); const rw = E.cityRewardOptions(c.level + 1);
+        html += `<button class="upg box press ${can ? 'can' : ''}" data-a="upgrade" ${can ? '' : 'disabled'}><span class="upg-city" data-city="${c.id}" data-lv="${c.level}"></span><span class="upg-arrow">▶</span><span class="upg-city" data-city="${c.id}" data-lv="${c.level + 1}"></span><span class="upg-info"><span class="upg-cost ${can ? 'ok' : ''}"><span data-spr="scrap" data-size="16"></span><b>${cost}</b></span><span class="upg-bar"><i style="width:${pct}%"></i></span><span class="upg-gain"><span class="pips"><i class="on"></i></span> +1 <span data-spr="scrap" data-size="12"></span> · +1 <span class="pips troops"><i class="on"></i></span> · <span data-spr="${rw[0].icon}" data-size="14"></span>/<span data-spr="${rw[1].icon}" data-size="14"></span> premio</span></span></button>`; }
+      else html += '<div class="hint short">★ Nivel máximo</div>';
     }
   }
   el.classList.toggle('compact', !sheetOpen);
   document.body.classList.toggle('panel-open', sheetOpen && window.innerWidth < 760);
   el.innerHTML = html; el.hidden = false; hydrate(el);
   const ci = el.querySelector('#cicon');
+  el.querySelectorAll('.upg-city').forEach((sp) => { const c = S.cities[+sp.dataset.city]; const img = PX.city(+sp.dataset.lv, fcol(c.owner), c.id + 1, c.capital, S.players[c.owner].faction); const cv2 = document.createElement('canvas'); cv2.width = 40; cv2.height = 38; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 40, 38); cv2.className = 'px-art'; sp.appendChild(cv2); });
   if (ci) { const c = S.cities[sel.id]; const img = PX.city(c.level, c.owner >= 0 ? fcol(c.owner) : '#8f8579', c.id + 1, c.capital, c.owner >= 0 ? S.players[c.owner].faction : null); const cv2 = document.createElement('canvas'); cv2.width = 60; cv2.height = 57; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 60, 57); cv2.className = 'px-art'; ci.appendChild(cv2); }
   const ui = el.querySelector('#uicon');
   if (ui) { const u = S.units.find((v) => v.id === sel.id); const ic = unitIcon(u.type, fcol(u.owner), S.players[u.owner].faction); ui.appendChild(ic); }
@@ -4259,6 +4310,7 @@ function howtoHtml(modal) {
 // ---------- turnos ----------
 async function endTurn() {
   if (!isMyTurn()) return;
+  if (S.players[me].cityReward) { openReward(); return; }
   if (S.players[me].card) { openCard(); return; }
   const idle = S.units.filter((u) => u.owner === me && !u.moved).length;
   if (idle > 0 && !endTurn.confirm) { endTurn.confirm = true; const idles = S.units.filter((u) => u.owner === me && !u.moved); const now = performance.now(); for (const u of idles) fx.push({ k: 'arrow', x: u.x, y: u.y, t0: now, dur: 3000 }); setSel({ kind: 'unit', id: idles[0].id }); centerOn(idles[0].x, idles[0].y); toast(`Te falta${idle > 1 ? 'n' : ''} ${idle} unidad${idle > 1 ? 'es' : ''} por mover (flechas). Toca otra vez para terminar igual.`, 'gold'); beep('error'); setTimeout(() => { endTurn.confirm = false; }, 3500); return; }
@@ -4324,6 +4376,17 @@ function nextUnit() {
   const curIdx = sel && sel.kind === 'unit' ? mine.findIndex((u) => u.id === sel.id) : -1;
   const u = mine[(curIdx + 1) % mine.length];
   setSel({ kind: 'unit', id: u.id }); centerOn(u.x, u.y);
+}
+// premio al subir de nivel una ciudad: elige 1 de 2
+function openReward() {
+  const R = S.players[me].cityReward; if (!R) return;
+  const c = S.cities[R.city], opts = E.cityRewardOptions(R.level);
+  openModal(`<div class="card-ev"><div class="card-ev-head"><span id="rwcity"></span><div><div class="brief">${esc(c.name)} · nivel ${R.level}</div><div class="h2" style="font-size:16px">¡La ciudad creció!</div></div></div>
+    <p class="muted">Elige un premio:</p>
+    <div class="rw-grid">${opts.map((o, i) => `<button class="rw box press" data-a="pick" data-i="${i}" style="animation-delay:${i * 0.08}s"><span data-spr="${o.icon}" data-col="var(--fc)" data-size="44"></span><b>${esc(o.name)}</b><small>${esc(o.desc)}</small></button>`).join('')}</div></div>`,
+    (a, d) => { if (a === 'pick') { E.chooseCityReward(S, R.city, +d.i); beep('ach'); closeModal(); fx.push({ k: 'confetti', x: c.x, y: c.y, c: fcol(me), t0: performance.now(), dur: 1400 }); afterAction(); } });
+  $('#modal').onclick = ((orig) => (e) => { if (e.target === $('#modal')) return; orig(e); })($('#modal').onclick);
+  const sp = $('#rwcity'); if (sp) { const img = PX.city(R.level, fcol(me), c.id + 1, c.capital, S.players[me].faction); const cv2 = document.createElement('canvas'); cv2.width = 60; cv2.height = 57; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 60, 57); cv2.className = 'px-art'; sp.appendChild(cv2); }
 }
 // carta de evento con decisión
 function openCard() {
