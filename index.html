@@ -128,13 +128,24 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .mission.done { border-color: var(--good); animation: popnum .35s steps(5); }
 .toast.sum { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; } .toast.sum .act { padding: 4px 8px; font-size: 12px; }
 .quote { font-style: italic; color: var(--fc, var(--inti)); font-size: 14px; margin-top: 4px; }
+.cachina { margin: 6px 0; padding: 6px 8px; background: var(--lo); border: 2px solid var(--edge); text-align: left; }
+.cach-head { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; } .cach-head b { font-family: var(--f-pixel); font-size: 9px; color: var(--inti); display: block; } .cach-head small { display: block; font-size: 13px; line-height: 1.15; } .cach-say { color: var(--bone); font-style: italic; } .cach-mk { color: var(--dust); }
+.cach-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.cgood { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px 5px; color: var(--bone); min-width: 0; } .cgood b { font-size: 18px; line-height: 1; } .cgood small { font-size: 12px; color: var(--dust); } .cgood:disabled { opacity: .5; }
+.cgood .cprice { position: absolute; top: 2px; right: 3px; font-family: var(--f-pixel); font-size: 6px; } .cgood .cprice.hot { color: var(--good); } .cgood .cprice.cold { color: var(--bad); }
+.cgood .cval { display: inline-flex; align-items: center; gap: 3px; font-family: var(--f-pixel); font-size: 8px; color: var(--inti); margin-top: 2px; }
+.cgood.hot.has { border-color: var(--good); animation: pulse-good 1.4s steps(4) infinite; } .cgood.cold .cval { color: var(--dust); }
+@keyframes pulse-good { 50% { box-shadow: 0 0 0 2px var(--good) inset; } }
+.cach-sub { font-family: var(--f-pixel); font-size: 7px; color: var(--dust); margin: 8px 0 4px; letter-spacing: .04em; } .cach-sub small { font-family: var(--f-mono, inherit); font-size: 11px; letter-spacing: 0; }
+.cdeal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 3px; color: var(--bone); min-width: 0; } .cdeal b { font-size: 13px; line-height: 1; } .cdeal small { font-size: 11px; color: var(--dust); display: inline-flex; align-items: center; gap: 3px; }
+.cdeal:disabled { opacity: .55; } .cdeal.can { border-color: var(--inti); } .cdeal.done { border-color: var(--good); opacity: .8; } .cdeal .pips i { width: 7px; height: 7px; }
 .insight { text-align: left; padding: 8px 10px; margin: 8px 0; border-color: var(--inti); }
 .insight.up { border-color: var(--good); } .insight b { font-family: var(--f-pixel); font-size: 10px; color: var(--inti); display: block; margin: 2px 0 4px; } .insight.up b { color: var(--good); }
 .insight ul { margin: 0; padding-left: 14px; font-size: 14px; color: var(--bone); } .insight li { margin: 1px 0; }
 .row2 { display: flex; gap: 6px; } .row2 .menu-btn { flex: 1; min-width: 0; } .row2 .menu-btn small { white-space: normal; }
 .beacon { position: absolute; right: 8px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 10; padding: 4px 8px; font-family: var(--f-pixel); font-size: 7px; color: var(--inti); border-color: var(--inti); letter-spacing: .04em; display: flex; gap: 5px; align-items: center; animation: pulse 1.6s steps(4) infinite; }
 .beacon.mine { color: var(--good); border-color: var(--good); } .beacon .bn { font-size: 10px; }
-.mission .mc { display: block; font-size: 12px; color: var(--muted); line-height: 1.1; }
+.mission .mc { display: block; font-size: 12px; color: var(--dust); line-height: 1.1; }
 .mission.offer { border-color: var(--good); animation: pulse 1.2s steps(4) infinite; }
 .card-opt.mo .mrw { display: block; font-family: var(--f-pixel); font-size: 7px; margin-top: 4px; letter-spacing: .04em; }
 .card-opt.mo.safe .mrw { color: var(--good); } .card-opt.mo.risk .mrw { color: var(--inti); } .card-opt.mo.risk { border-color: var(--inti); }
@@ -703,7 +714,7 @@ const Engine = (() => {
     // unidades únicas por facción (disponibles desde el inicio)
     vigia:        { name: 'Androide Vigía', cost: 6,  hp: 14, atk: 2.5, def: 3.5, mov: 1, rng: 2, faction: 'lima', desc: 'Robot centinela del búnker. Dispara a 2 y aguanta mucho.' },
     huaracero:    { name: 'Huaracero',      cost: 3,  hp: 8,  atk: 2.5, def: 1.5, mov: 2, rng: 2, faction: 'sierra', desc: 'Hondero andino. Alcance 2, barato y ágil.' },
-    jaguar:       { name: 'Cazador Jaguar', cost: 5,  hp: 12, atk: 4,   def: 1.5, mov: 2, rng: 1, faction: 'selva', desc: 'Golpea fuerte. Se cura del todo si descansa en selva.' },
+    jaguar:       { name: 'Cazador Jaguar', cost: 5,  hp: 12, atk: 4,   def: 1.5, mov: 2, rng: 1, faction: 'selva', desc: 'Golpea fuerte. Se cura mucho más si descansa en selva.' },
     buggy:        { name: 'Buggy Carroñero',cost: 4,  hp: 8,  atk: 2.5, def: 1,   mov: 4, rng: 1, faction: 'desierto', desc: 'Velocísimo. Cada baja enemiga te da +2 chatarra.' },
     fanatico:     { name: 'Fanático',       cost: 3,  hp: 6,  atk: 3, def: 0.5, mov: 2, rng: 1, faction: 'culto', desc: 'Barato y suicida. Pega muy fuerte, muere rápido.' },
     lancha:       { name: 'Lancha Artillada',cost: 3, hp: 12, atk: 3,   def: 2,   mov: 3, rng: 1, faction: 'flota', naval: true, desc: 'Aerodeslizador de la Flota: vuela sobre el mar y avanza en tierra sin problema (salvo montaña).' },
@@ -758,6 +769,8 @@ const Engine = (() => {
     sinheroes: { name: 'Sin líderes',       desc: 'Nadie empieza con su líder en el mapa.' },
     sincartas: { name: 'Sin cartas',        desc: 'Desactiva las cartas de evento con decisiones.' },
     ricos:     { name: 'Arranque rico',     desc: 'Todos empiezan con 15 de chatarra y 3 de energía.' },
+    mercadonegro: { name: 'Mercado negro',  desc: 'La Cachina cambia precios cada 2 turnos y el bien caliente se paga ×3.' },
+    sequia:    { name: 'Sequía',            desc: 'Los corrales producen la mitad y el mineral se paga el doble de base.' },
   };
   const MODES = {
     clasico: { name: 'Clásico',            tag: 'Conquista total',
@@ -788,11 +801,66 @@ const Engine = (() => {
   // construcciones de terreno: una unidad las levanta en una casilla a 2 pasos de una ciudad propia
   const BUILDS = {
     cultivo:    { name: 'Cultivo',    cost: 4, on: ['desierto', 'puna', 'selva'], desc: 'Chacras de riego. +1 chatarra por turno (+1 más junto a un río) y comida: +4% ataque y defensa a todas tus tropas (se acumula hasta 5 cultivos) y curan +1 al descansar.' },
-    mina:       { name: 'Mina',       cost: 5, on: ['montana'], desc: 'Saca metal de la montaña. +2 chatarra por turno.' },
-    aserradero: { name: 'Aserradero', cost: 4, on: ['selva'], desc: 'Madera para reconstruir. +1 chatarra y +1 defensa a la ciudad.' },
+    mina:       { name: 'Mina',       cost: 5, on: ['montana'], good: 'mineral', desc: 'Saca metal de la montaña. +2 chatarra por turno y 1 mineral para la Cachina.' },
+    aserradero: { name: 'Aserradero', cost: 4, on: ['selva'], good: 'lena', desc: 'Madera para reconstruir. +1 chatarra, +1 defensa a la ciudad y 1 leña por turno para la Cachina.' },
+    corral:     { name: 'Corral',     cost: 4, on: ['puna', 'montana'], good: 'lana', desc: 'Alpacas y ovejas en la puna. 1 lana por turno para la Cachina (la lana se paga bien en invierno).' },
     antena:     { name: 'Antena',     cost: 3, on: ['desierto', 'puna', 'montana', 'selva'], desc: 'Visión +2 desde aquí. Solo una por ciudad.' },
-    puerto:     { name: 'Puerto',     cost: 5, on: ['desierto', 'puna', 'selva'], coast: true, desc: 'Junto al mar. +2 chatarra y tus barcos se curan aquí.' },
+    puerto:     { name: 'Puerto',     cost: 5, on: ['desierto', 'puna', 'selva'], coast: true, good: 'mineral', desc: 'Junto al mar. +2 chatarra (+3 para Flota y Callao), tus barcos se curan aquí y los buzos sacan 1 mineral del Inti hundido por turno.' },
   };
+  // ---------- bienes y la Cachina ----------
+  // Las construcciones guardan bienes en su casilla (hasta GOOD_CAP, se ven como pips). Se venden todos juntos desde cualquier ciudad propia.
+  // El precio cambia cada MARKET_EVERY turnos: un bien se paga ×2 (alto), otro ×0.5 (bajo), el tercero normal.
+  const GOODS = {
+    lena:    { name: 'Leña',    base: 1,   color: '#b3703a', icon: 'g_lena',    from: 'aserradero' },
+    lana:    { name: 'Lana',    base: 1,   color: '#e9e2cf', icon: 'g_lana',    from: 'corral' },
+    mineral: { name: 'Mineral', base: 1.5, color: '#8fb4c8', icon: 'g_mineral', from: 'mina' }, // también lo sacan los puertos
+  };
+  const GOOD_KEYS = Object.keys(GOODS), GOOD_CAP = 4, MARKET_EVERY = 5;
+  function rollMarket(st) {
+    const ks = GOOD_KEYS.slice(); const hot = ks.splice(Math.floor(rng(st) * ks.length), 1)[0]; const cold = ks.splice(Math.floor(rng(st) * ks.length), 1)[0];
+    const m = st.mods || {};
+    st.market = { hot, cold, until: st.turn + (m.mercadonegro ? 2 : MARKET_EVERY) - 1, hotX: m.mercadonegro ? 3 : 2 };
+    event(st, { k: 'market', hot, cold, until: st.market.until });
+  }
+  function goodPrice(st, good) { const M = st.market; const base = GOODS[good].base * (st.mods && st.mods.sequia && good === 'mineral' ? 2 : 1); if (!M) return base; return M.hot === good ? base * (M.hotX || 2) : M.cold === good ? base * 0.5 : base; }
+  function goodsOf(st, p) { const r = { lena: 0, lana: 0, mineral: 0 }; for (const b of st.builds || []) if (b.owner === p && b.goods) r[BUILDS[b.type].good] += b.goods; return r; }
+  function hasCachina(st, p) { return st.cities.some((c) => c.owner === p); }
+  function sellGoods(st, p, good) {
+    bind(st);
+    if (st.cur !== p || !GOODS[good] || !hasCachina(st, p)) return 0;
+    let n = 0; for (const b of st.builds || []) if (b.owner === p && b.goods && BUILDS[b.type].good === good) { n += b.goods; b.goods = 0; }
+    if (!n) return 0;
+    const scrap = Math.max(1, Math.round(n * goodPrice(st, good)));
+    const P = st.players[p]; P.scrap += scrap; P.stats.sold = (P.stats.sold || 0) + n; P.stats.soldScrap = (P.stats.soldScrap || 0) + scrap;
+    const c = st.cities.find((cc) => cc.owner === p && cc.capital) || st.cities.find((cc) => cc.owner === p);
+    log(st, `${P.name} vendió ${n} de ${GOODS[good].name.toLowerCase()} en la Cachina: +${scrap} chatarra.`);
+    event(st, { k: 'sell', p, good, n, scrap, hot: st.market && st.market.hot === good, x: c && c.x, y: c && c.y });
+    return scrap;
+  }
+  function produceGoods(st, p) {
+    if (TUNE.goods === false) return;
+    for (const b of st.builds || []) { const g = BUILDS[b.type].good; if (!g || b.owner !== p) continue; const cap = GOOD_CAP; const was = b.goods || 0; const add = (st.mods && st.mods.sequia && b.type === 'corral' && st.turn % 2) ? 0 : 1; b.goods = Math.min(cap, was + add); if (b.goods === cap && was < cap) event(st, { k: 'goodsfull', x: b.x, y: b.y, p, good: g }); }
+  }
+  // Encargos del Cachinero: mejoras de facción que solo se pagan con bienes (tope 2 niveles)
+  const DEALS = {
+    blindaje: { name: 'Blindaje de mineral', good: 'mineral', cost: [6, 10], max: 2, icon: 'i_wall', desc: '+1 defensa a todas tus tropas por nivel.' },
+    ponchos:  { name: 'Ponchos de lana',     good: 'lana',    cost: [6, 10], max: 2, icon: 'g_lana', desc: 'Tus tropas se curan +1 por nivel al descansar.' },
+    carbon:   { name: 'Carbón de leña',      good: 'lena',    cost: [6, 10], max: 2, icon: 'g_lena', desc: 'Construcciones −15% por nivel y +1 chatarra por aserradero.' },
+  };
+  function dealLevel(st, p, k) { return ((st.players[p].deals || {})[k]) || 0; }
+  function dealOptions(st, p) {
+    const g = goodsOf(st, p);
+    return Object.entries(DEALS).map(([k, D]) => { const lv = dealLevel(st, p, k); const cost = D.cost[Math.min(lv, D.cost.length - 1)]; return { type: k, name: D.name, desc: D.desc, icon: D.icon, good: D.good, lv, max: D.max, cost, have: g[D.good], can: lv < D.max && g[D.good] >= cost && st.cur === p }; });
+  }
+  function buyDeal(st, p, k) {
+    bind(st);
+    const o = dealOptions(st, p).find((x) => x.type === k); if (!o || !o.can) return false;
+    let left = o.cost; for (const b of st.builds || []) { if (left <= 0) break; if (b.owner === p && b.goods && BUILDS[b.type].good === o.good) { const take = Math.min(left, b.goods); b.goods -= take; left -= take; } }
+    const P = st.players[p]; P.deals = P.deals || {}; P.deals[k] = o.lv + 1; P.stats.deals = (P.stats.deals || 0) + 1;
+    log(st, `${P.name} cerró con el Cachinero: ${o.name} ${o.lv + 1}.`);
+    event(st, { k: 'deal', p, type: k, lv: o.lv + 1, name: o.name });
+    return true;
+  }
   const BRANCHES = { guerra: 'Guerra', industria: 'Industria', supervivencia: 'Supervivencia' };
   const TIER_COST = [0, 4, 7, 11];
 
@@ -911,7 +979,7 @@ const Engine = (() => {
   // ---------- creación de partida ----------
   // La Señal del Inti: desafío semanal, misma semilla para todos
   // La Señal semanal: semana ISO (lunes a domingo, igual en todo el mundo), siempre 2 modificadores compatibles
-  const SIGNAL_MODS = ['niebla', 'subita', 'escasez', 'temblor', 'veteranos', 'sinpactos', 'marea', 'ricos'];
+  const SIGNAL_MODS = ['niebla', 'subita', 'escasez', 'temblor', 'veteranos', 'sinpactos', 'marea', 'ricos', 'mercadonegro', 'sequia'];
   const SIGNAL_CLASH = [['escasez', 'ricos']];
   const SIGNAL_BRAG = { lima: 'El búnker registró el resultado.', sierra: 'Desde la cumbre se vio todo.', selva: 'El río se llevó el resto.', desierto: 'Pagaron en chatarra.', culto: 'La transmisión fue escuchada.', flota: 'La sirena sonó una sola vez.', callao: 'Llegamos por el agua.', chasquis: 'El mensaje cruzó el país.', mineros: 'Turno cumplido.' };
   function isoWeek(now) {
@@ -1089,13 +1157,14 @@ const Engine = (() => {
     const nNodes = st.size === 'enorme' ? 10 : st.size === 'grande' ? 8 : st.size === 'mediano' ? 6 : 4;
     for (let k = 0, tries = 0; k < nNodes && tries < 200; tries++) {
       const x = Math.floor(rng(st) * W), y = Math.floor(rng(st) * H), t = st.tiles[idx(x, y)];
-      if (t === 'mar' || t === 'lago' || t === 'montana') continue;
+      if (t === 'mar' || t === 'lago' || t === 'montana' || (t === 'selva' && tries < 150)) continue; // los nodos caen en terreno abierto: cualquiera puede disputarlos
       if (st.cities.some((c) => dist(c.x, c.y, x, y) < 3) || st.nodes.some((n) => dist(n.x, n.y, x, y) < 4)) continue;
       if (st.ruins.includes(idx(x, y))) continue;
       st.nodes.push({ x, y, owner: -1, blocked: 0 }); k++;
     }
     if (mods.veteranos) for (const u of st.units) { u.vet = true; u.hp = maxHp(u); }
     st.players.forEach((_, i) => reveal(st, i));
+    rollMarket(st); st.events = [];
     log(st, 'Año 2087. Tres décadas después de la caída del Inti, el Perú vuelve a la guerra.');
     startTurn(st);
     return st;
@@ -1142,7 +1211,7 @@ const Engine = (() => {
     return m;
   }
   // cuanto más grande tu imperio, más caro todo (chatarra): mantiene la partida estable
-  const TUNE = { scaleRate: 0.12, scaleFree: 1, scaleMax: 2.2, get signalFrom() { return SIGNAL_FROM; }, set signalFrom(v) { SIGNAL_FROM = v; } };
+  const TUNE = { scaleRate: 0.12, scaleFree: 1, scaleMax: 2.2, goods: true, get signalFrom() { return SIGNAL_FROM; }, set signalFrom(v) { SIGNAL_FROM = v; } };
   function cityScale(st, p) { const n = st.cities.filter((c) => c.owner === p).length; return Math.min(TUNE.scaleMax, 1 + TUNE.scaleRate * Math.max(0, n - TUNE.scaleFree)); }
   // cosecha: cada cultivo alimenta a las tropas → +4% ataque y defensa a todas (máx. 5 cultivos)
   function harvest(st, p) { return Math.min(5, (st.builds || []).filter((b) => b.owner === p && b.type === 'cultivo').length) * 0.04; }
@@ -1169,8 +1238,8 @@ const Engine = (() => {
     if (st.players[p].horde) return 0;
     let s = 0;
     for (const c of st.cities) if (c.owner === p) s += c.level + (c.prod || 0) + (c.capital ? (fac(st, p) === 'lima' ? 2 : 1) : 0) + (hasTech(st, p, 'mercado') ? 1 : 0) + (fac(st, p) === 'selva' && st.tiles[idx(c.x, c.y)] === 'selva' ? 1 : 0) + 0;
-    if (fac(st, p) === 'flota' || fac(st, p) === 'callao') s += Math.min(fac(st, p) === 'flota' ? 5 : 3, st.cities.filter((c) => c.owner === p && neighbors(c.x, c.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar')).length);
-    for (const b of st.builds || []) if (b.owner === p) s += (b.type === 'mina' ? (fac(st, p) === 'mineros' ? 3 : 2) : b.type === 'puerto' ? 2 : b.type === 'antena' ? 0 : 1) + (b.type === 'cultivo' && riverAt(st, b.x, b.y) ? 1 : 0);
+    if (fac(st, p) === 'flota' || fac(st, p) === 'callao') s += Math.min(fac(st, p) === 'flota' ? 5 : 4, st.cities.filter((c) => c.owner === p && neighbors(c.x, c.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar')).length);
+    for (const b of st.builds || []) if (b.owner === p) s += (b.type === 'mina' ? (fac(st, p) === 'mineros' ? 3 : 2) : b.type === 'puerto' ? (fac(st, p) === 'flota' || fac(st, p) === 'callao' ? 3 : 2) : b.type === 'antena' || b.type === 'corral' ? 0 : 1) + (b.type === 'cultivo' && riverAt(st, b.x, b.y) ? 1 : 0) + (b.type === 'aserradero' && dealLevel(st, p, 'carbon') ? 1 : 0);
     if (st.mods && st.mods.escasez) s = Math.ceil(s / 2);
     return s;
   }
@@ -1190,7 +1259,7 @@ const Engine = (() => {
     if (water) return t === 'mar' && (fac(st, p) === 'callao' || fac(st, p) === 'flota') ? 2 : 99;
     if (st.roads && st.roads.includes(idx(x, y))) return 0.5;
     const riv = riverAt(st, x, y) ? 1 : 0;
-    if (t === 'selva' && fac(st, p) === 'selva') return 1 + riv * 0.5;
+    if (t === 'selva' && fac(st, p) === 'selva') return (['explorador', 'tanque', 'mortero', 'apu', 'buggy'].includes(type) ? 1.5 : 1) + riv * 0.5; // a pie la selva es camino; los vehículos sufren
     if (t === 'montana' && type === 'tanque') return 3 + riv;
     if (t === 'montana' && (type === 'barrenero' || fac(st, p) === 'mineros')) return 1 + riv;
     return TERRAIN[t].cost + riv;
@@ -1327,7 +1396,7 @@ const Engine = (() => {
     if (riverAt(st, d.x, d.y) && !bridgeAt(st, d.x, d.y) && !UNITS[d.type].naval && !UNITS[d.type].amphib && !UNITS[d.type].fly) b *= 0.8; // con el agua a la cintura
     const f = fac(st, d.owner);
     if (f === 'sierra' && t === 'montana') b += 0.35;
-    if (f === 'selva' && t === 'selva') b += 0.6;
+    if (f === 'selva' && t === 'selva') b += 0.4;
     const c = cityAt(st, d.x, d.y);
     if (c && c.owner === d.owner) {
       b = Math.max(b, hasTech(st, d.owner, 'murallas') ? 2.2 : 1.5);
@@ -1335,6 +1404,7 @@ const Engine = (() => {
       if ((st.builds || []).some((bb) => bb.owner === d.owner && bb.type === 'aserradero' && bb.city === c.id)) b += 0.3;
       if (hasTech(st, d.owner, 'bunker')) b += 0.5;
     }
+    if (d.owner >= 0) b += 0.35 * dealLevel(st, d.owner, 'blindaje');
     return b * (1 + harvest(st, d.owner));
   }
   function atkBonus(st, a) {
@@ -1557,12 +1627,12 @@ const Engine = (() => {
 
   // ---------- turnos ----------
   // ---------- misiones secundarias (encargos cortos con premio, solo para humanos en partida libre u online) ----------
-  const MISSION_KINDS = ['capture', 'kill', 'build', 'node', 'train', 'tech', 'hold'];
-  const MISSION_TITLE = { capture: 'Abrir el camino', kill: 'Romper la columna', build: 'Volver al socavón', node: 'Responder al Inti', train: 'Completar la cuadrilla', tech: 'Recuperar los planos', hold: 'No ceder la plaza' };
+  const MISSION_KINDS = ['capture', 'kill', 'build', 'node', 'train', 'tech', 'hold', 'sell', 'pillage'];
+  const MISSION_TITLE = { capture: 'Abrir el camino', kill: 'Romper la columna', build: 'Volver al socavón', node: 'Responder al Inti', train: 'Completar la cuadrilla', tech: 'Recuperar los planos', hold: 'No ceder la plaza', sell: 'Pasar por la Cachina', pillage: 'Quemar el granero' };
   const MISSION_PREFIX = { lima: 'Orden', sierra: 'Ronda', selva: 'Ruta', desierto: 'Frecuencia', culto: 'Transmisión', flota: 'Bitácora', callao: 'Desembarco', chasquis: 'Relevo', mineros: 'Parte de turno' };
   const SIGNAL_ROUNDS = 4; let SIGNAL_FROM = 24; // La Señal: mayoría de nodos sostenida gana (Clásico)
-  const SAFE_KINDS = ['train', 'tech', 'build'], RISK_KINDS = ['capture', 'node', 'kill', 'hold'];
-  function missionSnapshot(st, p) { const P = st.players[p]; return { kills: P.kills, captures: P.stats.captures, builds: P.stats.builds || 0, trained: Object.values(P.stats.trained || {}).reduce((a, b) => a + b, 0), techs: P.techs.length }; }
+  const SAFE_KINDS = ['train', 'tech', 'build', 'sell'], RISK_KINDS = ['capture', 'node', 'kill', 'hold', 'pillage'];
+  function missionSnapshot(st, p) { const P = st.players[p]; return { kills: P.kills, captures: P.stats.captures, builds: P.stats.builds || 0, trained: Object.values(P.stats.trained || {}).reduce((a, b) => a + b, 0), techs: P.techs.length, sold: P.stats.sold || 0, pillages: P.stats.pillages || 0 }; }
   function newMission(st, p, pool) {
     const P = st.players[p];
     const kinds = (pool || MISSION_KINDS).filter((k) => k !== (P.lastMission || ''));
@@ -1580,6 +1650,8 @@ const Engine = (() => {
       if (kind === 'build') return deco({ kind, text: 'Levanta una construcción (cultivo, mina…)', n: 1, due, reward: 6, snap });
       if (kind === 'node') { if (!(st.nodes || []).length) continue; return deco({ kind, text: 'Termina un turno sobre un nodo del Inti', due, reward: 7, snap }); }
       if (kind === 'train') return deco({ kind, text: 'Entrena 3 tropas', n: 3, due, reward: 6, snap });
+      if (kind === 'sell') { if (!(st.builds || []).some((b) => b.owner === p && BUILDS[b.type].good)) continue; return deco({ kind, text: 'Vende 6 bienes en la Cachina', n: 6, due, reward: 6, snap }); }
+      if (kind === 'pillage') { if (!(st.builds || []).some((b) => b.owner !== p && b.owner >= 0 && !allied(st, p, b.owner))) continue; return deco({ kind, text: 'Saquea una construcción enemiga', n: 1, due, reward: 8, snap }); }
       if (kind === 'tech') return deco({ kind, text: 'Investiga 2 tecnologías', n: 2, due, reward: 7, snap });
       if (kind === 'hold') { const mine = st.cities.filter((c) => c.owner === p && !c.capital); if (!mine.length) continue; const c = pick(st, mine); return deco({ kind, text: `Conserva ${c.name} hasta el turno ${due}`, city: c.id, due, reward: 6, snap }); }
     }
@@ -1593,6 +1665,8 @@ const Engine = (() => {
     if (m.kind === 'build') return { cur: Math.min(1, now.builds - m.snap.builds), n: 1 };
     if (m.kind === 'node') return { cur: (st.nodes || []).some((nd) => nd.owner === p && st.units.some((u) => u.owner === p && u.x === nd.x && u.y === nd.y)) ? 1 : 0, n: 1 };
     if (m.kind === 'train') return { cur: Math.min(m.n, now.trained - m.snap.trained), n: m.n };
+    if (m.kind === 'sell') return { cur: Math.min(m.n, now.sold - (m.snap.sold || 0)), n: m.n };
+    if (m.kind === 'pillage') return { cur: Math.min(m.n, now.pillages - (m.snap.pillages || 0)), n: m.n };
     if (m.kind === 'tech') return { cur: Math.min(m.n, now.techs - m.snap.techs), n: m.n };
     if (m.kind === 'hold') return { cur: st.turn >= m.due && st.cities[m.city].owner === p ? 1 : 0, n: 1, lost: st.cities[m.city].owner !== p };
     return null;
@@ -1632,7 +1706,7 @@ const Engine = (() => {
         u.x = opts[0][0]; u.y = opts[0][1];
       }
       u.caravan.turns--;
-      if (dist(u.x, u.y, tgt.x, tgt.y) <= 1) { st.players[p].scrap += 8; st.players[p].energy = (st.players[p].energy || 0) + 2; log(st, `La caravana llegó a ${tgt.name}: +8 chatarra, +2 energía.`); event(st, { k: 'caravan', x: u.x, y: u.y, p, ok: true }); st.units.splice(st.units.indexOf(u), 1); }
+      if (dist(u.x, u.y, tgt.x, tgt.y) <= 1) { st.players[p].scrap += 8; st.players[p].energy = (st.players[p].energy || 0) + 2; if (st.market) { st.market.hotX = 3; st.market.until = Math.max(st.market.until, st.turn + 2); } log(st, `La caravana llegó a ${tgt.name}: +8 chatarra, +2 energía. Trae compradores: la Cachina paga ×3.`); event(st, { k: 'caravan', x: u.x, y: u.y, p, ok: true }); st.units.splice(st.units.indexOf(u), 1); }
       else if (u.caravan.turns <= 0) { log(st, 'La caravana se perdió en el camino.'); event(st, { k: 'caravan', x: u.x, y: u.y, p, ok: false }); st.units.splice(st.units.indexOf(u), 1); }
     }
   }
@@ -1652,6 +1726,7 @@ const Engine = (() => {
     const p = st.cur, P = st.players[p];
     runScripts(st, p);
     moveCaravans(st, p);
+    produceGoods(st, p);
     checkMissions(st, p);
     P.scrap += income(st, p);
     P.energy = (P.energy || 0) + energyIncome(st, p);
@@ -1678,11 +1753,12 @@ const Engine = (() => {
       const t = st.tiles[idx(u.x, u.y)];
       let h = c && c.owner === p ? 4 : 2;
       if (c && c.owner === p && hasTech(st, p, 'bunker')) h += 4;
-      if (fac(st, p) === 'selva') h += 2;
+      if (fac(st, p) === 'selva' && t === 'selva') h += 2;
       if (harvest(st, p) > 0) h += 1;
+      h += dealLevel(st, p, 'ponchos');
       if (u.gear && GEAR[u.gear].heal) h += GEAR[u.gear].heal;
       if (hasTech(st, p, 'medicina')) h *= 2;
-      if (u.type === 'jaguar' && t === 'selva') h = 99;
+      if (u.type === 'jaguar' && t === 'selva') h += 4;
       if (UNITS[u.type].naval) { const pb = buildAt(st, u.x, u.y); if (pb && pb.type === 'puerto' && pb.owner === p) h += 6; }
       const before = u.hp; u.hp = Math.min(maxHp(u), u.hp + h);
       if (u.hp > before) event(st, { k: 'heal', x: u.x, y: u.y, v: u.hp - before, p });
@@ -1716,6 +1792,7 @@ const Engine = (() => {
     const m = st.mods || {};
     if (st.turn % (m.escasez ? 2 : 4) === 0) { addRuin(st); addRuin(st); log(st, 'Una lluvia de chatarra orbital dejó nuevas ruinas.'); }
     for (const nd of st.nodes || []) if (nd.blocked > 0) nd.blocked--;
+    if (!st.market || st.turn > st.market.until) rollMarket(st);
     // historial de puntaje por ronda (para el resumen final: "la guerra cambió en el turno X")
     if (!st.hist) st.hist = [];
     st.hist.push(st.players.map((P, i) => (P.alive && !P.horde ? score(st, i) : 0)));
@@ -1814,6 +1891,9 @@ const Engine = (() => {
     { id: 'paso', title: 'Una caravana pide paso', text: 'Comerciantes neutrales piden cruzar tus tierras hacia otra ciudad. Llevan chatarra y piezas del Inti.', who: 'narr', when: (st, p) => st.cities.filter((c) => c.owner === p).length >= 1 && st.cities.some((c) => c.owner !== p),
       opts: [{ label: 'Abrir las puertas', desc: 'La caravana cruza el mapa 4 turnos; si llega viva: +8 chatarra, +2 energía', run: (st, p) => { const cap = st.cities.find((c) => c.owner === p && c.capital) || st.cities.find((c) => c.owner === p); const far = st.cities.filter((c) => c.owner !== p && dist(c.x, c.y, cap.x, cap.y) >= 4).sort((a, b) => dist(a.x, a.y, cap.x, cap.y) - dist(b.x, b.y, cap.x, cap.y))[0] || st.cities.find((c) => c.owner !== p); const sp = neighbors(cap.x, cap.y).find(([x, y]) => !unitAt(st, x, y) && passable(st, 'rondero', p, x, y)); if (sp && far) { const u = spawn(st, -1, 'buggy', sp[0], sp[1]); u.hp = 6; u.name = 'Caravana'; u.caravan = { by: p, to: far.id, turns: 4 }; u.moved = true; u.acted = true; } else st.players[p].scrap += 3; } },
         { label: 'Confiscar la carga', desc: '+5 chatarra ahora · la facción más cercana no olvida (no pacta contigo 6 turnos)', run: (st, p) => { st.players[p].scrap += 5; const cap = st.cities.find((c) => c.owner === p && c.capital) || st.cities.find((c) => c.owner === p); let best = -1, bd = 99; st.players.forEach((Q, i) => { if (i === p || !Q.alive || Q.horde) return; const c = st.cities.find((cc) => cc.owner === i && cc.capital); if (c && dist(c.x, c.y, cap.x, cap.y) < bd) { bd = dist(c.x, c.y, cap.x, cap.y); best = i; } }); if (best >= 0) { st.players[best].grudge = { p, until: st.turn + 6 }; log(st, `${st.players[best].name} recuerda la confiscación.`); } } }], ai: 1 },
+    { id: 'cachinero', title: 'El Cachinero toca la puerta', text: 'El Cachinero llega con su carreta y una oferta: compra todo lo que tengas guardado, hoy, al triple. Pero sus caminos pasan por tierra de Sechura, y a la Viuda le gusta saber quién vende.', who: 'cachinero', when: (st, p) => Object.values(goodsOf(st, p)).reduce((a, b) => a + b, 0) >= 4,
+      opts: [{ label: 'Vender todo al triple', desc: 'Todos tus bienes se venden ahora ×3 · Sechura guarda rencor 5 turnos', run: (st, p) => { const g = goodsOf(st, p); let tot = 0; for (const k of GOOD_KEYS) tot += Math.round(g[k] * GOODS[k].base * 3); for (const b of st.builds || []) if (b.owner === p) b.goods = 0; st.players[p].scrap += tot; st.players[p].stats.soldScrap = (st.players[p].stats.soldScrap || 0) + tot; st.players[p].stats.sold = (st.players[p].stats.sold || 0) + Object.values(g).reduce((a, b) => a + b, 0); const q = st.players.findIndex((Q, i) => i !== p && Q.alive && Q.faction === 'desierto'); if (q >= 0) st.players[q].grudge = { p, until: st.turn + 5 }; log(st, `El Cachinero pagó ${tot} de chatarra por todo.`); event(st, { k: 'sell', p, good: 'lena', n: 0, scrap: tot, hot: true }); } },
+        { label: 'Cerrarle la puerta', desc: '+1 energía: sus piezas del Inti se quedan contigo', run: (st, p) => { st.players[p].energy = (st.players[p].energy || 0) + 1; } }], ai: 0 },
     { id: 'tambo', fac: 'chasquis', title: 'El tambo olvidado', text: 'Un corredor encuentra un tambo intacto en la Ruta Real: provisiones de antes de la caída.', who: 'chasquis',
       opts: [{ label: 'Repartir', desc: 'Todas tus tropas recuperan movimiento', run: (st, p) => { for (const u of st.units) if (u.owner === p) u.moved = false; } }, { label: 'Guardar', desc: '+6 chatarra', run: (st, p) => { st.players[p].scrap += 6; } }], ai: 1 },
     { id: 'veta', fac: 'mineros', title: 'La veta madre', text: 'Los barrenos tocan metal del Inti bajo el Cerro. Brilla. Y tiembla.', who: 'mineros',
@@ -1861,7 +1941,7 @@ const Engine = (() => {
     const coast = neighbors(u.x, u.y).some(([x, y]) => st.tiles[idx(x, y)] === 'mar');
     const mine = (st.builds || []).filter((b) => b.city === city.id);
     return Object.entries(BUILDS).filter(([k, B]) => B.on.includes(t) && (!B.coast || coast) && !(k === 'antena' && mine.some((b) => b.type === 'antena')) && mine.length < 3)
-      .map(([k, B]) => { const cost = Math.round(B.cost * cityScale(st, p)); return { type: k, name: B.name, cost, desc: B.desc, can: st.players[p].scrap >= cost, city: city.name }; });
+      .map(([k, B]) => { const cost = Math.max(2, Math.round(B.cost * cityScale(st, p) * (1 - 0.15 * dealLevel(st, p, 'carbon')))); return { type: k, name: B.name, cost, desc: B.desc, can: st.players[p].scrap >= cost, city: city.name }; });
   }
   function build(st, uid, type) {
     bind(st);
@@ -1883,9 +1963,10 @@ const Engine = (() => {
     const b = buildAt(st, u.x, u.y);
     if (!b || b.owner === u.owner || allied(st, b.owner, u.owner)) return;
     st.builds.splice(st.builds.indexOf(b), 1);
-    st.players[u.owner].scrap += 2;
+    const loot = 2 + (b.goods ? Math.round(b.goods * goodPrice(st, BUILDS[b.type].good)) : 0);
+    st.players[u.owner].scrap += loot; st.players[u.owner].stats.pillages = (st.players[u.owner].stats.pillages || 0) + 1;
     log(st, `${st.players[u.owner].name} saqueó ${BUILDS[b.type].name} de ${st.players[b.owner].name}.`);
-    event(st, { k: 'pillage', p: u.owner, x: u.x, y: u.y, type: b.type });
+    event(st, { k: 'pillage', p: u.owner, x: u.x, y: u.y, type: b.type, loot, goods: b.goods || 0 });
   }
 
   // ---------- habilidad del líder ----------
@@ -1950,7 +2031,7 @@ const Engine = (() => {
     let s = 0;
     for (const c of st.cities) if (c.owner === p) s += 100 * c.level + (c.capital ? 100 : 0);
     for (const u of st.units) if (u.owner === p) s += 10 * UNITS[u.type].cost;
-    s += 40 * st.players[p].techs.length + 20 * st.players[p].kills;
+    s += 40 * st.players[p].techs.length + 10 * st.players[p].kills;
     return s;
   }
   function power(st, p) {
@@ -1978,6 +2059,7 @@ const Engine = (() => {
         const c = st.cities.find((cc) => cc.name === ob.city);
         if (c && c.owner === ob.player) { st.winner = ob.player; st.winText = `Tomaste ${c.name}.`; return; }
       }
+      if (ob.type === 'sell') { if ((st.players[ob.player].stats.soldScrap || 0) >= ob.n) { st.winner = ob.player; st.winText = `Vendiste ${ob.n} de chatarra en la Cachina.`; return; } }
       if (ob.type === 'cities') {
         const n = st.cities.filter((c) => c.owner === ob.player).length;
         if (n >= ob.n) { st.winner = ob.player; st.winText = `Controlas ${n} ciudades.`; return; }
@@ -2255,7 +2337,10 @@ const Engine = (() => {
       const adv = adviseTech(st, p);
       if (adv && adv.can && P.scrap - techCost(st, p, adv.tech) >= (desperate ? 4 : 2)) research(st, adv.tech);
     }
-    if (!desperate && P.scrap >= 9 && rng(st) < 0.5) { for (const u of st.units.filter((v) => v.owner === p && !v.acted)) { const opts = buildOptions(st, u).filter((o) => o.can); if (opts.length && !enemiesNear(st, p, u.x, u.y, 2).length) { const best = opts.sort((a, b) => (b.type === 'mina' || b.type === 'puerto' ? 1 : 0) - (a.type === 'mina' || a.type === 'puerto' ? 1 : 0))[0]; build(st, u.id, best.type); break; } } }
+    // la Cachina: vende cuando el precio está alto, o cuando el stock está lleno a precio normal
+    if (!P.horde && hasCachina(st, p)) { const g = goodsOf(st, p); for (const k of GOOD_KEYS) { if (!g[k]) continue; const pr = goodPrice(st, k) / GOODS[k].base; if (pr >= 1.5 || (pr >= 1 && g[k] >= 6) || (desperate && pr >= 1) || (st.market && st.turn === st.market.until && pr >= 1)) sellGoods(st, p, k); } }
+    if (!P.horde && st.cities.filter((c) => c.owner === p).length >= 2) { for (const o of dealOptions(st, p)) if (o.can && (o.type !== 'carbon' || rng(st) < 0.4)) { buyDeal(st, p, o.type); break; } }
+    if (!desperate && P.scrap >= 9 && rng(st) < 0.5) { for (const u of st.units.filter((v) => v.owner === p && !v.acted)) { const opts = buildOptions(st, u).filter((o) => o.can); if (opts.length && !enemiesNear(st, p, u.x, u.y, 2).length) { const pri = (t) => (t === 'mina' || t === 'puerto' ? 2 : BUILDS[t].good ? 1 : 0); const best = opts.sort((a, b) => pri(b.type) - pri(a.type) || rng(st) - 0.5)[0]; build(st, u.id, best.type); break; } } }
     for (const c of myCities().sort((a, b) => threatened(b) - threatened(a))) {
       if (!desperate && c.level < (D.bonus ? 4 : 3) && P.scrap >= upgradeCost(st, c) + 4 && rng(st) < 0.35 && !threatened(c)) upgrade(st, c.id);
       if (D.trainSkip && rng(st) < D.trainSkip && !threatened(c)) continue; // fácil: a veces no entrena
@@ -2275,7 +2360,7 @@ const Engine = (() => {
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, chooseMission, setGuard, runScripts, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, chooseMission, setGuard, runScripts, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, GOODS, GOOD_KEYS, GOOD_CAP, MARKET_EVERY, goodPrice, goodsOf, sellGoods, hasCachina, DEALS, dealLevel, dealOptions, buyDeal, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
     SIGNAL_ROUNDS, SIGNAL_FROM, SIGNAL_BRAG, isoWeek, idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
@@ -2602,6 +2687,7 @@ const PX = (() => {
     b_cultivo: ['................', '.e..e..e..e..e..', 'kek.ek.ek.ek.ek.', 'SSSSSSSSSSSSSSSS', '.e..e..e..e..e..', '.ek.ek.ek.ek.ek.', 'SSSSSSSSSSSSSSSS', '.e..e..e..e..e..', '.ek.ek.ek.ek.ek.', 'SSSSSSSSSSSSSSSS', 'cccccccccccccccc', '................'],
     b_mina: ['................', '......kkkk......', '.....kGggGk.....', '....kGkkkkGk....', '...kGkkyykkGk...', '..kGkkkyykkkGk..', '.kkkkkkkkkkkkkk.', '.kbbbbbbbbbbbbk.', '.kbkkkkkkkkkkbk.', 'kkkGGkkkkkkGGkkk', 'kgkkgkkkkkkgkkgk', 'kkkkkkkkkkkkkkkk'],
     b_aserradero: ['................', '....kkkkkkkk....', '...kbbbbbbbbk...', '..kbbbbbbbbbbk..', '.kkkkkkkkkkkkkk.', '.kSSkSSSSSSkSSk.', '.kSSkSSkkSSkSSk.', 'kkkkkkkkkkkkkkkk', 'kbkbkbkbkbkbkbkb', 'kBkBkBkBkBkBkBkB', 'kkkkkkkkkkkkkkkk', '................'],
+    b_corral: ['................', '..kk......kk....', '.kwwk.k..kwwk...', '.kwwkkwkkkwwk...', '..kwwwwwwwwk....', '..kwwwwwwwwk....', '...kkwwwwkk.....', '.kkkkkkkkkkkkkk.', 'kbkbkbkbkbkbkbkb', 'kkkkkkkkkkkkkkkk', '.e.ee.e.ee.e.ee.', '................'],
     b_antena: ['.......kk.......', '......kcck......', '.....kccckk.....', '....kckkkcck....', '.......kk.......', '......kGGk......', '.......kk.......', '.......kk.......', '......kGGk......', '.....kGGGGk.....', '....kGGGGGGk....', '....kkkkkkkk....'],
     b_puerto: ['................', '....kkkkkk......', '...kbbbbbbk.....', '...kbkkkkbk.....', '...kbbbbbbk.....', 'kkkkkkkkkkkkkkkk', 'kbbbbbbbbbbbbbbk', 'kkkkkkkkkkkkkkkk', '.kBk.......kBk..', '.kBk.......kBk..', 'cccccccccccccccc', '.c..c..c..c..c..'],
     patrullera: ['................', '........kk......', '.......kGGk.....', '......kkkkkk....', '.....kGGGGGGk...', '.....kGkkkkGk...', '...kkkkkkkkkkkk.', '..kfffffffffffk.', '.kflfffffffffffk', 'kffffffffffffFFk', 'kkkkkkkkkkkkkkkk', '.kFFFFFFFFFFFFk.', '..kkkkkkkkkkkk..', 'c..c..c..c..c..c', '.c..c..c..c..c..', '................'],
@@ -2663,7 +2749,10 @@ const PX = (() => {
     em_chasquis: ['.....kk.....', '....kyyk....', '...kyyyyk...', '..kkyyyykk..', '.kwkkyykkwk.', 'kwwk.kk.kwwk', 'kwwwk..kwwwk', '.kwwk..kwwk.', '..kwk..kwk..', '...kwkkwk...', '....kwwk....', '.....kk.....'],
     em_mineros: ['....kkkk....', '...kyyyyk...', '..kyykwkyyk.', '..kyyyyyyk..', '..kkkkkkkk..', '............', 'kk........kk', 'kwwkk..kkwwk', '.kkwwkkwwkk.', '...kwwwwk...', '....kwwk....', '.....kk.....'],
     em_callao: ['.....kk.....', '....kwwk....', '.k..kwwk..k.', 'kwk.kwwk.kwk', 'kwk.kwwk.kwk', '.kwkkwwkkwk.', '..kwwwwwwk..', '....kwwk....', '....kwwk....', '....kwwk....', '...kwwwwk...', '....kkkk....'],
-    scrap: ['..kkkk..', '.kggggk.', 'kgGkkGgk', 'kgk..kgk', 'kgk..kgk', 'kgGkkGgk', '.kggggk.', '..kkkk..'],
+    scrap: ['.....kkk.....', '..kk.kgk.kk..', '.kggkkgkkggk.', '.kkgggggggkk.', '..kggkkkgGk..', 'kkggkkykkGGkk', 'kgggkyYykGGGk', 'kkggkkYkkGGkk', '..kggkkkGGk..', '.kkgGGGGGGkk.', '.kgGkkGkkGGk.', '..kk.kGk.kk..', '.....kkk.....'],
+    g_lena: ['..........', '..........', '...kkkk...', '..kSssSk..', '.kkkkkkkk.', 'kSssSkSssk', 'kskkskskkk', 'kkkkkkkkkk', '.kSsskSsk.', '..kkkkkk..'],
+    g_lana: ['..........', '...kkkk...', '..kwwwwk..', '.kwwkwwwk.', 'kwwkwwkwwk', 'kwwwwkwwwk', 'kwkwwwwkwk', '.kwwkwwwk.', '..kwwwwk..', '...kkkk...'],
+    g_mineral: ['....kk....', '...kcck...', '..kccwck..', '.kccwwcck.', 'kcccwcccck', 'kGcccccGck', 'kGGcccGGck', '.kGGGGGGk.', '..kkkkkk..', '..........'],
     wrench: ['......kkk.', '.....kgggk', '....kgGk.k', '....kgk...', '...kggk...', '..kgGk....', '.kgGk.....', 'kgGk......', 'kGk.......', '.k........'],
     hands: ['..........', 'kkk....kkk', 'kffk..kssk', 'kfffkksssk', '.kfkssksk.', '..kkssssk.', '...kssskk.', '....kkk...', '..........', '..........'],
     flag: ['kkkk', 'kffk', 'kflf', 'kfff', 'k...', 'k...', 'k...'],
@@ -2714,6 +2803,10 @@ const PX = (() => {
     callao: [ // La Sirena Chalaca: máscara de buceo, pelo de algas
       '..kee.kkkk.eek..', '.keeekccccckeee.', '.keekckkkkkckee.', '..kkckwwkwwkck..', '..kkckkkkkkkck..', '...kksssssskk...',
       '..keksssssskek..', '..keksxssxskek..', '..keksssssskek..', '..keekssssksee..', '...kekkkkkkkek..', '....kssssssk....', '...kffffffffk...', '..kffffffffffk..', '.kffffffffffffk.', '.kffffffffffffk.'],
+    cachinero: [ // El Cachinero: gorro de lana, lentes de soldador, sonrisa de diente de oro
+      '....kkkkkkkk....', '...kxxxxxxxxk...', '..kxxkxxxxkxxk..', '..kxxxxxxxxxxk..', '..kkkkkkkkkkkk..', '..kggkkkkkkggk..',
+      '..kgGkccckcckk..', '..kkkkkkkkkkkk..', '..kssssssssssk..', '..kskksssskkss..', '..kssskkkksssk..', '...ksskyykssk...',
+      '....kssssssk....', '...kGGGkkGGGk...', '..kGGGGyGGGGGk..', '.kGGGGGGGGGGGGk.'],
     flota: [ // Almirante Paita: gorra, barba y cicatriz
       '...kkkkkkkkkk...', '..kwwwwwwwwwwk..', '.kwwwwwyywwwwwk.', '.kkkkkkkkkkkkkk.', '..kssssssssssk..', '..kskksssskksk..',
       '..ksccsssscsk...', '..kssssssxsssk..', '..kssskkkksssk..', '..kssKKKKKKssk..', '..kKKKKKKKKKKk..', '...kKKKKKKKKk...',
@@ -2847,7 +2940,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '28';
+const GAME_VERSION = '29';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3042,6 +3135,8 @@ const ACH = [
 ];
 // ---------- retos ----------
 const RETOS = [
+  { id: 'cachinero', name: 'El Cachinero', color: '#f2b84b', faction: 'sierra', desc: 'Eres la Sierra en la puna. Aquí no gana quien conquista: gana quien vende 60 de chatarra en la Cachina antes del turno 25. Mercado negro: los precios cambian cada 2 turnos.', rules: 'Objetivo: vender 60 · Mercado negro · 25 turnos · 2 rivales',
+    cfg: () => ({ size: 'pequeno', mods: ['mercadonegro'], maxTurns: 25, objective: { type: 'sell', n: 60, player: 0 }, players: [human('sierra'), ai('desierto'), ai('mineros')] }) },
   { id: 'cerco', name: 'El cerco de Cusco', color: '#d6543a', faction: 'sierra', desc: 'Eres la Sierra. Tres facciones te rodean, la capital decide todo y el reloj corre.', rules: 'Muerte súbita · Blitz · 3 rivales · mapa mediano',
     cfg: () => ({ size: 'mediano', mods: ['subita', 'blitz'], players: [human('sierra'), ai('lima'), ai('selva'), ai('desierto')] }) },
   { id: 'hogueras', name: 'Mil hogueras', color: '#a8322a', faction: 'lima', desc: 'La Horda brota de los nodos cada 3 turnos. Resiste 20 turnos con Lima en pie.', rules: 'Modo Horda · sobrevivir 20 turnos · 1 rival',
@@ -3733,6 +3828,9 @@ function render(now) {
     ctx.fillStyle = fcol(b.owner); ctx.globalAlpha = 0.55; for (const i of HEXEDGE[k]) ctx.fillRect((i % LW) * P, ((i / LW) | 0) * P, P, P); ctx.globalAlpha = 1;
     drawSprite(PX.sprite('b_' + b.type), bx - 8 * P, by - 7 * P);
     drawPixelRect(fcol(b.owner), bx + 5 * P, by - 8 * P, 3, 2);
+    // bienes guardados en la casilla: pips del color del bien; llenos, parpadean (hay que venderlos)
+    const gk = E.BUILDS[b.type].good;
+    if (gk) { const n = b.goods || 0, full = n >= E.GOOD_CAP, blink = full && Math.floor(performance.now() / 450) % 2 === 0; drawPixelRect('#0d0b0a', bx - 8 * P, by - 10 * P, 2 * E.GOOD_CAP + 1, 3); for (let i = 0; i < E.GOOD_CAP; i++) drawPixelRect(i < n ? (blink ? '#ffffff' : E.GOODS[gk].color) : '#2a2420', bx - 7 * P + i * 2 * P, by - 9 * P, 1, 1); }
   }
   // ciudades
   for (const c of S.cities) {
@@ -3909,6 +4007,7 @@ function render(now) {
 
 const ATTACK_ANIM = { apu: 'stomp', dron: 'dive', jaguar: 'leap', buggy: 'lunge', tanque: 'lunge', rondero: 'lunge', explorador: 'lunge', fanatico: 'lunge', lancha: 'lunge', francotirador: 'recoil', huaracero: 'recoil', vigia: 'recoil', mortero: 'recoil' };
 // repetición online: guardamos lo que pasó en este aparato para que el rival lo vea animado cuando le llegue el turno
+function goodsBuildsOf(p) { return (S && S.builds || []).filter((b) => b.owner === p && E.BUILDS[b.type].good); }
 let replayAcc = [], replaySeq = 0, replaying = false;
 function consumeEvents() {
   const now0 = performance.now();
@@ -3953,6 +4052,11 @@ function consumeEvents() {
     if (e.k === 'pillage') { fx.push({ k: 'boom', x: e.x, y: e.y, t0: now, dur: 600 }); if (S.builds && e.p !== me) toast(S.players[e.p].name + ' saqueó tu ' + E.BUILDS[e.type].name + '.', 'red'); }
     if (e.k === 'capture') { fx.push({ k: 'flagrise', x: e.x, y: e.y, c: fcol(e.p), t0: now, dur: 700 }); fx.push({ k: 'confetti', x: e.x, y: e.y, c: fcol(e.p), t0: now + 150, dur: 1400 }); if (e.p === me) shake = { t0: now, dur: 200, amp: 2 }; }
     if (e.k === 'capture') { if (e.p === me && e.prev >= 0 && e.prev !== me) setTimeout(() => leaderBubble(e.prev, 'lost'), 900); else if (e.prev === me) setTimeout(() => leaderBubble(e.p, 'took'), 900); }
+    if (e.k === 'market') { const own = goodsBuildsOf(me); if (own.length && S.turn > 1) { const hotMine = own.some((b) => E.BUILDS[b.type].good === e.hot); setTimeout(() => { if (hotMine) { flash('LA CACHINA', E.GOODS[e.hot].name.toUpperCase() + ' SE PAGA ×' + (S.market && S.market.hotX || 2) + ' hasta el turno ' + e.until, '#f2b84b'); beep('ach'); } else toast('La Cachina paga ' + E.GOODS[e.hot].name.toLowerCase() + ' ×' + (S.market && S.market.hotX || 2) + ' y ' + E.GOODS[e.cold].name.toLowerCase() + ' a mitad hasta el turno ' + e.until + '.', 'gold'); }, 500); } }
+    if (e.k === 'sell' && e.p === me) { if (e.x != null) { fx.push({ k: 'star', x: e.x, y: e.y, t0: now, dur: 1100, txt: '+' + e.scrap }); if (e.hot || e.scrap >= 10) fx.push({ k: 'confetti', x: e.x, y: e.y, c: '#f2b84b', t0: now, dur: 1200 }); } beep(e.hot || e.scrap >= 10 ? 'ach' : 'buy'); if (e.scrap >= 10) flash('¡BUENA VENTA!', e.n + ' de ' + E.GOODS[e.good].name.toLowerCase() + ' · +' + e.scrap + ' chatarra', '#f2b84b'); }
+    if (e.k === 'deal' && e.p === me) { flash(e.name.toUpperCase() + ' ' + 'I'.repeat(e.lv), E.DEALS[e.type].desc, '#f2b84b'); beep('ach'); const cap = S.cities.find((c) => c.owner === me && c.capital) || S.cities.find((c) => c.owner === me); if (cap) fx.push({ k: 'confetti', x: cap.x, y: cap.y, c: '#f2b84b', t0: now, dur: 1300 }); }
+    if (e.k === 'goodsfull' && e.p === me) { fx.push({ k: 'ring', x: e.x, y: e.y, c: E.GOODS[e.good].color, t0: now, dur: 700 }); }
+    if (e.k === 'pillage' && e.p === me && e.goods) toast('Saqueaste ' + e.goods + ' de ' + E.GOODS[E.BUILDS[e.type].good].name.toLowerCase() + ': +' + e.loot + ' chatarra.', 'gold');
     if (e.k === 'signal') { const Q = S.players[e.p]; if (e.state === 'lost') { toast((e.p === me ? 'Perdiste la mayoría de los nodos: la Señal se apaga.' : 'La Señal de ' + Q.name + ' se apaga: perdió la mayoría de los nodos.'), e.p === me ? 'red' : 'gold'); } else if (e.n === 1) { setTimeout(() => { flash('LA SEÑAL', e.p === me ? 'Sostén la mayoría de los nodos ' + E.SIGNAL_ROUNDS + ' rondas y ganas' : Q.name + ' domina los nodos · ' + E.SIGNAL_ROUNDS + ' rondas y gana', e.p === me ? '#7cc46a' : '#ff6a4d'); beep(e.p === me ? 'ach' : 'betray'); if (e.p !== me) shake = { t0: performance.now(), dur: 400, amp: 4 }; }, 400); } else { setTimeout(() => { flash('LA SEÑAL · ' + e.n + '/' + E.SIGNAL_ROUNDS, e.p === me ? 'Una ronda más cerca' : Q.name + ' sigue en los nodos', e.p === me ? '#7cc46a' : '#ff6a4d'); beep('select'); }, 400); } }
     if (e.k === 'missionoffer' && e.p === me) { setTimeout(() => { if (S && S.players[me].missionOffer && isMyTurn() && $('#modal').hidden && typeof openMissionOffer === 'function') openMissionOffer(); }, 1600); }
     if (e.k === 'mission' && e.p === me) {
@@ -4235,6 +4339,7 @@ function renderSheet() {
     html += `<div class="gstats"><span class="gstat" title="Nivel"><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= c.level ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat good" title="Chatarra por turno"><span data-spr="scrap" data-size="14"></span><b>+${inc}</b></span><span class="gstat" title="Tropas de esta ciudad"><span class="pips troops">${Array.from({ length: cap }, (_, i) => `<i class="${i < troops ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat" title="Defensa"><span data-spr="i_wall" data-size="14"></span><b>${def + (c.wall ? 40 : 0)}%</b></span>${c.prod ? `<span class="gstat good" title="Taller"><span data-spr="i_gear" data-size="14"></span><b>+${c.prod}</b></span>` : ''}</div>`;
     const lands = (S.builds || []).filter((b) => b.city === c.id);
     if (lands.length) html += `<div class="lands">${lands.map((b) => `<span class="land" data-a="goto" data-x="${b.x}" data-y="${b.y}"><span data-spr="b_${b.type}" data-size="18"></span>${esc(E.BUILDS[b.type].name)}</span>`).join('')}<small class="muted">Tierras de ${esc(c.name)}</small></div>`;
+    if (mine) html += cachinaHtml();
     if (c.capital && mine && S.mods.subita) html += `<div class="hint cap-hint short">Muerte súbita: si cae tu capital, pierdes.</div>`;
     if (c.throne) html += `<div class="hint cap-hint">Quien controle el Trono 8 turnos seguidos gana la partida.</div>`;
     if (mine && isMyTurn()) {
@@ -4278,6 +4383,8 @@ function renderSheet() {
     if (a.dataset.a === 'build') { const o = E.buildOptions(S, S.units.find((v) => v.id === sel.id)).find((x) => x.type === a.dataset.t); if (o && !o.can) { toast(o.desc + ' Necesitas ' + o.cost + ' de chatarra.'); return; } if (E.build(S, sel.id, a.dataset.t)) { clearUndo(); afterAction(); } }
     if (a.dataset.a === 'hero') { if (E.heroAbility(S, sel.id)) { clearUndo(); beep('heal'); flash(E.HERO[S.players[me].faction].name, '', fcol(me)); afterAction(); } }
     if (a.dataset.a === 'upgrade') doUpgrade(sel.id);
+    if (a.dataset.a === 'sell') { if (a.disabled) { beep('error'); return; } doSell(a.dataset.g); }
+    if (a.dataset.a === 'deal') { const o = E.dealOptions(S, me).find((x) => x.type === a.dataset.t); if (!o) return; if (!o.can) { toast(o.lv >= o.max ? o.name + ': ya está al máximo.' : `${o.desc} Necesitas ${o.cost} de ${E.GOODS[o.good].name.toLowerCase()} (tienes ${o.have}).`, 'gold'); beep('error'); return; } if (E.buyDeal(S, me, o.type)) { clearUndo(); afterAction(); } }
   };
 }
 
@@ -4460,6 +4567,7 @@ function howtoHtml(modal) {
   <h3>Ruinas</h3><p>Los restos dorados del Inti dan chatarra, planos o refuerzos. Cada 4 turnos caen nuevas.</p>
   <h3>Facciones</h3><p>Cada facción empieza con una tecnología, tiene una unidad única desde el inicio y un terreno donde es más fuerte. Mira el Códice para los detalles.</p>
   <h3>Arsenal</h3><p>Tres ramas: Guerra (armas), Industria (economía y vehículos) y Supervivencia (defensa y visión). Cada nivel abre el siguiente. El consejo de la Directora te dice qué conviene ahora.</p>
+  <h3>La Cachina</h3><p>Minas, aserraderos y corrales producen bienes (mineral, leña, lana) que se guardan en su casilla hasta 4. Se venden todos juntos desde cualquier ciudad tuya, en La Cachina. Cada 5 turnos el Cachinero paga un bien al doble y otro a la mitad: vender en el momento justo es chatarra extra. Si te saquean la construcción, se llevan los bienes.</p>
   <h3>Ríos, equipo y misiones</h3><p>Los ríos cuestan +1 al cruzar y quien se queda dentro defiende 20% menos; en los puentes (donde pasa la carretera) no hay castigo. Una tropa parada en tu ciudad puede comprar una pieza de equipo para siempre: blindaje, cuchillas, botas, botiquín, mira o tanque de agua. Y desde el turno 3 recibes misiones cortas con premio en chatarra: cumplirlas te mantiene con ritmo.</p>
   <h3>Alianzas y traiciones</h3><p>Puedes tener un solo aliado: no se atacan y comparten visión. Si todos los que quedan son aliados, gana la alianza y lidera quien tenga más puntos. Romper una alianza te da +50% de ataque ese turno, pero quedas marcado como traidor.</p></div>`;
 }
@@ -4549,7 +4657,7 @@ function openReward() {
 // misión secundaria: elige 1 de 2 (una segura, una en zona en disputa con premio mayor)
 function openMissionOffer() {
   const O = S.players[me].missionOffer; if (!O) return;
-  const h = `<div class="card-ev"><div class="card-ev-head"><span data-por="vargas" data-size="64"></span><div><div class="brief">Encargos · turno ${S.turn}</div><div class="h2" style="font-size:16px">Elige tu misión</div></div></div>
+  const h = `<div class="card-ev"><div class="card-ev-head"><span data-por="lima" data-size="64"></span><div><div class="brief">Encargos · turno ${S.turn}</div><div class="h2" style="font-size:16px">Elige tu misión</div></div></div>
     <p class="card-ev-text">Dos encargos llegaron al búnker. Solo puedes aceptar uno; el otro se pierde.</p>
     ${O.map((m, i) => `<button class="card-opt box press mo ${m.risk ? 'risk' : 'safe'}" data-a="pick" data-i="${i}"><b>${esc(m.prefix)} · ${esc(m.title)}</b><small>${esc(m.text)} · antes del turno ${m.due}</small><span class="mrw">${m.risk ? '⚠ EN DISPUTA · ' : '✓ SEGURA · '}+${m.reward} chatarra</span></button>`).join('')}
     <p class="muted">Si terminas el turno sin elegir, se toma la primera.</p></div>`;
@@ -4601,6 +4709,7 @@ function objectiveText() {
   if (!S) return '';
   const ob = S.objective;
   if (!ob) { if (S.gameMode === 'rey') return 'Controla el Trono (ciudad con corona) 8 turnos seguidos.'; if (S.gameMode === 'nodos') return 'Controla 3 nodos del Inti al terminar tu turno.'; if (S.gameMode === 'horda') return 'Sobrevive a La Horda: elimina a los rivales o alíate con todos.'; return S.mode === 'campaign' || S.mods && S.mods.subita ? 'Elimina a todos o forma la alianza final.' : ''; }
+  if (ob.type === 'sell') return `Vende ${ob.n} de chatarra en la Cachina antes del turno ${S.maxTurns + 1} (llevas ${S.players[me].stats.soldScrap || 0}).`;
   if (ob.type === 'cities') return `Controla ${ob.n} ciudades (tienes ${S.cities.filter((c) => c.owner === me).length}).`;
   if (ob.type === 'capture') return `Toma ${ob.city}` + (S.maxTurns < 40 ? ` antes del turno ${S.maxTurns + 1}.` : '.');
   if (ob.type === 'eliminate') return `Elimina a ${E.FACTIONS[ob.faction].name}.`;
@@ -4617,6 +4726,19 @@ function shutdownMatch() {
   for (const id of ['#endBtn', '#techBtn', '#diploBtn', '#nextBtn', '#undoBtn']) { const b = $(id); if (b) b.disabled = true; }
   Ambient.stop(); renderHud();
 }
+// ---------- La Cachina ----------
+const CACHINERO = ['¿Qué me trajo, caserito?', 'Hoy pago bien, mañana quién sabe.', 'Todo se vende, todo se compra.', 'La lana abriga y también paga.', 'Mineral del bueno, no de ese que brilla y no vale.', 'Leña seca, chatarra fresca.', 'Si espera al precio alto, gana. Si espera mucho, pierde.'];
+function cachinaHtml() {
+  const own = goodsBuildsOf(me); if (!own.length) return '';
+  const g = E.goodsOf(S, me), M = S.market || {}, can = isMyTurn();
+  const line = M.until ? `${esc(E.GOODS[M.hot].name)} ×${M.hotX || 2} · ${esc(E.GOODS[M.cold].name)} ×½ · hasta el turno ${M.until}` : '';
+  const say = CACHINERO[(S.turn + me) % CACHINERO.length];
+  return `<div class="cachina"><div class="cach-head"><span data-por="cachinero" data-size="40"></span><div><b>La Cachina</b><small class="cach-say">«${esc(say)}»</small><small class="cach-mk">${line}</small></div></div>
+    <div class="cach-row">${E.GOOD_KEYS.map((k) => { const n = g[k], pr = E.goodPrice(S, k), mult = pr / E.GOODS[k].base, val = Math.max(1, Math.round(n * pr)); const st = M.hot === k ? 'hot' : M.cold === k ? 'cold' : ''; return `<button class="cgood box press ${st} ${n ? 'has' : ''}" data-a="sell" data-g="${k}" ${can && n ? '' : 'disabled'}><span data-spr="${E.GOODS[k].icon}" data-size="22"></span><b>${n}</b><small>${esc(E.GOODS[k].name)}</small><span class="cprice ${st}">${mult === 1 ? '' : mult > 1 ? '▲ ×' + mult : '▼ ×½'}</span><span class="cval"><span data-spr="scrap" data-size="12"></span>${n ? '+' + val : '—'}</span></button>`; }).join('')}</div>
+    <div class="cach-sub">Encargos del Cachinero <small>(se pagan con bienes)</small></div>
+    <div class="cach-row deals">${E.dealOptions(S, me).map((o) => `<button class="cdeal box press ${o.can ? 'can' : ''} ${o.lv >= o.max ? 'done' : ''}" data-a="deal" data-t="${o.type}" ${o.can ? '' : 'disabled'} title="${esc(o.desc)}"><span data-spr="${o.icon}" data-size="18"></span><b>${esc(o.name.split(' ')[0])}</b><span class="pips">${Array.from({ length: o.max }, (_, i) => `<i class="${i < o.lv ? 'on' : ''}"></i>`).join('')}</span><small>${o.lv >= o.max ? 'máximo' : `<span data-spr="${E.GOODS[o.good].icon}" data-size="10"></span> ${o.have}/${o.cost}`}</small></button>`).join('')}</div></div>`;
+}
+function doSell(good) { const n = E.sellGoods(S, me, good); if (!n) return; clearUndo(); afterAction(); tutCheck('sell'); }
 // resumen final: el turno en que la guerra cambió de mano (según el historial de puntajes) y lo que pasó ese turno
 // online: resumen de lo que pasó desde tu último turno + botón para saltar la repetición animada
 function replaySummary(ev) {
@@ -4705,6 +4827,7 @@ const TUT = [
 ];
 // consejos contextuales: aparecen una sola vez, cuando la situación lo pide
 const TIPS = [
+  { id: 'cachina', when: () => goodsBuildsOf(me).length > 0, t: 'Tu mina, aserradero o corral guarda bienes (los puntitos bajo la casilla). Véndelos en La Cachina, dentro de cualquier ciudad tuya: el precio cambia cada 5 turnos, espera el ×2.' },
   { id: 'enemigo', when: () => S.units.some((u) => u.owner === me && E.targets(S, u).some((e) => E.relation(S, me, e.owner) === 'guerra')), t: 'Tienes un enemigo a tiro. Toca tu unidad y luego el borde rojo: el primer toque muestra el daño, el segundo dispara.' },
   { id: 'ruina', when: () => { const v = E.visibleSet(S, me); return S.ruins.some((k) => v.has(k)); }, t: 'Ves un fragmento dorado: son ruinas. Entra con cualquier unidad para ganar chatarra, planos o refuerzos.' },
   { id: 'nodo', when: () => { const v = E.visibleSet(S, me); return (S.nodes || []).some((n) => v.has(E.idx(n.x, n.y)) && n.owner !== me); }, t: 'Ese cráter que late es un nodo del Inti. Termina tu turno con una unidad encima y ganarás energía ⚡ cada turno.' },
@@ -5502,7 +5625,7 @@ window.__inti = { get S() { return S; }, get busy() { return busy; }, get pushin
 function boot(data) {
   const kick = () => { try { Music.setOn(musicOn && sound); Ambient.setOn(store.get('ambient', true) && sound); } catch {} document.removeEventListener('pointerdown', kick); };
   document.addEventListener('pointerdown', kick);
-  $('#scrapIcon').appendChild(PX.icon('scrap', '#888888', 16));
+  $('#scrapIcon').appendChild(PX.icon('scrap', '#9a9187', 26));
   $('#energyIcon').appendChild(PX.icon('i_energy', '#f2b84b', 16));
   $('#energyChip').onclick = () => S && openProtocols();
   $('#undoBtn').onclick = undoMove;
