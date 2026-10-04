@@ -237,6 +237,13 @@ body.panel-open .sheet { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); m
 .stat.gear { border-color: var(--inti); color: var(--inti-hi); }
 .stat.harvest { border-color: var(--good); color: var(--good); }
 .scale-hint { border-left: 4px solid var(--inti); padding-left: 8px; }
+.avatars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.avatar { padding: 6px 2px; display: grid; place-items: center; border-color: var(--hi); }
+.avatar canvas { width: 40px; height: 40px; }
+.avatar[aria-pressed="true"] { border-color: var(--fc); background: color-mix(in srgb, var(--fc) 22%, var(--panel)); box-shadow: 0 0 0 2px var(--fc); animation: popnum .25s steps(4); }
+.seat .seat-av { margin-left: 4px; flex: none; }
+.profile.press { cursor: pointer; }
+.profile .arrow { margin-left: auto; color: var(--inti); font-size: 24px; }
 .lands { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 2px; }
 .lands .land { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 2px solid var(--cc, var(--fc)); background: #1a1512; font-size: 17px; cursor: pointer; }
 .lands small { width: 100%; font-size: 15px; }
@@ -2665,7 +2672,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '22';
+const GAME_VERSION = '23';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -2679,8 +2686,10 @@ function hydrate(root) {
   });
   root.querySelectorAll('[data-spr]').forEach((el) => { if (!el.firstChild) el.appendChild(PX.icon(el.dataset.spr, el.dataset.col || '#888888', +(el.dataset.size || 48))); });
 }
-const store = { get(k, d) { try { const v = localStorage.getItem('inti:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('inti:' + k, JSON.stringify(v)); } catch {} } };
+// guardado local con respaldo en memoria (si el navegador bloquea el almacenamiento, la sesión sigue funcionando)
+const memStore = new Map();
+const store = { get(k, d) { if (memStore.has(k)) return memStore.get(k); try { const v = localStorage.getItem('inti:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { memStore.set(k, v); try { localStorage.setItem('inti:' + k, JSON.stringify(v)); } catch {} } };
 
 // ---------- estado de la interfaz ----------
 let S = null;            // partida
@@ -3124,7 +3133,13 @@ const Ambient = (() => {
 })();
 
 // ---------- utilidades ----------
-function playerName() { return store.get('name', 'Igarashi'); }
+// identidad del jugador: nombre (alias) + avatar. Sin cuentas ni contraseñas: se guarda en el aparato.
+const CALLSIGN_A = ['Cóndor', 'Puma', 'Chasqui', 'Vicuña', 'Zorro', 'Jaguar', 'Tunki', 'Apu', 'Huayra', 'Killa', 'Inti', 'Qori', 'Mayu', 'Rumi', 'Wayra', 'Amaru', 'Kuntur', 'Sacha', 'Chaska', 'Illapa'];
+const CALLSIGN_B = ['del Norte', 'de Ica', 'Rojo', 'de Acero', 'Nocturno', 'del Sur', 'Dorado', 'Salvaje', 'de la Costa', 'Andino', 'Ceniza', 'de Hierro', 'Veloz', 'del Río', 'Fantasma', 'Ciego', 'Brava', 'de Puno'];
+function randomCallsign() { return CALLSIGN_A[Math.floor(Math.random() * CALLSIGN_A.length)] + ' ' + CALLSIGN_B[Math.floor(Math.random() * CALLSIGN_B.length)]; }
+function playerName() { let n = store.get('name', null); if (!n) { n = randomCallsign(); store.set('name', n); } return n; }
+const AVATARS = ['lima', 'sierra', 'selva', 'desierto', 'culto', 'flota', 'callao', 'chasquis', 'mineros'];
+function playerAvatar() { return store.get('avatar', null) || store.get('fac', 'lima'); }
 const fcol = (p) => (S.players[p].horde ? '#a8322a' : E.FACTIONS[S.players[p].faction].color);
 const isMyTurn = () => S && S.cur === me && S.winner < 0 && !busy;
 function toast(msg, cls = '') {
@@ -4560,13 +4575,13 @@ function mainMenu() {
   const pr = profile();
   show(`<div class="logo">Inti<span>Caído</span></div>
     <div class="tag">Perú · 2087 · estrategia por turnos · v${GAME_VERSION}</div>
-    <div class="profile box"><span data-por="${store.get('fac', 'lima')}" data-size="44"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div><button class="act ghost" data-a="profile" style="flex:none;padding:8px 10px">Ver</button></div>
+    <div class="profile box"><span data-por="${playerAvatar()}" data-size="44"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div><button class="act ghost" data-a="profile" style="flex:none;padding:8px 10px">Ver</button></div>
     ${hasSave ? card('cont', 'Continuar', `${esc(E.FACTIONS[save.S.players[save.me].faction].name)} · turno ${save.S.turn}`, 'th_cont', E.FACTIONS[save.S.players[save.me].faction].color, 'data-gold="1"') : ''}
     ${card('camp', 'Campaña', prog > 10 ? 'Campaña completada · vuelve a jugar' : prog >= 2 ? 'Capítulo ' + Math.min(prog, 10) + ' de 10 disponible' : 'Empieza aquí: incluye tutorial', 'th_camp', '#3fb6c9')}
-    ${card('suyos', 'Guerra de los Suyos', '6 modos · 7 facciones · hasta 6 rivales · 4 mapas', 'th_suyos', '#e8a93a')}
-    ${card('online', 'Partida online', 'Juega con Garupo, cada uno en su celular', 'th_online', '#7a86e8')}
+    ${card('suyos', 'Guerra de los Suyos', '6 modos · 9 facciones · hasta 8 rivales · 4 mapas', 'th_suyos', '#e8a93a')}
+    ${card('online', 'Partida online', 'Con amigos, cada uno en su celular · código de sala', 'th_online', '#7a86e8')}
     ${card('retos', 'Retos', `${Object.keys(store.get('retos', {})).length} de ${RETOS.length} superados · escenarios con reglas únicas`, 'th_retos', '#e5533d')}
-    ${card('codex', 'Códice', 'Las 7 facciones, sus unidades y el árbol de tecnología', 'th_codex', '#c76b8f')}
+    ${card('codex', 'Códice', 'Las 9 facciones, sus unidades y el árbol de tecnología', 'th_codex', '#c76b8f')}
     ${card('ach', 'Logros', `${nAch} de ${ACH.length} desbloqueados`, 'th_ach', '#f2b84b')}
     ${card('how', 'Cómo jugar', 'Reglas en un minuto', 'th_how', '#9a9187')}`,
   (a) => {
@@ -4722,13 +4737,30 @@ function retosScreen() {
 function profileScreen() {
   const pr = profile(), games = store.get('games', 0), wf = store.get('winfac', {});
   show(`<button class="back" data-a="back">‹ Volver</button><div class="h2">Comandante</div>
-    <div class="profile box"><span data-por="${store.get('fac', 'lima')}" data-size="56"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP · faltan ${pr.next - pr.xp} para el nivel ${pr.lvl + 1}</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div></div>
-    <div class="label">Tu nombre</div><input id="nameIn" maxlength="18" value="${esc(playerName())}" autocomplete="off">
+    <div class="profile box"><span data-por="${playerAvatar()}" data-size="56"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP · faltan ${pr.next - pr.xp} para el nivel ${pr.lvl + 1}</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div></div>
+    <div class="label">Tu alias <small>(así te ven los demás en línea)</small></div><div class="row"><input id="nameIn" maxlength="18" value="${esc(playerName())}" autocomplete="off" style="flex:1"><button class="act ghost" data-a="rand" style="flex:none" title="Alias al azar">Azar</button></div>
+    <div class="label">Tu avatar</div><div class="avatars">${AVATARS.map((k) => `<button class="avatar box press" data-a="av" data-k="${k}" aria-pressed="${k === playerAvatar()}" style="--fc:${E.FACTIONS[k].color}"><span data-por="${k}" data-size="40"></span></button>`).join('')}</div>
     <div class="status-grid">${[['flag', games, 'partidas'], ['i_medal', Object.keys(achState()).length, 'logros'], ['th_suyos', Object.keys(wf).length, 'facciones ganadas']].map(([ic, v, l]) => `<div class="stile box"><span data-spr="${ic}" data-col="#f2b84b" data-size="22"></span><b>${v}</b><small>${l}</small></div>`).join('')}</div>
     <div class="label">Rangos</div>${TITLES.map(([l, t]) => `<div class="facinfo-row box ${pr.lvl >= l ? '' : 'dim'}"><div><b>Nivel ${l} · ${esc(t)}</b></div></div>`).join('')}
     <div class="label">Reliquias (solo en partidas contra la IA)</div>${PERKS.map(([l, k, t]) => `<div class="facinfo-row box ${pr.lvl >= l ? '' : 'dim'}"><span data-spr="shard" data-col="${pr.lvl >= l ? '#f2b84b' : '#5a544d'}" data-size="32"></span><div><b>${esc(t)}</b><small>${pr.lvl >= l ? 'Desbloqueada' : 'Se desbloquea en el nivel ' + l}</small></div></div>`).join('')}
     <p class="muted">Ganas XP en cada partida: más por victorias, por más rivales, mapas grandes e IA difícil.</p>`,
-  (a) => { const nm = ($('#nameIn')?.value || '').trim(); if (nm) store.set('name', nm); if (a === 'back') mainMenu(); });
+  (a, d) => { const nm = ($('#nameIn')?.value || '').trim(); if (nm) store.set('name', nm); if (a === 'back') mainMenu(); if (a === 'av') { store.set('avatar', d.k); beep('tap'); profileScreen(); } if (a === 'rand') { store.set('name', randomCallsign()); beep('tap'); profileScreen(); } }, true);
+}
+// primera vez: elige alias y avatar antes de ver el menú (sin cuentas, sin fricción)
+function welcomeScreen() {
+  const name = store.get('name', null) || randomCallsign();
+  const draw = () => show(`<div class="brief">Transmisión entrante · 2087</div><div class="h2">Bienvenido, Comandante</div>
+    <p class="muted">Elige cómo te verán los demás. Lo puedes cambiar luego en tu perfil.</p>
+    <div class="label">Tu avatar</div><div class="avatars">${AVATARS.map((k) => `<button class="avatar box press" data-a="av" data-k="${k}" aria-pressed="${k === playerAvatar()}" style="--fc:${E.FACTIONS[k].color}"><span data-por="${k}" data-size="44"></span></button>`).join('')}</div>
+    <div class="label">Tu alias</div><div class="row"><input id="nameIn" maxlength="18" value="${esc(store.get('name', name))}" autocomplete="off" style="flex:1"><button class="act ghost" data-a="rand" style="flex:none">Azar</button></div>
+    <button class="menu-btn btn-gold" data-a="go"><div><b>Entrar al Perú</b><small>Sin cuentas ni contraseñas: tu perfil vive en este aparato</small></div><span class="arrow">›</span></button>`,
+    (a, d) => {
+      const nm = ($('#nameIn')?.value || '').trim(); if (nm) store.set('name', nm);
+      if (a === 'av') { store.set('avatar', d.k); beep('tap'); draw(); }
+      if (a === 'rand') { store.set('name', randomCallsign()); beep('tap'); draw(); }
+      if (a === 'go') { if (!store.get('name', null)) store.set('name', name); store.set('welcomed', 1); beep('capture'); mainMenu(); }
+    }, true);
+  draw();
 }
 
 // ---------- logros ----------
@@ -4904,9 +4936,9 @@ async function onlineMenu() {
   try { games = (await Net.mine()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 8); } catch (e) { console.error(e); }
   show(`<button class="back" data-a="back">‹ Volver</button><div class="h2">Partida online</div>
     <p class="muted">${kind === 'supabase' ? 'Conectado al servidor de Inti Caído. Cualquiera con el enlace puede entrar con un código.' : 'Conectado dentro de Claude. Quien juegue contigo necesita acceso como editor a esta página.'}</p>
-    <div class="label">Tu nombre en la partida</div><input id="nameIn" maxlength="18" value="${esc(playerName())}" autocomplete="off">
+    <div class="profile box press" data-a="profile"><span data-por="${playerAvatar()}" data-size="40"></span><div class="profile-b"><b>${esc(playerName())}</b><small>Así te verán en la sala · toca para cambiar alias o avatar</small></div><span class="arrow">›</span></div>
     ${card('create', 'Crear sala', 'Elige facción, modo y rivales; te doy un código', 'th_online', '#7a86e8')}
-    ${card('coop', 'Historia cooperativa', 'Tú y tu pareja contra la Horda · 3 capítulos', 'th_camp', '#a8322a')}
+    ${card('coop', 'Historia cooperativa', 'Dos aliados contra la Horda · 3 capítulos', 'th_camp', '#a8322a')}
     ${kind === 'supabase' ? card('records', 'Récords', 'Marcador entre jugadores, facciones ganadoras y últimas partidas', 'th_ach', '#f2b84b') : ''}
     <div class="label">Unirme con un código</div><div class="row"><input id="codeIn" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;flex:1" autocomplete="off"><button class="act" data-a="join" style="flex:none">Unirme</button></div>
     ${games.length ? '<div class="label">Mis partidas</div>' + games.map((g) => { const st = g.status === 'lobby' ? 'En sala' : g.status === 'done' ? 'Terminada' : (g.curUid === uid ? '▶ Tu turno' : 'Turno de ' + esc(g.curName || '…')); return `<button class="game-item box press ${g.curUid === uid && g.status === 'playing' ? 'myturn' : ''}" data-a="open" data-code="${esc(g.code)}"><b>${esc(g.code)}</b><span>${esc((g.seats || []).map((s) => s.name || 'IA').join(' · '))}${g.coop ? ' · co-op' : ''}</span><small>${st}</small></button>`; }).join('') : ''}`,
@@ -4916,6 +4948,7 @@ async function onlineMenu() {
     if (a === 'create') factionPick((f, n, size, mode, mods, diff, mapOpts) => createRoom({ f, n, size: size === 'grande' || size === 'enorme' ? 'mediano' : size, mode, mods, diff, map: mapOpts.map }), { title: 'Tu facción en la sala', cta: 'Crear sala', back: onlineMenu, maxN: 4 });
     if (a === 'coop') coopMenu();
     if (a === 'records') recordsScreen();
+    if (a === 'profile') profileScreen();
     if (a === 'join') { const code = ($('#codeIn').value || '').trim().toUpperCase(); if (code.length === 4) joinRoom(code); else toast('Escribe el código de 4 letras.'); }
     if (a === 'open') openRoom(d.code);
   });
@@ -4945,7 +4978,7 @@ async function createRoom(o) {
   const facs = o.seatsFacs || [o.f, ...E.FACTION_KEYS.filter((k) => k !== o.f)].slice(0, o.n);
   let code = newCode();
   for (let i = 0; i < 5; i++) { if (!(await Net.get(code))) break; code = newCode(); }
-  const doc = { code, status: 'lobby', host: uid, members: [uid], seats: facs.map((k, i) => ({ faction: k, uid: i === 0 ? uid : null, name: i === 0 ? playerName() : null, human: o.humanSeats ? o.humanSeats.includes(i) : true })), state: null, gameMode: o.mode || 'clasico', mods: o.mods || [], size: o.size || 'mediano', diff: o.diff || 'normal', map: o.map || 'peru', coop: !!o.coop, chapter: o.chapter || null, version: 0, chat: [] };
+  const doc = { code, status: 'lobby', host: uid, members: [uid], seats: facs.map((k, i) => ({ faction: k, uid: i === 0 ? uid : null, name: i === 0 ? playerName() : null, avatar: i === 0 ? playerAvatar() : null, human: o.humanSeats ? o.humanSeats.includes(i) : true })), state: null, gameMode: o.mode || 'clasico', mods: o.mods || [], size: o.size || 'mediano', diff: o.diff || 'normal', map: o.map || 'peru', coop: !!o.coop, chapter: o.chapter || null, version: 0, chat: [] };
   try { await Net.create(doc); } catch (e) { console.error(e); toast('No pude crear la sala: ' + (e.code === 'invalid_argument' ? 'necesitas permiso de edición.' : (e.message || 'inténtalo otra vez.')), 'red'); return; }
   openRoom(code);
 }
@@ -4957,7 +4990,7 @@ async function joinRoom(code) {
   if (g.status !== 'lobby') { toast('Esa partida ya empezó.', 'red'); return; }
   const free = g.seats.findIndex((x) => !x.uid && x.human !== false);
   if (free < 0) { toast('La sala está llena.', 'red'); return; }
-  const seats = g.seats.map((x, i) => (i === free ? { ...x, uid, name: playerName() } : x));
+  const seats = g.seats.map((x, i) => (i === free ? { ...x, uid, name: playerName(), avatar: playerAvatar() } : x));
   try { await Net.update(code, { seats, members: [...new Set([...(g.members || []), uid])], version: (g.version || 0) + 1 }, g.version || 0); }
   catch (e) { if (e.code === 'stale') { joinRoom(code); return; } toast(e.code === 'invalid_argument' ? 'No tienes permiso aquí. Pide que te inviten como editor.' : 'No pude unirme. Inténtalo otra vez.', 'red'); return; }
   openRoom(code);
@@ -5010,7 +5043,7 @@ function lobbyView(g) {
   const seatHtml = (s, i) => {
     const F = E.FACTIONS[s.faction], ed = canEdit(i), who = s.name || (s.human === false ? 'IA · ' + F.leader : 'Asiento libre');
     const dk = s.diff || g.diff || 'normal';
-    let h = `<div class="seat box ${ed ? 'press editable' : ''} ${lobbyPick === i ? 'picking' : ''}" style="--fc:${F.color}" ${ed ? `data-a="pick" data-i="${i}"` : ''}><span data-por="${s.faction}" data-size="40"></span><div class="seat-t"><b>${esc(who)}</b><small>${esc(F.name)}${s.uid === g.host ? ' · anfitrión' : ''}${i === mySeat ? ' · tú' : ''}${!s.uid ? ' · IA ' + esc(E.DIFF[dk].name) : ''}</small></div><small class="seat-r">${ed ? (lobbyPick === i ? '▲' : 'Cambiar ▾') : s.uid ? 'Listo' : ''}</small></div>`;
+    let h = `<div class="seat box ${ed ? 'press editable' : ''} ${lobbyPick === i ? 'picking' : ''}" style="--fc:${F.color}" ${ed ? `data-a="pick" data-i="${i}"` : ''}><span data-por="${s.faction}" data-size="40"></span><div class="seat-t"><b>${esc(who)}</b><small>${esc(F.name)}${s.uid === g.host ? ' · anfitrión' : ''}${i === mySeat ? ' · tú' : ''}${!s.uid ? ' · IA ' + esc(E.DIFF[dk].name) : ''}</small></div>${s.uid && s.avatar ? `<span class="seat-av" data-por="${s.avatar}" data-size="24"></span>` : ''}<small class="seat-r">${ed ? (lobbyPick === i ? '▲' : 'Cambiar ▾') : s.uid ? 'Listo' : ''}</small></div>`;
     if (lobbyPick === i) {
       const takenByHuman = (k) => g.seats.some((x, j) => j !== i && x.uid && x.faction === k);
       h += `<div class="fac-grid lobby-grid">${E.FACTION_KEYS.map((k) => { const G = E.FACTIONS[k]; const tk = takenByHuman(k); return `<button class="fac box press" style="--fc:${G.color}" aria-pressed="${k === s.faction}" data-a="setfac" data-i="${i}" data-k="${k}" ${tk ? 'disabled' : ''}><span data-por="${k}" data-size="44"></span><span class="fac-t"><b>${esc(G.short)}</b><small>${tk ? 'ocupada' : esc(G.suyo)}</small></span></button>`; }).join('')}</div>
@@ -5124,6 +5157,7 @@ function boot(data) {
   if (data && data.S && !data.online) { loadGame(data.S, data.me); return; }
   if (data && data.online) { openRoom(data.online); return; }
   if (location.hash && /^#[A-Z]{4}$/.test(location.hash)) { Net.init().then((k) => { if (k !== 'none') joinRoom(location.hash.slice(1)); else mainMenu(); }); return; }
+  if (!store.get('welcomed', 0) && !window.__skipWelcome) { welcomeScreen(); return; }
   mainMenu();
 }
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
