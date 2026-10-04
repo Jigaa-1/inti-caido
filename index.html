@@ -84,7 +84,7 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 /* ---------- HUD ---------- */
 .hud { position: absolute; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px; display: flex; align-items: center; gap: 6px; z-index: 10; pointer-events: none; }
 .hud > * { pointer-events: auto; }
-.chip { display: flex; align-items: center; gap: 5px; padding: 6px 7px; font-family: var(--f-pixel); font-size: 9px; white-space: nowrap; }
+.chip { display: flex; align-items: center; gap: 5px; padding: 6px 7px; font-family: var(--f-pixel); font-size: 10px; white-space: nowrap; }
 .chip .dot { width: 12px; height: 12px; background: var(--fc, var(--inti)); border: var(--b) solid var(--edge); box-sizing: content-box; }
 .chip .num { font-variant-numeric: tabular-nums; display: inline-block; }
 .chip .num.up { animation: numup .45s steps(6); color: var(--good); }
@@ -133,7 +133,7 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 /* barra de mando */
 .cmd { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 10px); display: flex; align-items: flex-end; gap: 8px; z-index: 12; pointer-events: none; }
 .cmd > * { pointer-events: auto; }
-.cmd .tool { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 70px; padding: 8px 0 6px; font-family: var(--f-pixel); font-size: 7px; color: var(--dust); position: relative; }
+.cmd .tool { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 70px; padding: 8px 0 6px; font-family: var(--f-pixel); font-size: 8px; color: var(--dust); position: relative; }
 .cmd .tool canvas { width: 30px; height: 30px; }
 .cmd .tool .badge { position: absolute; top: -8px; right: -6px; background: var(--inti); color: #1d1408; font-size: 8px; padding: 3px 5px; border: var(--b) solid var(--edge); }
 .end { margin-left: auto; padding: 16px 18px; font-family: var(--f-pixel); font-size: 12px; line-height: 1.3; }
@@ -186,7 +186,7 @@ body.panel-open .sheet { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); m
 .tcard { flex: 0 0 88px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 6px; background: var(--edge); border: var(--b) solid var(--hi); }
 .tcard canvas { width: 48px; height: 48px; }
 .tcard b { font-size: 17px; font-weight: 400; text-align: center; line-height: 1; }
-.tcard .cost { font-family: var(--f-pixel); font-size: 8px; color: var(--inti); }
+.tcard .cost { font-family: var(--f-pixel); font-size: 9px; color: var(--inti); }
 .tcard[disabled] { opacity: .38; }
 .tcard.lock .cost { color: var(--dust); font-size: 7px; }
 .pips { display: flex; gap: 3px; align-items: center; }
@@ -259,6 +259,20 @@ body.panel-open .sheet { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); m
 .rw { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; text-align: center; border-color: var(--inti); animation: up .3s steps(5) both; }
 .rw b { font-family: var(--f-pixel); font-size: 10px; font-weight: 400; color: var(--inti-hi); }
 .rw small { font-size: 17px; color: var(--bone); line-height: 1.1; }
+.pro-mode .wrap { min-height: calc(100vh - 44px); display: flex; align-items: center; justify-content: center; }
+.pro-wrap { position: relative; width: 100%; min-height: 70vh; display: flex; align-items: center; justify-content: center; }
+.pro-box { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; animation: proin .6s steps(6) both; max-width: 420px; }
+@keyframes proin { from { opacity: 0; transform: translateY(8px); } }
+.pro-line { font-family: var(--f-pixel); font-size: 18px; line-height: 1.6; color: var(--bone); text-shadow: 4px 4px 0 #000; letter-spacing: .04em; }
+.pro-line.pro-small { font-size: 9px; color: var(--inti); }
+.pro-title { font-family: var(--f-pixel); font-size: 42px; line-height: 1.1; color: var(--bone); text-shadow: 5px 5px 0 #000; animation: popnum .5s steps(6); }
+.pro-title span { color: var(--inti); }
+.pro-say { display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px; background: rgba(13,11,10,.85); border: var(--b) solid var(--inti); }
+.pro-say b { font-family: var(--f-pixel); font-size: 8px; color: var(--inti); display: block; margin-bottom: 6px; }
+.pro-say p { margin: 0; font-size: 22px; }
+.pro-skip { position: absolute; top: 0; right: 0; }
+.pro-hint { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: 16px; color: var(--dust); opacity: .7; }
+.fant { font-style: normal; color: var(--dust); font-size: 15px; }
 .lands { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 2px; }
 .lands .land { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border: 2px solid var(--cc, var(--fc)); background: #1a1512; font-size: 17px; cursor: pointer; }
 .lands small { width: 100%; font-size: 15px; }
@@ -1087,7 +1101,7 @@ const Engine = (() => {
   const rankOf = (u) => u.rank || (u.vet ? 1 : 0);
   const maxHp = (u) => UNITS[u.type].hp + RANKS[rankOf(u)].hp + (u.boss ? 20 : 0) + (u.gear && GEAR[u.gear].hp || 0); // los jefes son más grandes
   function promote(st, u) { const r = rankOf(u); if (r >= 2) return false; u.rank = r + 1; u.vet = true; u.hp = Math.min(maxHp(u), u.hp + RANKS[u.rank].hp); event(st, { k: 'rank', x: u.x, y: u.y, id: u.id, rank: u.rank, p: u.owner }); return true; }
-  const fac = (st, p) => st.players[p].faction;
+  const fac = (st, p) => (p >= 0 && st.players[p] ? st.players[p].faction : null);
   const nodeAt = (st, x, y) => st.nodes && st.nodes.find((n) => n.x === x && n.y === y);
   const riverAt = (st, x, y) => !!(st.rivers && st.rivers.includes(idx(x, y)));
   const bridgeAt = (st, x, y) => riverAt(st, x, y) && !!(st.roads && st.roads.includes(idx(x, y)));
@@ -1336,8 +1350,8 @@ const Engine = (() => {
   function killUnit(st, d, by) {
     st.units = st.units.filter((v) => v !== d);
     if (d.hero) { st.players[d.owner].moral = 3; log(st, `¡${d.name || 'El líder'} de ${st.players[d.owner].name} ha caído! Su facción pierde moral.`); event(st, { k: 'herodown', p: d.owner, x: d.x, y: d.y }); }
-    st.players[d.owner].stats.lost++;
-    if (by >= 0 && st.players[d.owner].horde && st.players[by].stats) st.players[by].stats.hordeKills++;
+    if (d.owner >= 0) st.players[d.owner].stats.lost++;
+    if (by >= 0 && d.owner >= 0 && st.players[d.owner].horde && st.players[by].stats) st.players[by].stats.hordeKills++;
     event(st, { k: 'kill', x: d.x, y: d.y, type: d.type, owner: d.owner, by, id: d.id });
   }
 
@@ -1494,6 +1508,7 @@ const Engine = (() => {
   }
   // la IA decide si acepta una alianza propuesta por p
   function aiAccepts(st, p, q) {
+    const G = st.players[q].grudge; if (G && G.p === p && st.turn < G.until) return false;
     const trust = st.players[p].traitor === 0;
     const ratio = power(st, p) / Math.max(1, power(st, q));
     const emb = hasTech(st, p, 'embajada');
@@ -1566,8 +1581,39 @@ const Engine = (() => {
       const m = newMission(st, p); if (m) { P.mission = m; event(st, { k: 'mission', p, state: 'new', text: m.text, reward: m.reward, due: m.due }); }
     }
   }
+  // caravanas neutrales: avanzan solas hacia su destino; si llegan, premian a quien las dejó pasar
+  function moveCaravans(st, p) {
+    for (const u of st.units.slice()) {
+      if (!u.caravan || u.caravan.by !== p) continue;
+      const tgt = st.cities[u.caravan.to]; if (!tgt) { st.units.splice(st.units.indexOf(u), 1); continue; }
+      for (let step = 0; step < 2; step++) {
+        if (dist(u.x, u.y, tgt.x, tgt.y) <= 1) break;
+        const opts = neighbors(u.x, u.y).filter(([x, y]) => inb(x, y) && !unitAt(st, x, y) && !['mar', 'lago', 'montana'].includes(st.tiles[idx(x, y)]));
+        if (!opts.length) break;
+        opts.sort((a, b) => dist(a[0], a[1], tgt.x, tgt.y) - dist(b[0], b[1], tgt.x, tgt.y));
+        u.x = opts[0][0]; u.y = opts[0][1];
+      }
+      u.caravan.turns--;
+      if (dist(u.x, u.y, tgt.x, tgt.y) <= 1) { st.players[p].scrap += 8; st.players[p].energy = (st.players[p].energy || 0) + 2; log(st, `La caravana llegó a ${tgt.name}: +8 chatarra, +2 energía.`); event(st, { k: 'caravan', x: u.x, y: u.y, p, ok: true }); st.units.splice(st.units.indexOf(u), 1); }
+      else if (u.caravan.turns <= 0) { log(st, 'La caravana se perdió en el camino.'); event(st, { k: 'caravan', x: u.x, y: u.y, p, ok: false }); st.units.splice(st.units.indexOf(u), 1); }
+    }
+  }
+  // guiones de campaña: cosas que pasan en un turno concreto (traiciones, refuerzos, mensajes)
+  function runScripts(st, p) {
+    if (!st.scripts || p !== 0) return;
+    for (const sc of st.scripts) {
+      if (sc.done || st.turn < sc.turn) continue;
+      sc.done = true;
+      if (sc.k === 'betray') { const a = sc.a, b = sc.b; if (st.players[a] && st.players[a].alive) { st.rel[a < b ? a + '-' + b : b + '-' + a] = 'guerra'; st.players[a].betrayed = b; log(st, sc.text); event(st, { k: 'betray', a, b, scripted: true, text: sc.text }); } }
+      if (sc.k === 'spawn') { for (let i = 0; i < sc.n; i++) freeUnit(st, sc.p, sc.type, sc.vet); log(st, sc.text); event(st, { k: 'script', text: sc.text, who: sc.who }); }
+      if (sc.k === 'msg') { log(st, sc.text); event(st, { k: 'script', text: sc.text, who: sc.who }); }
+      if (sc.k === 'scrap') { st.players[sc.p].scrap += sc.n; event(st, { k: 'script', text: sc.text, who: sc.who }); }
+    }
+  }
   function startTurn(st) {
     const p = st.cur, P = st.players[p];
+    runScripts(st, p);
+    moveCaravans(st, p);
     checkMissions(st, p);
     P.scrap += income(st, p);
     P.energy = (P.energy || 0) + energyIncome(st, p);
@@ -1715,6 +1761,9 @@ const Engine = (() => {
       opts: [{ label: 'Asaltarla', desc: '+9 chatarra · 3 turnos de mala fama', run: (st, p) => { st.players[p].scrap += 9; st.players[p].traitor = Math.max(st.players[p].traitor, 3); } }, { label: 'Cobrar peaje', desc: '+4 chatarra', run: (st, p) => { st.players[p].scrap += 4; } }], ai: 1 },
     { id: 'vision', fac: 'culto', title: 'La visión del Profeta', text: 'El Profeta despierta gritando: ha visto el sol encenderse de nuevo.', who: 'culto',
       opts: [{ label: 'Peregrinación', desc: '2 Fanáticos gratis', run: (st, p) => { freeUnit(st, p, 'fanatico'); freeUnit(st, p, 'fanatico'); } }, { label: 'Meditar', desc: '+3 energía', run: (st, p) => { st.players[p].energy += 3; } }], ai: 0 },
+    { id: 'paso', title: 'Una caravana pide paso', text: 'Comerciantes neutrales piden cruzar tus tierras hacia otra ciudad. Llevan chatarra y piezas del Inti.', who: 'narr', when: (st, p) => st.cities.filter((c) => c.owner === p).length >= 1 && st.cities.some((c) => c.owner !== p),
+      opts: [{ label: 'Abrir las puertas', desc: 'La caravana cruza el mapa 4 turnos; si llega viva: +8 chatarra, +2 energía', run: (st, p) => { const cap = st.cities.find((c) => c.owner === p && c.capital) || st.cities.find((c) => c.owner === p); const far = st.cities.filter((c) => c.owner !== p && dist(c.x, c.y, cap.x, cap.y) >= 4).sort((a, b) => dist(a.x, a.y, cap.x, cap.y) - dist(b.x, b.y, cap.x, cap.y))[0] || st.cities.find((c) => c.owner !== p); const sp = neighbors(cap.x, cap.y).find(([x, y]) => !unitAt(st, x, y) && passable(st, 'rondero', p, x, y)); if (sp && far) { const u = spawn(st, -1, 'buggy', sp[0], sp[1]); u.hp = 6; u.name = 'Caravana'; u.caravan = { by: p, to: far.id, turns: 4 }; u.moved = true; u.acted = true; } else st.players[p].scrap += 3; } },
+        { label: 'Confiscar la carga', desc: '+5 chatarra ahora · la facción más cercana no olvida (no pacta contigo 6 turnos)', run: (st, p) => { st.players[p].scrap += 5; const cap = st.cities.find((c) => c.owner === p && c.capital) || st.cities.find((c) => c.owner === p); let best = -1, bd = 99; st.players.forEach((Q, i) => { if (i === p || !Q.alive || Q.horde) return; const c = st.cities.find((cc) => cc.owner === i && cc.capital); if (c && dist(c.x, c.y, cap.x, cap.y) < bd) { bd = dist(c.x, c.y, cap.x, cap.y); best = i; } }); if (best >= 0) { st.players[best].grudge = { p, until: st.turn + 6 }; log(st, `${st.players[best].name} recuerda la confiscación.`); } } }], ai: 1 },
     { id: 'tambo', fac: 'chasquis', title: 'El tambo olvidado', text: 'Un corredor encuentra un tambo intacto en la Ruta Real: provisiones de antes de la caída.', who: 'chasquis',
       opts: [{ label: 'Repartir', desc: 'Todas tus tropas recuperan movimiento', run: (st, p) => { for (const u of st.units) if (u.owner === p) u.moved = false; } }, { label: 'Guardar', desc: '+6 chatarra', run: (st, p) => { st.players[p].scrap += 6; } }], ai: 1 },
     { id: 'veta', fac: 'mineros', title: 'La veta madre', text: 'Los barrenos tocan metal del Inti bajo el Cerro. Brilla. Y tiembla.', who: 'mineros',
@@ -2176,7 +2225,7 @@ const Engine = (() => {
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, setGuard, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, setGuard, runScripts, AI_DOCTRINE, weeklySignal, cityRewardOptions, chooseCityReward, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
     idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
@@ -2748,7 +2797,7 @@ const PX = (() => {
 
 </script>
 <script>
-const GAME_VERSION = '26';
+const GAME_VERSION = '27';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -2803,7 +2852,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Comandante, el desierto del norte está lleno de restos del Inti. Los Saqueadores de Sechura ya bajan por la Panamericana. Tome cinco ciudades antes que ellos.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c1', size: 'pequeno', tutorialRuin: true, objective: { type: 'cities', player: 0, n: 6 }, players: [human(), ai('desierto', 'facil')] }),
-    tutorial: true, next: 'c2' },
+    fantasy: 'La señal', tutorial: true, next: 'c2' },
   c2: { n: 2, title: 'La Ruta del Sol', brief: 'Transmisión entrante · Huancayo · 2087', color: '#d6543a', goal: 'Toma Cusco', size: 'mediano',
     lines: [
       ['', 'Con el norte asegurado, llegan señales desde el sur. Alguien encendió un fragmento del Inti en lo alto de Cusco.'],
@@ -2812,6 +2861,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Tome Cusco. Si la selva le ofrece alianza, úsela. Pero no confíe en nadie.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c2', size: 'mediano', objective: { type: 'capture', city: 'Cusco', player: 0 }, players: [human(), ai('sierra'), ai('selva')] }),
+    fantasy: 'La subida', after: (st) => { st.scripts = [{ turn: 3, k: 'spawn', p: 0, type: 'rondero', n: 2, vet: true, who: 'lima', text: 'Vargas: "Le mando dos veteranos del búnker. Suba por la carretera; en la montaña, Rumi tiene ventaja."' }, { turn: 8, k: 'msg', who: 'sierra', text: 'Apu Rumi: "Costeño. Cada paso que das arriba te cuesta el doble. Vuelve a tu mar."' }]; },
     next: 'c3' },
   c3: { n: 3, title: 'Las Líneas', brief: 'Transmisión interceptada · Pampa de Nazca · 2088', color: '#c76b8f', goal: 'Elimina al Culto', size: 'mediano',
     lines: [
@@ -2821,6 +2871,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Borre al Culto del mapa antes de que terminen. La Viuda de Sechura ofrece su ayuda. Cobra caro, pero su gente conoce el desierto.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c3', size: 'mediano', objective: { type: 'eliminate', faction: 'culto', player: 0 }, players: [human(), ai('culto'), ai('desierto')] }),
+    fantasy: 'Mil hogueras', after: (st) => { const cu = st.players.findIndex((P) => P.faction === 'culto'); const cap = st.cities.find((c) => c.owner === cu && c.capital); if (cap) { let n = 0; for (const [x, y] of E.neighbors(cap.x, cap.y)) { if (n >= 4) break; if (!E.unitAt(st, x, y) && !['mar', 'lago', 'montana'].includes(st.tiles[E.idx(x, y)])) { st.units.push({ id: st.nextId++, type: 'fanatico', owner: cu, x, y, hp: 6, moved: true, acted: true, kills: 0, vet: false, home: cap.id }); n++; } } } st.scripts = [{ turn: 6, k: 'spawn', p: cu, type: 'fanatico', n: 3, who: 'culto', text: 'El Profeta Ciego: "Más peregrinos llegan a las Líneas. El sol los llama."' }, { turn: 12, k: 'spawn', p: cu, type: 'fanatico', n: 3, who: 'culto', text: 'El Profeta Ciego: "Mil hogueras. Cuéntalas si puedes."' }]; },
     next: 'c4' },
   c4: { n: 4, title: 'Marea Negra', brief: 'Alerta de costa · Callao · 2088', color: '#7a86e8', goal: 'Resiste 25 turnos y conserva Lima', size: 'mediano',
     lines: [
@@ -2830,6 +2881,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Resista 25 turnos. Fortifique la costa. La Sierra no nos quiere, pero tampoco quiere a la Flota.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c4', size: 'mediano', maxTurns: 25, objective: { type: 'survive', turns: 25, player: 0 }, players: [human(), ai('flota', 'dificil'), ai('sierra')] }),
+    fantasy: 'La defensa de Lima', after: (st) => { if (!st.players[0].techs.includes('murallas')) st.players[0].techs.push('murallas'); const fl = st.players.findIndex((P) => P.faction === 'flota'); st.scripts = [{ turn: 2, k: 'spawn', p: 0, type: 'vigia', n: 2, who: 'lima', text: 'Vargas: "Dos Vigías a la costa. Que no desembarquen."' }, { turn: 5, k: 'spawn', p: fl, type: 'lancha', n: 3, who: 'flota', text: 'Almirante Paita: "Primera oleada. Lima, abran las puertas o las abro yo."' }, { turn: 12, k: 'spawn', p: fl, type: 'lancha', n: 3, who: 'flota', text: 'Almirante Paita: "Segunda oleada. Todavía estoy de buen humor."' }, { turn: 19, k: 'spawn', p: fl, type: 'patrullera', n: 2, who: 'flota', text: 'Almirante Paita: "Última marea. Después de esto, no quedará costa."' }]; },
     next: 'c5' },
   c5: { n: 5, title: 'Los Cuatro Suyos', brief: 'Consejo de Guerra · Lima · 2089', color: '#e8a93a', goal: 'Último en pie o alianza final', size: 'grande',
     lines: [
@@ -2839,6 +2891,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Cinco facciones, un país. Sobreviva. Alíese con quien haga falta. Y recuerde que las alianzas también se rompen.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c5', size: 'grande', players: [human(), ai('sierra', 'dificil'), ai('selva'), ai('desierto', 'dificil'), ai('culto'), ai('flota')] }),
+    fantasy: 'La traición', after: (st) => { const se = st.players.findIndex((P) => P.faction === 'selva'); st.rel['0-' + se] = 'alianza'; st.scripts = [{ turn: 2, k: 'msg', who: 'selva', text: 'Madre Yacumama: "El río y el búnker, aliados. Qué raro suena. Cuida mi flanco y yo cuido el tuyo."' }, { turn: 9, k: 'betray', a: se, b: 0, text: 'Madre Yacumama rompe la alianza: "La selva no tiene amigos. Tiene estaciones."' }, { turn: 9, k: 'spawn', p: se, type: 'jaguar', n: 2, who: 'selva', text: 'Los jaguares salen de la selva.' }]; },
     next: 'c6' },
   c6: { n: 6, title: 'El Último Sol', brief: 'Transmisión final · Orilla del Titicaca · 2089', color: '#f2b84b', goal: 'Toma Puno antes del turno 30', size: 'mediano',
     lines: [
@@ -2848,7 +2901,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Esto termina en Puno. Tome la ciudad antes del turno 30 y apague el núcleo. O enciéndalo. Esa decisión ya es suya, Comandante.'],
     ],
     setup: () => { const cfg = { mode: 'campaign', chapter: 'c6', size: 'mediano', maxTurns: 30, objective: { type: 'capture', city: 'Puno', player: 0 }, players: [human(), ai('sierra', 'dificil'), ai('culto', 'dificil')] }; cfg.boss = true; return cfg; },
-    outro: 'Puno es suya. Bajo el lago, el núcleo del Inti late más fuerte que nunca. No se apagó, Comandante: la despertó. Fin del primer acto.',
+    fantasy: 'El gigante de Puno', outro: 'Puno es suya. Bajo el lago, el núcleo del Inti late más fuerte que nunca. No se apagó, Comandante: la despertó. Fin del primer acto.',
     next: 'c7' },
   // ---- Acto II: el Inti despierto ----
   c7: { n: 7, title: 'La Mar Brava', brief: 'Acto II · Alerta de marea · Callao · 2090', color: '#2fa39a', goal: 'Toma el Callao', size: 'mediano',
@@ -2859,7 +2912,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'El Callao es la boca de Lima: sin él no entra ni sale nada. Recupérelo. La Flota cobra por ayudar, pero sin barcos no cruzará esa bahía.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c7', size: 'mediano', map: 'peru', mods: ['marea'], objective: { type: 'capture', city: 'Callao', player: 0 }, players: [human(), ai('callao', 'dificil'), ai('flota')] }),
-    after: (st) => { const cal = st.cities.find((c) => c.name === 'Callao'); const q = st.players.findIndex((P) => P.faction === 'callao'); if (cal && q >= 0) { cal.level = 3; cal.owner = q; } },
+    fantasy: 'Lima sitiada', after: (st) => { const cal = st.cities.find((c) => c.name === 'Callao'); const q = st.players.findIndex((P) => P.faction === 'callao'); if (cal && q >= 0) { cal.level = 3; cal.owner = q; const lima = st.cities.find((c) => c.owner === 0 && c.capital); if (lima) { let n = 0; for (const [x, y] of E.neighbors(lima.x, lima.y)) { if (n >= 2) break; if (!E.unitAt(st, x, y) && st.tiles[E.idx(x, y)] !== 'montana') { st.units.push({ id: st.nextId++, type: 'triton', owner: q, x, y, hp: 12, moved: true, acted: true, kills: 0, vet: false, home: cal.id }); n++; } } } } st.scripts = [{ turn: 1, k: 'msg', who: 'callao', text: 'La Sirena Chalaca: "Buenos días, Directora. Estamos en su puerta. Literalmente."' }, { turn: 10, k: 'spawn', p: q, type: 'triton', n: 2, who: 'callao', text: 'La marea sube otra vez.' }]; },
     next: 'c8' },
   c8: { n: 8, title: 'Mil Hogueras', brief: 'Acto II · Canal de emergencia · Nazca · 2090', color: '#a8322a', goal: 'Resiste 20 turnos a la Horda', size: 'mediano',
     lines: [
@@ -2869,7 +2922,7 @@ const CHAPTERS = {
       ['Directora Vargas', 'Veinte turnos. Apague los nodos pisándolos, mantenga Lima en pie y acepte la mano de la Selva: hoy nadie sobrevive solo.'],
     ],
     setup: () => ({ mode: 'campaign', chapter: 'c8', size: 'mediano', gameMode: 'horda', maxTurns: 20, objective: { type: 'survive', turns: 20, player: 0 }, players: [human(), ai('selva'), ai('culto', 'facil')] }),
-    after: (st) => { st.rel['0-1'] = 'alianza'; },
+    fantasy: 'La Horda', after: (st) => { st.rel['0-1'] = 'alianza'; },
     next: 'c9' },
   c9: { n: 9, title: 'El Trono de Vilcabamba', brief: 'Acto II · Cumbres de la Cordillera · 2091', color: '#8a6bd6', goal: 'Reina 8 turnos sobre el Trono', size: 'mediano',
     lines: [
@@ -2878,7 +2931,7 @@ const CHAPTERS = {
       ['La Viuda de Sechura', 'Un trono que habla con un satélite. Yo pongo el precio: diez mil piezas de chatarra. Y aún así, Directora, pienso ganarlo.'],
       ['Directora Vargas', 'Suba. Siéntese. Y aguante ocho turnos con todo el Perú empujando para bajarla de ahí.'],
     ],
-    setup: () => ({ mode: 'campaign', chapter: 'c9', size: 'mediano', map: 'cordillera', gameMode: 'rey', maxTurns: 45, players: [human(), ai('sierra', 'dificil'), ai('desierto', 'dificil'), ai('culto')] }),
+    fantasy: 'El trono', setup: () => ({ mode: 'campaign', chapter: 'c9', size: 'mediano', map: 'cordillera', gameMode: 'rey', maxTurns: 45, players: [human(), ai('sierra', 'dificil'), ai('desierto', 'dificil'), ai('culto')] }),
     next: 'c10' },
   c10: { n: 10, title: 'Inti Renacido', brief: 'Acto II · Última transmisión · Titicaca · 2091', color: '#ffd45a', goal: 'Derriba al Inti de acero', size: 'grande',
     lines: [
@@ -2895,7 +2948,7 @@ const CHAPTERS = {
       const puno = st.cities.find((c) => c.name === 'Puno') || st.cities[st.cities.length - 1];
       if (cul >= 0 && puno) { puno.owner = cul; puno.level = 4; st.players[cul].techs.push('taller', 'artilleria', 'apu', 'murallas'); const n = E.neighbors(puno.x, puno.y).find(([x, y]) => !E.unitAt(st, x, y) && !['mar', 'lago'].includes(st.tiles[E.idx(x, y)])); if (n) st.units.push({ id: st.nextId++, type: 'apu', owner: cul, x: n[0], y: n[1], hp: 60, moved: true, acted: true, kills: 0, boss: true, name: 'Inti de acero', vet: true }); }
     },
-    outro: 'El Inti de acero cae de rodillas frente a la costa y su luz se apaga por fin. Treinta y cuatro años después de la caída, el sol vuelve a ser solo el sol. Gracias por jugar, Comandante. El Perú es suyo.',
+    fantasy: 'El Inti de acero', outro: 'El Inti de acero cae de rodillas frente a la costa y su luz se apaga por fin. Treinta y cuatro años después de la caída, el sol vuelve a ser solo el sol. Gracias por jugar, Comandante. El Perú es suyo.',
     next: null },
   suyos: { title: 'La Guerra de los Suyos', brief: 'Historia alternativa · Todos contra todos', color: '#e8a93a',
     lines: [
@@ -3216,7 +3269,7 @@ function randomCallsign() { return CALLSIGN_A[Math.floor(Math.random() * CALLSIG
 function playerName() { let n = store.get('name', null); if (!n) { n = randomCallsign(); store.set('name', n); } return n; }
 const AVATARS = ['lima', 'sierra', 'selva', 'desierto', 'culto', 'flota', 'callao', 'chasquis', 'mineros'];
 function playerAvatar() { return store.get('avatar', null) || store.get('fac', 'lima'); }
-const fcol = (p) => (S.players[p].horde ? '#a8322a' : E.FACTIONS[S.players[p].faction].color);
+const fcol = (p) => (p < 0 || !S.players[p] ? '#b3a490' : S.players[p].horde ? '#a8322a' : E.FACTIONS[S.players[p].faction].color);
 const isMyTurn = () => S && S.cur === me && S.winner < 0 && !busy;
 function toast(msg, cls = '') {
   const last = $('#toasts').lastChild; if (last && last.textContent === msg) return; // no repetir el mismo aviso seguido
@@ -3570,7 +3623,8 @@ function drawUnit(u, px, py, dim, now) {
   drawPixelRect('#0d0b0a', px - 5 * P, py + 3 * P, 10, 3);
   drawPixelRect(col, px - 4 * P, py + 3 * P, 8, 2);
   drawPixelRect(PX.shade(col, -0.4), px - 3 * P, py + 4 * P, 6, 1);
-  const img = PX.sprite(u.hero ? E.FACTIONS[S.players[u.owner].faction].unique : u.type, col, null, S.players[u.owner].faction);
+  const ufac = u.owner >= 0 && S.players[u.owner] ? S.players[u.owner].faction : null;
+  const img = PX.sprite(u.hero ? E.FACTIONS[ufac].unique : u.type, col, null, ufac);
   const sx = px - 8 * US, sy = py - 11 * US + bob;
   if (u.hero) { ctx.drawImage(PX.sprite('crown'), Math.round(px - 7 * 1), Math.round(sy - 6 * US + (Math.floor(now / 400) % 2 ? -US : 0)), 7 * US, 5 * US); }
   if (an && an.scale < 1) { const s = an.scale; ctx.globalAlpha = s; ctx.drawImage(img, Math.round(px - 8 * US * s), Math.round(py - 11 * US * s + bob), img.width * US * s, img.height * US * s); ctx.globalAlpha = 1; }
@@ -3831,7 +3885,7 @@ function consumeEvents() {
     if (e.k === 'kill') {
       if (e.by === me) { killStreak = { n: (killStreak.turn === S.turn ? killStreak.n : 0) + 1, turn: S.turn }; if (killStreak.n >= 2) fx.push({ k: 'star', x: e.x, y: e.y, t0: now + 300, dur: 1200, txt: 'x' + killStreak.n + (killStreak.n >= 4 ? ' ¡MASACRE!' : killStreak.n === 3 ? ' ¡TRIPLE!' : ' ¡DOBLE!') }); }
       const col = fcol(e.owner);
-      fx.push({ k: 'shatter', x: e.x, y: e.y, t0: now + 120, dur: 900, parts: shatterParts(e.type === 'heroe' ? E.FACTIONS[S.players[e.owner].faction].unique : e.type, col, S.players[e.owner].faction, hexX(e.x, e.y), hexY(e.x, e.y)) });
+      fx.push({ k: 'shatter', x: e.x, y: e.y, t0: now + 120, dur: 900, parts: shatterParts(e.type === 'heroe' && e.owner >= 0 ? E.FACTIONS[S.players[e.owner].faction].unique : e.type, col, e.owner >= 0 ? S.players[e.owner].faction : null, hexX(e.x, e.y), hexY(e.x, e.y)) });
       fx.push({ k: 'boom', x: e.x, y: e.y, t0: now + 120, dur: 600 });
       setTimeout(() => beep('kill'), 120 + seq);
       if (e.type === 'apu') shake = { t0: now + 120, dur: 600, amp: 9 };
@@ -3855,6 +3909,9 @@ function consumeEvents() {
       if (e.state === 'fail') toast('Misión fallida: ' + e.text, 'red');
     }
     if (e.k === 'herodown') { const Q = S.players[e.p]; setTimeout(() => { flash((Q.name || 'EL LÍDER').toUpperCase() + ' HA CAÍDO', e.p === me ? 'Tu facción pierde la moral 3 turnos' : E.FACTIONS[Q.faction].name + ' pierde la moral', e.p === me ? '#ff6a4d' : '#ffd45a'); shake = { t0: performance.now(), dur: 700, amp: 8 }; beep('lose'); }, 500); if (e.p !== me) setTimeout(() => leaderBubble(e.p, 'hero'), 2600); }
+    if (e.k === 'caravan' && e.p === me) { if (e.ok) { flash('¡CARAVANA A SALVO!', '+8 chatarra · +2 energía', '#7cc46a'); fx.push({ k: 'confetti', x: e.x, y: e.y, c: '#7cc46a', t0: now, dur: 1200 }); beep('ach'); } else toast('La caravana se perdió en el camino.', 'red'); }
+    if (e.k === 'script') { setTimeout(() => { if (e.who && LEADER_REACT[e.who]) { const q = S.players.findIndex((P) => P.faction === e.who); if (q >= 0) { const c = $('#coach'); c.innerHTML = `<span data-por="${e.who}" data-size="48"></span><div><span class="who" style="color:${fcol(q)}">${esc(S.players[q].name)}</span><p></p></div><button class="skip" id="tipOk">×</button>`; hydrate(c); c.hidden = false; typeInto(c.querySelector('p'), e.text, c.querySelector('canvas')); $('#tipOk').onclick = () => { c.hidden = true; }; setTimeout(() => { if ($('#tipOk') && !c.hidden) c.hidden = true; }, 9000); return; } } toast(e.text, 'gold'); }, 400); }
+    if (e.k === 'betray' && e.scripted && e.b === me) { setTimeout(() => { flash('¡TRAICIÓN!', e.text, '#e5533d'); shake = { t0: performance.now(), dur: 600, amp: 7 }; beep('betray'); }, 300); }
     if (e.k === 'wake' && e.p === me) toast('Una tropa en guardia despierta: enemigo cerca.', 'gold');
     if (e.k === 'betray' && e.a === me) setTimeout(() => leaderBubble(e.b, 'betrayed'), 700);
     if (e.k === 'ally' && (e.a === me || e.b === me)) setTimeout(() => leaderBubble(e.a === me ? e.b : e.a, 'ally'), 500);
@@ -4031,7 +4088,7 @@ function renderDuel(su, t) {
   const d = $('#duel'); if (!d) return false;
   if (!su || !t) { d.hidden = true; return false; }
   const f = E.forecast(S, su, t);
-  const ico = (u) => `<span data-spr="${u.hero ? E.FACTIONS[S.players[u.owner].faction].unique : u.type}" data-col="${fcol(u.owner)}" data-size="40"></span>`;
+  const ico = (u) => `<span data-spr="${u.hero && u.owner >= 0 ? E.FACTIONS[S.players[u.owner].faction].unique : u.type}" data-col="${fcol(u.owner)}" data-size="40"></span>`;
   d.innerHTML = `<div class="side">${ico(su)}<small>${esc(su.hero ? su.name || 'Líder' : E.UNITS[su.type].name)}</small><span class="hp">${su.hp}❤</span></div>
     <div class="mid"><span class="dmg ${f.kills ? 'kill' : ''}">${f.kills ? '☠ ' : ''}-${f.dmg}</span><span class="arrow-d">▶ ATACA ▶</span><span class="ret ${f.ret ? '' : 'none'}">${f.ret ? 'recibes -' + f.ret : 'sin respuesta'}</span></div>
     <div class="side">${ico(t)}<small>${esc(t.hero ? t.name || 'Líder' : E.UNITS[t.type].name)}</small><span class="hp">${t.hp}❤${f.kills ? ' → ☠' : ' → ' + (t.hp - f.dmg)}</span></div>
@@ -4054,10 +4111,12 @@ function renderSheet() {
     if (!u) { sel = null; el.hidden = true; return; }
     const U = E.UNITS[u.type], mine = u.owner === me;
     const tk = S.tiles[E.idx(u.x, u.y)], terr = E.TERRAIN[tk].name;
-    const F = E.FACTIONS[S.players[u.owner].faction];
+    const NEUTRAL = { name: 'Neutral', short: 'Caravana', color: '#b3a490' };
+    const P_u = u.owner >= 0 ? S.players[u.owner] : { name: u.name || 'Neutral', faction: null };
+    const F = u.owner >= 0 ? E.FACTIONS[P_u.faction] : NEUTRAL;
     el.className = 'sheet box unit' + (E.rankOf(u) ? ' vet' : ''); el.style.setProperty('--cc', fcol(u.owner));
     const mh = E.maxHp(u), hpPct = Math.round(u.hp / mh * 100);
-    html += `<div class="sheet-head"><span id="uicon"></span><div><div class="title">${u.hero ? esc(u.name || 'Líder') : esc(U.name)}</div>${u.hero ? '<div class="sub vetline">★ LÍDER DE LA FACCIÓN</div>' : ''}<div class="sub">${mine ? 'Tuya' : esc(S.players[u.owner].name)} · ${esc(F.short)}${U.faction ? ' · ÚNICA' : ''}</div>${E.rankOf(u) ? `<div class="sub vetline">${'★'.repeat(E.rankOf(u))} ${esc(E.RANKS[E.rankOf(u)].name.toUpperCase())} · +${E.RANKS[E.rankOf(u)].hp} vida, +${E.RANKS[E.rankOf(u)].atk} ataque${E.RANKS[E.rankOf(u)].def ? ', +' + E.RANKS[E.rankOf(u)].def + ' defensa' : ''}</div>` : `<div class="sub">${u.kills || 0} baja${u.kills === 1 ? '' : 's'} · asciende con ${(E.hasTech(S, u.owner, 'veterania') ? 2 : 3) * (E.rankOf(u) + 1)}</div>`}</div><button class="expand" data-a="expand" aria-label="Más">${sheetOpen ? '▾' : '▸'}</button><button class="x" data-a="close" aria-label="Cerrar">×</button></div>`;
+    html += `<div class="sheet-head"><span id="uicon"></span><div><div class="title">${u.hero ? esc(u.name || 'Líder') : esc(U.name)}</div>${u.hero ? '<div class="sub vetline">★ LÍDER DE LA FACCIÓN</div>' : ''}<div class="sub">${mine ? 'Tuya' : esc(P_u.name)} · ${esc(F.short)}${U.faction ? ' · ÚNICA' : ''}</div>${E.rankOf(u) ? `<div class="sub vetline">${'★'.repeat(E.rankOf(u))} ${esc(E.RANKS[E.rankOf(u)].name.toUpperCase())} · +${E.RANKS[E.rankOf(u)].hp} vida, +${E.RANKS[E.rankOf(u)].atk} ataque${E.RANKS[E.rankOf(u)].def ? ', +' + E.RANKS[E.rankOf(u)].def + ' defensa' : ''}</div>` : `<div class="sub">${u.kills || 0} baja${u.kills === 1 ? '' : 's'} · asciende con ${(E.hasTech(S, u.owner, 'veterania') ? 2 : 3) * (E.rankOf(u) + 1)}</div>`}</div><button class="expand" data-a="expand" aria-label="Más">${sheetOpen ? '▾' : '▸'}</button><button class="x" data-a="close" aria-label="Cerrar">×</button></div>`;
     html += `<div class="hpbar"><span class="hp-l">VIDA</span><span class="hp-t"><i style="width:${hpPct}%;background:${hpPct > 50 ? 'var(--good)' : hpPct > 25 ? 'var(--inti)' : 'var(--bad)'}"></i></span><span class="hp-n">${u.hp}/${mh}</span></div>`;
     html += `<div class="stats"><span class="stat"><span data-spr="i_medal" data-size="12"></span> Ataque <b>${U.atk}</b></span><span class="stat"><span data-spr="i_wall" data-size="12"></span> Defensa <b>${U.def}</b></span><span class="stat"><span data-spr="i_boots" data-size="12"></span> Mov. <b>${E.unitMov(S, u)}</b></span><span class="stat"><span data-spr="i_eye" data-size="12"></span> Alcance <b>${U.rng}</b></span>${u.gear ? `<span class="stat gear" title="${esc(E.GEAR[u.gear].desc)}"><span data-spr="${GEAR_ICON[u.gear]}" data-size="12"></span> ${esc(E.GEAR[u.gear].name)}</span>` : ''}${E.harvest(S, u.owner) > 0 ? `<span class="stat harvest"><span data-spr="b_cultivo" data-size="12"></span> Cosecha <b>+${Math.round(E.harvest(S, u.owner) * 100)}%</b></span>` : ''}</div>`;
     const road = (S.roads || []).includes(E.idx(u.x, u.y));
@@ -4072,7 +4131,7 @@ function renderSheet() {
       if (!u.hero && isMyTurn()) q.push(`<button class="act ghost ${u.guard ? 'on' : ''}" data-a="guard" title="En guardia: no cuenta como pendiente y despierta si se acerca un enemigo">${u.guard ? '🛡 En guardia' : '🛡 Guardia'}</button>`);
       if (!q.length && !t) q.push(`<span class="chip-s ${u.moved ? 'off' : 'on'}">${u.moved ? (u.acted ? '✓ Actuó' : '✓ Movió') : '→ Puede moverse'}</span>`);
       html += `<div class="quick">${q.join('')}</div>`;
-      if (t) { const f = E.forecast(S, u, t); html += `<div class="fore"><div class="ftgt"><span data-spr="${t.hero ? E.FACTIONS[S.players[t.owner].faction].unique : t.type}" data-col="${fcol(t.owner)}" data-size="28"></span><div><b>${esc(t.hero ? t.name || 'Líder' : E.UNITS[t.type].name)}</b><br>de ${esc(S.players[t.owner].name)} · ${t.hp} vida</div></div><div class="fbox ${f.kills ? 'kill' : 'hit'}"><small>Causas</small><b>${f.dmg}${f.kills ? ' ☠' : ''}</b><small>${f.kills ? 'lo destruyes' : 'de daño'}</small></div><div class="fbox ret ${f.ret ? '' : 'none'}"><small>Recibes</small><b>${f.ret}</b><small>${f.ret ? 'de vuelta' : 'nada'}</small></div><div class="fhint">Toca el objetivo otra vez para atacar.</div></div>`; }
+      if (t) { const f = E.forecast(S, u, t); html += `<div class="fore"><div class="ftgt"><span data-spr="${t.hero ? E.FACTIONS[S.players[t.owner].faction].unique : t.type}" data-col="${fcol(t.owner)}" data-size="28"></span><div><b>${esc(t.hero ? t.name || 'Líder' : t.name || E.UNITS[t.type].name)}</b><br>de ${esc(t.owner >= 0 ? S.players[t.owner].name : 'nadie (neutral)')} · ${t.hp} vida</div></div><div class="fbox ${f.kills ? 'kill' : 'hit'}"><small>Causas</small><b>${f.dmg}${f.kills ? ' ☠' : ''}</b><small>${f.kills ? 'lo destruyes' : 'de daño'}</small></div><div class="fbox ret ${f.ret ? '' : 'none'}"><small>Recibes</small><b>${f.ret}</b><small>${f.ret ? 'de vuelta' : 'nada'}</small></div><div class="fhint">Toca el objetivo otra vez para atacar.</div></div>`; }
       if (u.hero) { const H = E.HERO[S.players[me].faction]; html += `<button class="act ${E.canHeroAbility(S, u) ? '' : 'ghost'}" data-a="hero" ${E.canHeroAbility(S, u) ? '' : 'disabled'}>${esc(H.name)}${u.cd > 0 ? ' · listo en ' + u.cd + ' turno' + (u.cd > 1 ? 's' : '') : ''} <small>${esc(H.desc)} Alcance 2.</small></button>`; }
       if (E.canCapture(S, u)) html += `<button class="act" data-a="capture">Tomar ${esc(E.cityAt(S, u.x, u.y).name)}</button>`;
       const go = E.gearOptions(S, u);
@@ -4133,7 +4192,7 @@ function renderSheet() {
   el.querySelectorAll('.upg-city').forEach((sp) => { const c = S.cities[+sp.dataset.city]; const img = PX.city(+sp.dataset.lv, fcol(c.owner), c.id + 1, c.capital, S.players[c.owner].faction); const cv2 = document.createElement('canvas'); cv2.width = 40; cv2.height = 38; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 40, 38); cv2.className = 'px-art'; sp.appendChild(cv2); });
   if (ci) { const c = S.cities[sel.id]; const img = PX.city(c.level, c.owner >= 0 ? fcol(c.owner) : '#8f8579', c.id + 1, c.capital, c.owner >= 0 ? S.players[c.owner].faction : null); const cv2 = document.createElement('canvas'); cv2.width = 60; cv2.height = 57; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 60, 57); cv2.className = 'px-art'; ci.appendChild(cv2); }
   const ui = el.querySelector('#uicon');
-  if (ui) { const u = S.units.find((v) => v.id === sel.id); const ic = unitIcon(u.type, fcol(u.owner), S.players[u.owner].faction); ui.appendChild(ic); }
+  if (ui) { const u = S.units.find((v) => v.id === sel.id); const ic = unitIcon(u.type, fcol(u.owner), u.owner >= 0 ? S.players[u.owner].faction : null); ui.appendChild(ic); }
   const tr = el.querySelector('#trainer');
   if (tr) {
     const c = S.cities[sel.id];
@@ -4609,7 +4668,7 @@ window.claude?.hot?.snapshot?.(() => ({ S, me, online: online ? online.code : nu
 function show(html, bind, keepScroll) { const s = $('#screenScroll'); const top = keepScroll ? s.scrollTop : 0; s.innerHTML = `<div class="wrap">${html}</div>`; $('#screen').hidden = false; s.scrollTop = top; hydrate(s); startBg(); s.onclick = (e) => { const a = e.target.closest('[data-a]'); if (a) { beep(a.dataset.a === 'back' ? 'close' : 'tap'); bind && bind(a.dataset.a, a.dataset, a); } }; }
 function hideScreen() { $('#screen').hidden = true; }
 // fondo animado del menú: Lima en ruinas bajo el Inti que cae
-let bgOn = false;
+let bgOn = false, bgFx = null;
 const bgParts = Array.from({ length: 46 }, (_, i) => ({ x: Math.random(), y: Math.random(), v: 0.0006 + Math.random() * 0.0012, s: Math.random() < 0.2 ? 2 : 1 }));
 function startBg() { if (bgOn) return; bgOn = true; requestAnimationFrame(drawBg); }
 function drawBg(now) {
@@ -4628,8 +4687,16 @@ function drawBg(now) {
   }
   // estrellas
   for (let i = 0; i < 30; i++) { const x = hash(i, 1) * W, y = hash(i, 2) * hz * 0.5; if ((Math.floor(now / 500) + i) % 7) px('#6b5a6a', x, y); }
-  // el Inti cayendo
-  const ix = Math.round(W * 0.72), iy = Math.round(hz * 0.32);
+  // el Inti cayendo (en el prólogo, de verdad cae: cruza el cielo, impacta y todo se apaga)
+  let ix = Math.round(W * 0.72), iy = Math.round(hz * 0.32), fxp = 0, dark = 0, flash = 0;
+  if (bgFx) {
+    const el = (now - bgFx.t0) / 1000;
+    if (bgFx.kind === 'radio') { dark = 0.85; }
+    if (bgFx.kind === 'fall') { fxp = Math.min(1, el / 2.1); ix = Math.round(W * (0.15 + 0.55 * fxp)); iy = Math.round(hz * (0.05 + 0.95 * fxp * fxp)); if (fxp >= 1) { flash = Math.max(0, 1 - (el - 2.1) * 2); } }
+    if (bgFx.kind === 'dark') { dark = 0.92; ix = -99; }
+    if (bgFx.kind === 'open') { dark = Math.max(0, 0.9 - el * 0.5); ix = -99; }
+    if (bgFx.kind === 'none') { ix = -99; }
+  }
   for (let k = 0; k < 40; k++) { const tx = ix + k * 1.6, ty = iy - k * 1.1; px(k < 8 ? '#ffe08a' : k < 20 ? '#e8862e' : '#8c3a22', tx, ty, 2, 2); if (hash(k, Math.floor(now / 120)) < 0.3) px('#ffe08a', tx + 2, ty - 2); }
   for (let y = -9; y <= 9; y++) for (let x = -9; x <= 9; x++) {
     const d = x * x + y * y; if (d > 81) continue;
@@ -4662,6 +4729,8 @@ function drawBg(now) {
     p.y += p.v; p.x -= p.v * 0.4; if (p.y > 1) { p.y = 0; p.x = Math.random(); } if (p.x < 0) p.x = 1;
     px(p.s > 1 ? '#8a8079' : '#5a5049', p.x * W, p.y * H, p.s, p.s);
   }
+  if (dark > 0) { g.fillStyle = 'rgba(8,6,6,' + dark + ')'; g.fillRect(0, 0, W, H); }
+  if (flash > 0) { g.fillStyle = 'rgba(255,240,200,' + flash + ')'; g.fillRect(0, 0, W, H); c.style.transform = 'translate(' + ((Math.random() - 0.5) * 12 * flash) + 'px,' + ((Math.random() - 0.5) * 12 * flash) + 'px)'; } else c.style.transform = '';
 }
 
 function gameUI(on) { document.body.classList.remove('panel-open'); for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
@@ -4709,10 +4778,51 @@ function mainMenu() {
 function campaignMenu() {
   const prog = store.get('progress', 1), done = store.get('chapters', {});
   show(`<button class="back" data-a="back">‹ Volver</button><div class="h2">Campaña</div><p class="muted">Eres el Comandante del Búnker de Lima. Diez capítulos en dos actos: la caída del Inti y su despertar.</p>
-    ${CHAPTER_KEYS.map((k, i) => { const ch = CHAPTERS[k]; const locked = i + 1 > prog; return `<button class="chap box press ${locked ? 'locked' : ''} ${done[k] ? 'done' : ''}" style="--cc:${ch.color}" data-a="ch" data-k="${k}" ${locked ? 'disabled' : ''}><span class="chap-n">${locked ? '🔒' : ch.n}</span><div class="card-body"><b>${esc(ch.title)}</b><small>${locked ? 'Gana el capítulo anterior' : esc(ch.goal) + ' · mapa ' + E.SIZES[ch.size].name.toLowerCase()}</small></div><span class="chap-state">${done[k] ? '✓' : i === 0 && !done[k] ? 'TUTORIAL' : ''}</span></button>`; }).join('')}`,
-  (a, d) => { if (a === 'back') mainMenu(); if (a === 'ch') showStory(d.k); });
+    ${CHAPTER_KEYS.map((k, i) => { const ch = CHAPTERS[k]; const locked = i + 1 > prog; return `<button class="chap box press ${locked ? 'locked' : ''} ${done[k] ? 'done' : ''}" style="--cc:${ch.color}" data-a="ch" data-k="${k}" ${locked ? 'disabled' : ''}><span class="chap-n">${locked ? '🔒' : ch.n}</span><div class="card-body"><b>${esc(ch.title)}${ch.fantasy ? ` <i class="fant">· ${esc(ch.fantasy)}</i>` : ''}</b><small>${locked ? 'Gana el capítulo anterior' : esc(ch.goal) + ' · mapa ' + E.SIZES[ch.size].name.toLowerCase()}</small></div><span class="chap-state">${done[k] ? '✓' : i === 0 && !done[k] ? 'TUTORIAL' : ''}</span></button>`; }).join('')}`,
+  (a, d) => { if (a === 'back') mainMenu(); if (a === 'ch') showStory(d.k); if (a === 'pro') prologue(); });
 }
 
+function startChapter(key) {
+  const ch = CHAPTERS[key];
+  const cfg = ch.setup();
+  const st = E.newGame(cfg); st.chapter = cfg.chapter;
+  if (cfg.boss) { // el gigante de Apu Rumi custodia Puno
+    const puno = st.cities.find((c) => c.name === 'Puno'); const sierra = st.players.findIndex((P) => P.faction === 'sierra');
+    if (puno && sierra >= 0) { puno.owner = sierra; puno.level = 3; st.players[sierra].techs.push('taller', 'artilleria', 'apu'); const n = E.neighbors(puno.x, puno.y).find(([x, y]) => !E.unitAt(st, x, y) && st.tiles[E.idx(x, y)] !== 'mar' && st.tiles[E.idx(x, y)] !== 'lago'); if (n) st.units.push({ id: st.nextId++, type: 'apu', owner: sierra, x: n[0], y: n[1], hp: 40, moved: true, acted: true, kills: 0, vet: true }); }
+  }
+  if (ch.after) ch.after(st);
+  loadGame(st, 0);
+  if (ch.tutorial) tutStart();
+}
+// prólogo: 60 segundos de película con el propio motor del fondo; se puede saltar; termina en el capítulo 1
+function prologue() {
+  const steps = [
+    { t: 1800, html: `<div class="pro-line pro-small">2057</div><div class="pro-line">EL SOL CAYÓ.</div>`, fx: 'radio' },
+    { t: 3200, html: ``, fx: 'fall' },
+    { t: 1600, html: `<div class="pro-line pro-small">TREINTA AÑOS DE SILENCIO</div>`, fx: 'dark' },
+    { t: 2600, html: `<div class="pro-line pro-small">2087</div><div class="pro-line">LAS COMPUERTAS SE ABREN.</div>`, fx: 'open' },
+    { t: 2600, html: `<div class="pro-say"><span data-por="lima" data-size="56"></span><div><b>Directora Vargas</b><p>Comandante. Tenemos una señal.</p></div></div>`, fx: 'none' },
+    { t: 2200, html: `<div class="pro-title">INTI<br><span>CAÍDO</span></div>`, fx: 'title' },
+  ];
+  let i = -1, timer = null, done = false;
+  const finish = () => { if (done) return; done = true; clearTimeout(timer); bgFx = null; store.set('prologue', 1); beep('capture'); startChapter('c1'); };
+  const next = () => {
+    i++; if (i >= steps.length) { finish(); return; }
+    const st = steps[i];
+    bgFx = { kind: st.fx, t0: performance.now() };
+    const box = $('#proBox'); if (!box) return; box.innerHTML = st.html; hydrate(box); box.className = 'pro-box ' + st.fx;
+    if (st.fx === 'radio') { beep('error'); setTimeout(() => beep('tap'), 300); }
+    if (st.fx === 'fall') { setTimeout(() => { beep('kill'); beep('lose'); }, 2100); }
+    if (st.fx === 'open') beep('turn');
+    if (st.fx === 'title') { beep('win'); }
+    clearTimeout(timer); timer = setTimeout(next, st.t);
+  };
+  show(`<div class="pro-wrap"><div id="proBox" class="pro-box"></div><button class="skip pro-skip" data-a="skip">SALTAR ›</button><div class="pro-hint">toca para avanzar</div></div>`, (a) => { if (a === 'skip') finish(); else next(); });
+  $('#screenScroll').classList.add('pro-mode');
+  const orig = finish; const cleanup = () => $('#screenScroll').classList.remove('pro-mode');
+  setTimeout(next, 200);
+  const obs = setInterval(() => { if (done) { cleanup(); clearInterval(obs); } }, 300);
+}
 async function showStory(key, after) {
   const ch = CHAPTERS[key];
   story = key;
@@ -4728,15 +4838,7 @@ async function showStory(key, after) {
       if (a === 'back') { mainMenu(); return; }
       if (i < ch.lines.length - 1) { i++; beep('tap'); draw(); return; }
       if (after) { after(); return; }
-      const cfg = ch.setup();
-      const st = E.newGame(cfg); st.chapter = cfg.chapter;
-      if (cfg.boss) { // el gigante de Apu Rumi custodia Puno
-        const puno = st.cities.find((c) => c.name === 'Puno'); const sierra = st.players.findIndex((P) => P.faction === 'sierra');
-        if (puno && sierra >= 0) { puno.owner = sierra; puno.level = 3; st.players[sierra].techs.push('taller', 'artilleria', 'apu'); const n = E.neighbors(puno.x, puno.y).find(([x, y]) => !E.unitAt(st, x, y) && st.tiles[E.idx(x, y)] !== 'mar' && st.tiles[E.idx(x, y)] !== 'lago'); if (n) { st.units.push({ id: st.nextId++, type: 'apu', owner: sierra, x: n[0], y: n[1], hp: 40, moved: true, acted: true, kills: 0, vet: true, home: puno.id }); } }
-      }
-      if (ch.after) ch.after(st);
-      loadGame(st, 0);
-      if (ch.tutorial) tutStart();
+      startChapter(key);
     });
   };
   draw();
@@ -4895,7 +4997,7 @@ function welcomeScreen() {
       const nm = ($('#nameIn')?.value || '').trim(); if (nm) store.set('name', nm);
       if (a === 'av') { store.set('avatar', d.k); beep('tap'); draw(); }
       if (a === 'rand') { store.set('name', randomCallsign()); beep('tap'); draw(); }
-      if (a === 'go') { if (!store.get('name', null)) store.set('name', name); store.set('welcomed', 1); beep('capture'); mainMenu(); }
+      if (a === 'go') { if (!store.get('name', null)) store.set('name', name); store.set('welcomed', 1); beep('capture'); if (!store.get('prologue', 0)) prologue(); else mainMenu(); }
     }, true);
   draw();
 }
