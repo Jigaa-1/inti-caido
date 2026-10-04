@@ -139,6 +139,28 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .end { margin-left: auto; padding: 16px 18px; font-family: var(--f-pixel); font-size: 12px; line-height: 1.3; }
 .end[disabled] { background: var(--panel-2); color: var(--dust); box-shadow: inset var(--b) var(--b) 0 var(--hi), inset calc(var(--b) * -1) calc(var(--b) * -1) 0 var(--lo); }
 .end.pulse { animation: pulse 1s steps(2) infinite; }
+/* botón de turno: verde oscuro mientras quedan tropas, verde brillante con check cuando todo listo */
+.end .cnt { display: inline-block; min-width: 18px; margin-left: 6px; padding: 2px 5px; background: #1d1408; color: var(--inti); font-size: 9px; vertical-align: middle; }
+.end.ready { background: #35a04a; color: #0d1a0f; border-color: #7cf08a; animation: readyPulse 1.1s steps(3) infinite; }
+.end.ready .chk { display: inline-block; animation: popnum .35s steps(4); }
+.end.pending { background: #2a5a33; color: #cfeec9; border-color: #4f9a5c; }
+@keyframes readyPulse { 50% { background: #5fd072; } }
+/* la barra de botones se esconde cuando un panel grande está abierto y vuelve al cerrarlo */
+.cmd { transition: transform .22s steps(5), opacity .2s; }
+body.panel-open .cmd { transform: translateY(120%); opacity: 0; pointer-events: none; }
+body.panel-open .cmd > * { pointer-events: none; }
+body.panel-open .sheet { bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); max-height: 70vh; }
+/* estadísticas gráficas */
+.gstats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gstat { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 5px; background: var(--edge); font-size: 19px; color: var(--bone); }
+.gstat b { font-weight: 400; color: var(--bone); }
+.gstat.good b { color: var(--good); }
+.pips { display: inline-flex; gap: 3px; }
+.pips i { width: 10px; height: 10px; background: #2a2420; border: 2px solid #5a544d; display: inline-block; }
+.pips i.on { background: var(--inti); border-color: var(--inti-hi); }
+.pips.troops i.on { background: var(--bone); border-color: #fff; }
+.pips.troops i { border-radius: 50%; width: 9px; height: 9px; }
+.hint.short { font-size: 17px; padding: 4px 8px; }
 @keyframes pulse { 50% { background: var(--inti-hi); } }
 
 /* panel de selección */
@@ -2643,6 +2665,7 @@ const PX = (() => {
 
 </script>
 <script>
+const GAME_VERSION = '21';
 /* ===== INTI CAÍDO · interfaz ===== */
 (() => {
 const E = Engine;
@@ -3457,6 +3480,11 @@ function drawUnit(u, px, py, dim, now) {
   else if (u.boss) { const bs = 1.35, g = 0.55 + 0.45 * Math.abs(Math.sin(now / 400)); ctx.save(); ctx.shadowColor = 'rgba(255,212,90,' + g + ')'; ctx.shadowBlur = 14; ctx.drawImage(img, Math.round(px - 8 * US * bs), Math.round(py - 11 * US * bs - 4 + bob), img.width * US * bs, img.height * US * bs); ctx.restore(); }
   else { ctx.globalAlpha = dim ? 0.5 : 1; ctx.drawImage(img, Math.round(sx), Math.round(sy), img.width * US, img.height * US); ctx.globalAlpha = 1; }
   if (an && an.flash) { ctx.save(); ctx.globalCompositeOperation = 'source-atop'; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(Math.round(sx), Math.round(sy), img.width * US, img.height * US); ctx.restore(); }
+  // check: verde claro si ya hizo todo, verde oscuro si solo movió (tus tropas, en tu turno)
+  if (u.owner === me && S.cur === me && (u.moved || u.acted) && !an) {
+    const done = u.moved && (u.acted || !E.targets(S, u).length), col = done ? '#7cf08a' : '#35a04a', bx = px + 5 * US, by = py - 12 * US;
+    drawPixelRect('#0d0b0a', bx - 1, by - 1, 6, 6); drawPixelRect(col, bx, by + 2, 1, 1); drawPixelRect(col, bx + 1, by + 3, 1, 1); drawPixelRect(col, bx + 2, by + 2, 1, 1); drawPixelRect(col, bx + 3, by + 1, 1, 1); drawPixelRect(col, bx + 4, by, 1, 1);
+  }
   const rk = E.rankOf(u); if (rk) { ctx.fillStyle = '#f2b84b'; for (let i = 0; i < rk; i++) ctx.fillRect(Math.round(px + 6 * US - i * 6), Math.round(sy - 2), 4, 4); }
   // vida
   const mh = E.maxHp(u), w = 12, f = Math.max(1, Math.round(w * u.hp / mh));
@@ -3571,6 +3599,15 @@ function render(now) {
       drawPixelRect('#0d0b0a', cx - (w / 2) * P, cy - 3 * P, w, 6);
       drawPixelRect(c.owner >= 0 ? fcol(c.owner) : '#5a544d', cx - (w / 2) * P, cy + 2 * P, w, 1);
       ctx.fillStyle = '#efe6d8'; ctx.fillText(c.name, Math.round(cx), Math.round(cy));
+      // nivel y tropas, al estilo tablero: un cuadrito por nivel, puntos por tropa
+      if (c.owner >= 0) {
+        const troops = E.unitsOfCity(S, c), lv = c.level, bw = 5 * P, gap = P, total = lv * bw + (lv - 1) * gap, x0 = cx - total / 2, yy = cy + 5 * P;
+        for (let i = 0; i < lv; i++) {
+          const bx = x0 + i * (bw + gap);
+          drawPixelRect('#0d0b0a', bx - P, yy - P, 7, 6); drawPixelRect(i < troops ? '#efe6d8' : '#3a2f28', bx, yy, 5, 4);
+          if (i < troops) drawPixelRect(fcol(c.owner), bx + P, yy + P, 3, 2);
+        }
+      }
     }
     // a qué ciudad pertenece cada construcción
     if (cam.z > 0.85) for (const b of S.builds || []) {
@@ -3857,8 +3894,13 @@ function renderHud() {
   const end = $('#endBtn');
   end.disabled = !isMyTurn();
   end.textContent = S.winner >= 0 ? 'Partida terminada' : isMyTurn() ? 'Terminar turno' : busy ? 'Jugando…' : 'Esperando…';
-  const idle = isMyTurn() && !S.units.some((u) => u.owner === me && (!u.moved || (!u.acted && E.targets(S, u).length))) && !S.cities.some((c) => c.owner === me && E.canTrain(S, c.id, 'rondero'));
-  end.classList.toggle('pulse', idle);
+  const pendingUnits = S.units.filter((u) => u.owner === me && (!u.moved || (!u.acted && E.targets(S, u).length))).length;
+  const idle = isMyTurn() && pendingUnits === 0 && !S.cities.some((c) => c.owner === me && E.canTrain(S, c.id, 'rondero'));
+  end.classList.remove('pulse');
+  end.classList.toggle('ready', isMyTurn() && pendingUnits === 0);
+  end.classList.toggle('pending', isMyTurn() && pendingUnits > 0);
+  if (isMyTurn()) end.innerHTML = pendingUnits === 0 ? '<span class="chk">✓</span> Terminar' : 'Terminar <span class="cnt">' + pendingUnits + '</span>';
+  const nb = $('#nextBtn .nx'); if (nb) nb.textContent = isMyTurn() && pendingUnits ? String(pendingUnits) : '»';
   // misión secundaria
   const mEl = $('#mission'), M = P.mission;
   if (mEl) { if (M && S.winner < 0) { const pr = E.missionProgress(S, me) || { cur: 0, n: 1 }; mEl.hidden = false; mEl.innerHTML = `<span class="mk">MISIÓN</span><span>${esc(M.text)}</span><span class="mp">${pr.n > 1 ? pr.cur + '/' + pr.n : 'T' + M.due}</span>`; mEl.onclick = () => { toast(`${M.text}. Premio: +${M.reward} chatarra. Plazo: turno ${M.due}.` + (pr.n > 1 ? ` Llevas ${pr.cur}/${pr.n}.` : ''), 'gold'); beep('tap'); }; } else mEl.hidden = true; }
@@ -3899,7 +3941,7 @@ function renderDuel(su, t) {
 function renderSheet() {
   const el = $('#sheet'), duel = $('#duel');
   if (duel) duel.hidden = true;
-  if (!S || !sel) { el.hidden = true; return; }
+  if (!S || !sel) { el.hidden = true; document.body.classList.remove('panel-open'); return; }
   if (sel.kind === 'unit' && pendingTarget != null && window.innerWidth < 760) {
     const su = S.units.find((u) => u.id === sel.id), t = S.units.find((u) => u.id === pendingTarget);
     if (su && t && renderDuel(su, t)) { el.hidden = true; return; }
@@ -3967,19 +4009,20 @@ function renderSheet() {
     if (mine && isMyTurn()) html += `<div class="quick"><button class="act ghost" data-a="expand">Entrenar y mejorar</button></div>`;
     const inc = c.owner >= 0 ? c.level + (c.capital ? 1 : 0) + (E.hasTech(S, c.owner, 'mercado') ? 1 : 0) : c.level;
     const def = c.owner >= 0 ? Math.round(((E.hasTech(S, c.owner, 'murallas') ? 2.2 : 1.5) + (E.hasTech(S, c.owner, 'bunker') ? 0.5 : 0)) * 100) : 100;
-    html += `<div class="stats"><span class="stat">Nivel <b>${c.level}</b></span><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= c.level ? 'on' : ''}"></i>`).join('')}</span><span class="stat">Produce <b>+${inc}</b></span><span class="stat">Tropas <b>${E.unitsOfCity(S, c)}/${E.cityCap(c)}</b></span><span class="stat">Defensa <b>${def}%</b></span></div>`;
-    if (mine && E.cityScale(S, me) > 1.001) html += `<div class="hint">Precios ×${E.cityScale(S, me).toFixed(2)} por tener ${S.cities.filter((cc) => cc.owner === me).length} ciudades.</div>`;
+    const troops = E.unitsOfCity(S, c), cap = E.cityCap(c);
+    html += `<div class="gstats"><span class="gstat" title="Nivel"><span class="pips">${[1, 2, 3, 4].map((i) => `<i class="${i <= c.level ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat good" title="Chatarra por turno"><span data-spr="scrap" data-size="14"></span><b>+${inc}</b></span><span class="gstat" title="Tropas de esta ciudad"><span class="pips troops">${Array.from({ length: cap }, (_, i) => `<i class="${i < troops ? 'on' : ''}"></i>`).join('')}</span></span><span class="gstat" title="Defensa"><span data-spr="i_wall" data-size="14"></span><b>${def}%</b></span></div>`;
     const lands = (S.builds || []).filter((b) => b.city === c.id);
     if (lands.length) html += `<div class="lands">${lands.map((b) => `<span class="land" data-a="goto" data-x="${b.x}" data-y="${b.y}"><span data-spr="b_${b.type}" data-size="18"></span>${esc(E.BUILDS[b.type].name)}</span>`).join('')}<small class="muted">Tierras de ${esc(c.name)}</small></div>`;
-    if (c.capital && mine) html += `<div class="hint cap-hint">Es tu corazón: produce +1 extra y si cae, pierdes el búnker. ${S.mods.subita ? 'Con Muerte súbita, perderla te elimina.' : ''}</div>`;
+    if (c.capital && mine && S.mods.subita) html += `<div class="hint cap-hint short">Muerte súbita: si cae tu capital, pierdes.</div>`;
     if (c.throne) html += `<div class="hint cap-hint">Quien controle el Trono 8 turnos seguidos gana la partida.</div>`;
     if (mine && isMyTurn()) {
       const left = E.trainsPerTurn(S, me) - (c.built | 0);
-      html += `<div class="label">${left <= 0 ? 'Ya entrenó este turno' : E.unitAt(S, c.x, c.y) ? 'Mueve la unidad que está encima para entrenar' : 'Entrenar' + (E.trainsPerTurn(S, me) > 1 ? ' (' + left + ' restantes)' : '')}</div><div class="trainer" id="trainer"></div>`;
+      html += `<div class="label">${left <= 0 ? '✓ Ya entrenó' : E.unitAt(S, c.x, c.y) ? '⛔ Ocupada: mueve la tropa de encima' : 'Entrenar' + (E.trainsPerTurn(S, me) > 1 ? ' (' + left + ' restantes)' : '')}</div><div class="trainer" id="trainer"></div>`;
       html += c.level < 4 ? `<button class="act ghost" data-a="upgrade" ${S.players[me].scrap < E.upgradeCost(S, c) ? 'disabled' : ''}>Mejorar a nivel ${c.level + 1} · ${E.upgradeCost(S, c)} chatarra <small>(+1 chatarra/turno, +1 tropa)</small></button>` : '<div class="hint">Nivel máximo.</div>';
     }
   }
   el.classList.toggle('compact', !sheetOpen);
+  document.body.classList.toggle('panel-open', sheetOpen && window.innerWidth < 760);
   el.innerHTML = html; el.hidden = false; hydrate(el);
   const ci = el.querySelector('#cicon');
   if (ci) { const c = S.cities[sel.id]; const img = PX.city(c.level, c.owner >= 0 ? fcol(c.owner) : '#8f8579', c.id + 1, c.capital, c.owner >= 0 ? S.players[c.owner].faction : null); const cv2 = document.createElement('canvas'); cv2.width = 60; cv2.height = 57; const g2 = cv2.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, 60, 57); cv2.className = 'px-art'; ci.appendChild(cv2); }
@@ -4319,7 +4362,7 @@ function objectiveText() {
 function shutdownMatch() {
   // cierra toda la partida: la IA deja de jugar, no se puede tocar el mapa ni los botones
   aiRun++; busy = false; powerMode = null; sel = null; pendingTarget = null; tut = null; clearUndo();
-  $('#sheet').hidden = true; $('#duel').hidden = true; $('#coach').hidden = true; $('#banner').hidden = true; $('#toasts').innerHTML = ''; $('#flash').innerHTML = '';
+  document.body.classList.remove('panel-open'); $('#sheet').hidden = true; $('#duel').hidden = true; $('#coach').hidden = true; $('#banner').hidden = true; $('#toasts').innerHTML = ''; $('#flash').innerHTML = '';
   for (const id of ['#endBtn', '#techBtn', '#diploBtn', '#nextBtn', '#undoBtn']) { const b = $(id); if (b) b.disabled = true; }
   Ambient.stop(); renderHud();
 }
@@ -4499,7 +4542,7 @@ function drawBg(now) {
   }
 }
 
-function gameUI(on) { for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
+function gameUI(on) { document.body.classList.remove('panel-open'); for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
 
 // tarjeta de menú con miniatura pixel y franja de color
 function card(a, title, sub, thumb, color, extra = '') {
@@ -4514,7 +4557,7 @@ function mainMenu() {
   const nAch = Object.keys(achState()).length;
   const pr = profile();
   show(`<div class="logo">Inti<span>Caído</span></div>
-    <div class="tag">Perú · 2087 · estrategia por turnos</div>
+    <div class="tag">Perú · 2087 · estrategia por turnos · v${GAME_VERSION}</div>
     <div class="profile box"><span data-por="${store.get('fac', 'lima')}" data-size="44"></span><div class="profile-b"><b>${esc(playerName())} · Nivel ${pr.lvl}</b><small>${esc(pr.title)} · ${pr.xp} XP</small><span class="bar"><i style="width:${Math.round((pr.xp - pr.prev) / (pr.next - pr.prev) * 100)}%"></i></span></div><button class="act ghost" data-a="profile" style="flex:none;padding:8px 10px">Ver</button></div>
     ${hasSave ? card('cont', 'Continuar', `${esc(E.FACTIONS[save.S.players[save.me].faction].name)} · turno ${save.S.turn}`, 'th_cont', E.FACTIONS[save.S.players[save.me].faction].color, 'data-gold="1"') : ''}
     ${card('camp', 'Campaña', prog > 10 ? 'Campaña completada · vuelve a jugar' : prog >= 2 ? 'Capítulo ' + Math.min(prog, 10) + ' de 10 disponible' : 'Empieza aquí: incluye tutorial', 'th_camp', '#3fb6c9')}
