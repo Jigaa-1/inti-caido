@@ -107,6 +107,21 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .round i { display: block; width: 18px; height: 3px; background: var(--bone); box-shadow: 0 -6px 0 var(--bone), 0 6px 0 var(--bone); }
 .banner { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 60px); transform: translateX(-50%); z-index: 11; padding: 6px 12px; font-size: 20px; color: var(--dust); white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
 .banner b { color: var(--bone); font-weight: 400; }
+.duel { position: absolute; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 14; max-width: 520px; margin: 0 auto; padding: 8px 10px; border-color: var(--bad); background: linear-gradient(180deg, #3a1712, var(--panel) 70%); display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; animation: duelin .22s steps(5); }
+@keyframes duelin { from { transform: translateY(16px) scale(.96); opacity: 0; } }
+.duel .side { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
+.duel .side small { font-size: 14px; color: var(--dust); max-width: 70px; text-align: center; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duel .side .hp { font-size: 15px; color: var(--bone); }
+.duel .mid { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.duel .dmg { font-family: var(--f-pixel); font-size: 20px; color: #ffd45a; line-height: 1; animation: popnum .35s steps(5); text-shadow: 3px 3px 0 #000; }
+.duel .dmg.kill { color: #ff6a4d; }
+.duel .ret { font-size: 16px; color: #8fd0ff; }
+.duel .ret.none { color: var(--dust); }
+.duel .arrow-d { font-family: var(--f-pixel); font-size: 10px; color: var(--bad); }
+.duel .acts { grid-column: 1 / -1; display: flex; gap: 8px; }
+.duel .acts .go { flex: 1; font-size: 11px; padding: 12px; background: var(--bad); color: #fff; border-color: #ff8a73; animation: pulse-atk 1s steps(4) infinite; }
+@keyframes pulse-atk { 50% { background: #ff6a4d; } }
+.duel .acts .no { flex: none; padding: 12px 14px; }
 .mission { position: absolute; left: 8px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 10; padding: 5px 9px; font-size: 17px; color: var(--bone); text-align: left; display: flex; align-items: center; gap: 7px; max-width: 62vw; border-color: var(--inti); animation: up .25s steps(4); }
 .mission .mk { font-family: var(--f-pixel); font-size: 7px; color: var(--inti); letter-spacing: .05em; }
 .mission .mp { font-family: var(--f-pixel); font-size: 8px; color: var(--good); margin-left: auto; flex: none; }
@@ -549,6 +564,7 @@ body.big .tcard { flex-basis: 100px; }
   <button id="mission" class="mission box" hidden></button>
   <div id="coach" class="coach box" hidden></div>
   <div id="sheet" class="sheet box" hidden></div>
+  <div id="duel" class="duel box" hidden></div>
   <div id="cmd" class="cmd" hidden>
     <button class="tool box press" id="techBtn"><span id="techIcon"></span>ARSENAL<span class="badge" id="techBadge" hidden></span></button>
     <button class="tool box press" id="diploBtn"><span id="diploIcon"></span>DIPLOM.<span class="badge" id="diploBadge" hidden></span></button>
@@ -3864,9 +3880,28 @@ function renderPowerBar() {
 function unitIcon(type, color, faction) { return PX.icon(type === 'heroe' ? E.FACTIONS[faction].unique : type, color, 48, false, faction); }
 
 let sheetOpen = false;
+// tarjeta de duelo compacta (celular): tú → enemigo, daño que haces y recibes, botón grande. Cancelar NO deselecciona la unidad.
+function renderDuel(su, t) {
+  const d = $('#duel'); if (!d) return false;
+  if (!su || !t) { d.hidden = true; return false; }
+  const f = E.forecast(S, su, t);
+  const ico = (u) => `<span data-spr="${u.hero ? E.FACTIONS[S.players[u.owner].faction].unique : u.type}" data-col="${fcol(u.owner)}" data-size="40"></span>`;
+  d.innerHTML = `<div class="side">${ico(su)}<small>${esc(su.hero ? su.name || 'Líder' : E.UNITS[su.type].name)}</small><span class="hp">${su.hp}❤</span></div>
+    <div class="mid"><span class="dmg ${f.kills ? 'kill' : ''}">${f.kills ? '☠ ' : ''}-${f.dmg}</span><span class="arrow-d">▶ ATACA ▶</span><span class="ret ${f.ret ? '' : 'none'}">${f.ret ? 'recibes -' + f.ret : 'sin respuesta'}</span></div>
+    <div class="side">${ico(t)}<small>${esc(t.hero ? t.name || 'Líder' : E.UNITS[t.type].name)}</small><span class="hp">${t.hp}❤${f.kills ? ' → ☠' : ' → ' + (t.hp - f.dmg)}</span></div>
+    <div class="acts"><button class="act go" data-a="go">${f.kills ? '¡DESTRUIR!' : '¡ATACAR!'}</button><button class="act ghost no" data-a="no">Cancelar</button></div>`;
+  hydrate(d); d.hidden = false;
+  d.onclick = (e) => { const a = e.target.closest('[data-a]'); if (!a) return; if (a.dataset.a === 'go') { beep('tap'); doAttack(su, t); d.hidden = true; } else { pendingTarget = null; beep('close'); renderSheet(); } };
+  return true;
+}
 function renderSheet() {
-  const el = $('#sheet');
+  const el = $('#sheet'), duel = $('#duel');
+  if (duel) duel.hidden = true;
   if (!S || !sel) { el.hidden = true; return; }
+  if (sel.kind === 'unit' && pendingTarget != null && window.innerWidth < 760) {
+    const su = S.units.find((u) => u.id === sel.id), t = S.units.find((u) => u.id === pendingTarget);
+    if (su && t && renderDuel(su, t)) { el.hidden = true; return; }
+  }
   let html = '';
   if (sel.kind === 'unit') {
     const u = S.units.find((v) => v.id === sel.id);
@@ -4282,7 +4317,7 @@ function objectiveText() {
 function shutdownMatch() {
   // cierra toda la partida: la IA deja de jugar, no se puede tocar el mapa ni los botones
   aiRun++; busy = false; powerMode = null; sel = null; pendingTarget = null; tut = null; clearUndo();
-  $('#sheet').hidden = true; $('#coach').hidden = true; $('#banner').hidden = true; $('#toasts').innerHTML = ''; $('#flash').innerHTML = '';
+  $('#sheet').hidden = true; $('#duel').hidden = true; $('#coach').hidden = true; $('#banner').hidden = true; $('#toasts').innerHTML = ''; $('#flash').innerHTML = '';
   for (const id of ['#endBtn', '#techBtn', '#diploBtn', '#nextBtn', '#undoBtn']) { const b = $(id); if (b) b.disabled = true; }
   Ambient.stop(); renderHud();
 }
@@ -4462,7 +4497,7 @@ function drawBg(now) {
   }
 }
 
-function gameUI(on) { for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
+function gameUI(on) { for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#duel').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
 
 // tarjeta de menú con miniatura pixel y franja de color
 function card(a, title, sub, thumb, color, extra = '') {
