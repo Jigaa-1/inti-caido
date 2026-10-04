@@ -107,6 +107,11 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .round i { display: block; width: 18px; height: 3px; background: var(--bone); box-shadow: 0 -6px 0 var(--bone), 0 6px 0 var(--bone); }
 .banner { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 60px); transform: translateX(-50%); z-index: 11; padding: 6px 12px; font-size: 20px; color: var(--dust); white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
 .banner b { color: var(--bone); font-weight: 400; }
+.mission { position: absolute; left: 8px; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 10; padding: 5px 9px; font-size: 17px; color: var(--bone); text-align: left; display: flex; align-items: center; gap: 7px; max-width: 62vw; border-color: var(--inti); animation: up .25s steps(4); }
+.mission .mk { font-family: var(--f-pixel); font-size: 7px; color: var(--inti); letter-spacing: .05em; }
+.mission .mp { font-family: var(--f-pixel); font-size: 8px; color: var(--good); margin-left: auto; flex: none; }
+.mission.done { border-color: var(--good); animation: popnum .35s steps(5); }
+@media (min-width: 760px) { .mission { left: 340px; } }
 .banner { display: flex; align-items: center; gap: 6px; }
 .banner .think canvas { display: block; }
 
@@ -192,6 +197,7 @@ canvas#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-acti
 .toasts { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 60px); z-index: 25; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; padding: 0 16px; }
 .toast { padding: 8px 12px; font-size: 20px; max-width: 440px; animation: up .18s steps(4); transition: opacity .45s, transform .45s; }
 .toast.out { opacity: 0; transform: translateY(-8px); }
+.stat.gear { border-color: var(--inti); color: var(--inti-hi); }
 .stat.harvest { border-color: var(--good); color: var(--good); }
 .scale-hint { border-left: 4px solid var(--inti); padding-left: 8px; }
 .lands { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0 2px; }
@@ -540,6 +546,7 @@ body.big .tcard { flex-basis: 100px; }
     <button class="round box press" id="pauseBtn" aria-label="Menú"><i></i></button>
   </div>
   <div id="banner" class="banner box" hidden></div>
+  <button id="mission" class="mission box" hidden></button>
   <div id="coach" class="coach box" hidden></div>
   <div id="sheet" class="sheet box" hidden></div>
   <div id="cmd" class="cmd" hidden>
@@ -614,6 +621,8 @@ const Engine = (() => {
     patrullera:   { name: 'Patrullera',      cost: 5,  hp: 12, atk: 2.5, def: 2,   mov: 4, rng: 2, tech: 'taller', naval: true, desc: 'Barco artillado para todos: rápido en el mar, lento en tierra, dispara a 2.' },
     acorazado:    { name: 'Acorazado',       cost: 9,  hp: 24, atk: 4,   def: 3,   mov: 3, rng: 2, tech: 'artilleria', naval: true, desc: 'Fortaleza flotante. Bombardea la costa a 2 casillas.' },
     triton:       { name: 'Tritón',          cost: 5,  hp: 12, atk: 3,   def: 2,   mov: 2, rng: 1, faction: 'callao', amphib: true, desc: 'Buzo de combate con tridente. Nada y camina igual de rápido. +1 ataque desde el agua.' },
+    chasqui:      { name: 'Chasqui',         cost: 3,  hp: 9,  atk: 2.5, def: 1.2, mov: 4, rng: 1, faction: 'chasquis', desc: 'Corredor del norte. Rapidísimo, ignora el bloqueo enemigo y en carretera vuela.' },
+    barrenero:    { name: 'Barrenero',       cost: 5,  hp: 13, atk: 3.5, def: 2,   mov: 2, rng: 1, faction: 'mineros', desc: 'Minero con taladro y dinamita. Cruza montañas como llano y pega +50% a ciudades.' },
     cangrejo:     { name: 'Cangrejo de acero', cost: 9, hp: 22, atk: 3,   def: 4,   mov: 2, rng: 1, faction: 'callao', tech: 'taller', amphib: true, desc: 'Mecha anfibio con pinzas. Lento, blindado, cruza el mar y toma ciudades.' },
     heroe:        { name: 'Líder',           cost: 0,  hp: 18, atk: 3,   def: 2.5, mov: 2, rng: 1, hero: true, desc: 'Tu líder en persona. Arenga a las tropas cercanas. Si cae, tu facción pierde moral 3 turnos.' },
   };
@@ -689,7 +698,7 @@ const Engine = (() => {
   };
   // construcciones de terreno: una unidad las levanta en una casilla a 2 pasos de una ciudad propia
   const BUILDS = {
-    cultivo:    { name: 'Cultivo',    cost: 4, on: ['desierto', 'puna'], desc: 'Chacras de riego. +1 chatarra por turno y comida: +4% ataque y defensa a todas tus tropas (se acumula hasta 5 cultivos) y curan +1 al descansar.' },
+    cultivo:    { name: 'Cultivo',    cost: 4, on: ['desierto', 'puna', 'selva'], desc: 'Chacras de riego. +1 chatarra por turno (+1 más junto a un río) y comida: +4% ataque y defensa a todas tus tropas (se acumula hasta 5 cultivos) y curan +1 al descansar.' },
     mina:       { name: 'Mina',       cost: 5, on: ['montana'], desc: 'Saca metal de la montaña. +2 chatarra por turno.' },
     aserradero: { name: 'Aserradero', cost: 4, on: ['selva'], desc: 'Madera para reconstruir. +1 chatarra y +1 defensa a la ciudad.' },
     antena:     { name: 'Antena',     cost: 3, on: ['desierto', 'puna', 'montana', 'selva'], desc: 'Visión +2 desde aquí. Solo una por ciudad.' },
@@ -699,12 +708,43 @@ const Engine = (() => {
   const TIER_COST = [0, 4, 7, 11];
 
   // habilidad del líder (una vez cada 4 turnos): efecto sobre unidades propias a 2 casillas
+  // equipamiento: una pieza por unidad, se compra en una ciudad propia (chatarra) y se queda con la unidad
+  const GEAR = {
+    blindaje: { name: 'Blindaje de chatarra', cost: 3, def: 0.6, desc: '+0.6 de defensa. Placas soldadas de autos viejos.' },
+    cuchillas: { name: 'Cuchillas', cost: 3, atk: 0.6, desc: '+0.6 de ataque. Machetes y varillas afiladas.' },
+    botas:    { name: 'Botas de caucho', cost: 2, mov: 1, desc: '+1 de movimiento. Llantas recicladas, pies secos.' },
+    botiquin: { name: 'Botiquín', cost: 2, heal: 3, desc: 'Cura +3 extra cada vez que descansa.' },
+    mira:     { name: 'Mira telescópica', cost: 4, rng: 1, onlyRanged: true, desc: '+1 de alcance (solo tropas que ya disparan a distancia).' },
+    tanque_agua: { name: 'Tanque de agua', cost: 2, hp: 4, desc: '+4 de vida máxima. Pesa, pero salva.' },
+  };
+  function unitRng(u) { return UNITS[u.type].rng + (u.gear && GEAR[u.gear].rng || 0); }
+  function gearOf(u) { return u && u.gear ? GEAR[u.gear] : null; }
+  function gearOptions(st, u) {
+    bind(st);
+    if (!u || u.acted || u.hero || u.gear) return [];
+    const c = cityAt(st, u.x, u.y); if (!c || c.owner !== u.owner) return [];
+    const sc = cityScale(st, u.owner);
+    return Object.entries(GEAR).filter(([k, G]) => !(G.onlyRanged && UNITS[u.type].rng < 2) && !(G.rng && UNITS[u.type].noMoveAttack)).map(([k, G]) => { const cost = Math.round(G.cost * sc); return { type: k, name: G.name, cost, desc: G.desc, can: st.players[u.owner].scrap >= cost }; });
+  }
+  function equip(st, uid, type) {
+    bind(st);
+    const u = st.units.find((v) => v.id === uid); if (!u) return false;
+    const o = gearOptions(st, u).find((x) => x.type === type);
+    if (!o || !o.can || u.owner !== st.cur) return false;
+    st.players[u.owner].scrap -= o.cost; u.gear = type; if (GEAR[type].hp) u.hp += GEAR[type].hp;
+    st.players[u.owner].stats.gear = (st.players[u.owner].stats.gear || 0) + 1;
+    log(st, `${st.players[u.owner].name} equipó ${GEAR[type].name} a su ${UNITS[u.type].name}.`);
+    event(st, { k: 'gear', x: u.x, y: u.y, p: u.owner, type });
+    return true;
+  }
   const HERO = {
     lima:     { name: 'Protocolo de apoyo', desc: 'Cura 5 y da +1 energía.', heal: 5, energy: 1 },
     sierra:   { name: 'Grito de la montaña', desc: 'Cura 3 y las tropas cercanas recuperan movimiento.', heal: 3, move: true },
     selva:    { name: 'Canto del río', desc: 'Cura 8 a las tropas cercanas.', heal: 8 },
     desierto: { name: 'Botín de guerra', desc: 'Cura 3 y +4 chatarra.', heal: 3, scrap: 4 },
     culto:    { name: 'Fervor', desc: 'Cura 3 y las tropas cercanas recuperan ataque.', heal: 3, act: true },
+    chasquis: { name: 'Relevo', desc: 'Las tropas cercanas recuperan todo su movimiento y curan 2.', heal: 2, move: true },
+    mineros:  { name: 'Dinamita', desc: 'Cura 3 a los tuyos y hace 5 de daño a los enemigos vecinos.', heal: 3, blast: 5 },
     callao:   { name: 'Marea viva', desc: 'Cura 4 y las tropas en agua o costa recuperan movimiento.', heal: 4, move: true, coastOnly: true },
     flota:    { name: 'Marea alta', desc: 'Cura 4 y las tropas cercanas recuperan movimiento.', heal: 4, move: true },
   };
@@ -737,14 +777,22 @@ const Engine = (() => {
                 unique: 'triton', startTech: [], terrain: 'mar',
                 perk: 'Sus unidades pueden nadar; Tritón y Cangrejo son anfibios de verdad. Hasta 3 ciudades costeras dan +1. Sin tecnología inicial: su fuerza está en el agua.',
                 lore: 'Cuando el Inti cayó al mar frente al Callao, los pescadores que bucearon entre sus restos volvieron distintos: respiran bajo el agua y oyen el latido del satélite. Viven en muelles sobre pilotes y barcos hundidos. Para ellos la costa no es frontera: es puerta.' },
+    chasquis: { name: 'Chasquis del Norte',    short: 'Chasquis', color: '#b4e34a', capital: 'Cajamarca', suyo: 'La Ruta Real', leader: 'Capitán Quispe',
+                unique: 'chasqui', startTech: ['comandos'], terrain: 'puna',
+                perk: 'Empieza con Comandos. Sus tropas mueven +1 si arrancan en carretera. Chasqui: corredor que ignora el bloqueo enemigo.',
+                lore: 'Herederos de los mensajeros del Inca. Cuando cayó el Inti y se apagaron las radios, ellos volvieron a correr: llevan noticias, chatarra y, si hace falta, guerra, por los caminos de todo el país.' },
+    mineros:  { name: 'Mineros del Cerro',     short: 'Mineros',  color: '#e2b84a', capital: 'Cerro de Pasco', suyo: 'El Socavón', leader: 'La Ingeniera Huamán',
+                unique: 'barrenero', startTech: ['chatarreria'], terrain: 'montana',
+                perk: 'Empieza con Chatarrería. Las montañas les cuestan 1 y sus Minas dan +3. Barrenero que dinamita ciudades.',
+                lore: 'Bajaron al socavón cuando cayó el satélite y salieron treinta años después con taladros, dinamita y una idea fija: todo el metal del Perú está bajo tierra, y la tierra es de ellos.' },
   };
-  const FACTION_KEYS = ['lima', 'sierra', 'selva', 'desierto', 'culto', 'flota', 'callao'];
+  const FACTION_KEYS = ['lima', 'sierra', 'selva', 'desierto', 'culto', 'flota', 'callao', 'chasquis', 'mineros'];
 
   // ciudades: nombre, fila (en escala base 19), banda, desplazamiento, prioridad (1 = siempre, 2 = mediano+, 3 = solo grande)
   const CITY_DEFS = [
     ['Piura', 1, 'des', 0, 1], ['Tumbes', 0, 'des', 0, 3], ['Chiclayo', 3, 'des', 0, 2], ['Cajamarca', 4, 'sie', 1, 2], ['Chachapoyas', 2, 'sie', 3, 3],
     ['Trujillo', 6, 'des', 0, 1], ['Iquitos', 3, 'sel', 3, 1], ['Yurimaguas', 2, 'sel', 1, 3], ['Tarapoto', 5, 'sel', 0, 2], ['Chimbote', 8, 'des', 0, 1],
-    ['Huaraz', 7, 'sie', 1, 2], ['Pucallpa', 8, 'sel', 1, 1], ['Huánuco', 9, 'sie', 3, 3], ['Lima', 10, 'des', 0, 1], ['Huancayo', 10, 'sie', 2, 1],
+    ['Huaraz', 7, 'sie', 1, 2], ['Pucallpa', 8, 'sel', 1, 1], ['Huánuco', 9, 'sie', 3, 3], ['Cerro de Pasco', 9, 'sie', 1, 2], ['Lima', 10, 'des', 0, 1], ['Huancayo', 10, 'sie', 2, 1],
     ['Ica', 12, 'des', 1, 2], ['Ayacucho', 12, 'sie', 1, 1], ['Cusco', 13, 'sie', 3, 1], ['Nazca', 14, 'des', 0, 1], ['Pto. Maldonado', 13, 'sel', 2, 2],
     ['Abancay', 15, 'sie', 1, 3], ['Arequipa', 16, 'sie', 0, 1], ['Puno', 16, 'sie', 3, 2], ['Juliaca', 15, 'sie', 4, 3], ['Moquegua', 17, 'des', 1, 3],
     ['Tacna', 18, 'des', 1, 2], ['Tingo María', 7, 'sel', 0, 3], ['Satipo', 11, 'sel', 0, 3], ['Callao', 13, 'isla', 0, 1],
@@ -838,7 +886,7 @@ const Engine = (() => {
       st.cities.push({ id: st.cities.length, name, x: xx, y: yy, owner: -1, level: 1, built: 0 });
     }
     // pueblos extra para que los mapas grandes no queden vacíos
-    const TOWNS = ['Barranca', 'Cañete', 'Pisco', 'Camaná', 'Mollendo', 'Huanta', 'Tarma', 'La Oroya', 'Cerro de Pasco', 'Oxapampa', 'Moyobamba', 'Rioja', 'Nauta', 'Espinar', 'Ayaviri', 'Azángaro', 'Huancavelica', 'Chota', 'Celendín', 'Huamachuco', 'Casma', 'Huarmey', 'Paita', 'Sechura', 'Lambayeque', 'Pacasmayo', 'Chepén', 'Sicuani', 'Urubamba', 'Jauja', 'Chanchamayo', 'Juanjuí', 'Lamas', 'Jaén', 'Caraz', 'Yungay', 'Chulucanas', 'Morropón', 'Caravelí', 'Chivay', 'Yauri', 'Puquio', 'Coracora', 'Yanahuanca', 'Pozuzo', 'Atalaya', 'Sepahua', 'Tambopata', 'Iberia', 'Macusani'].filter((n) => !st.cities.some((c) => c.name === n));
+    const TOWNS = ['Barranca', 'Cañete', 'Pisco', 'Camaná', 'Mollendo', 'Huanta', 'Tarma', 'La Oroya', 'Oxapampa', 'Moyobamba', 'Rioja', 'Nauta', 'Espinar', 'Ayaviri', 'Azángaro', 'Huancavelica', 'Chota', 'Celendín', 'Huamachuco', 'Casma', 'Huarmey', 'Paita', 'Sechura', 'Lambayeque', 'Pacasmayo', 'Chepén', 'Sicuani', 'Urubamba', 'Jauja', 'Chanchamayo', 'Juanjuí', 'Lamas', 'Jaén', 'Caraz', 'Yungay', 'Chulucanas', 'Morropón', 'Caravelí', 'Chivay', 'Yauri', 'Puquio', 'Coracora', 'Yanahuanca', 'Pozuzo', 'Atalaya', 'Sepahua', 'Tambopata', 'Iberia', 'Macusani'].filter((n) => !st.cities.some((c) => c.name === n));
     const want = Math.max(size.cities || 0, st.cities.length), land = [];
     for (let yy = 1; yy < H - 1; yy++) for (let xx = 1; xx < W - 1; xx++) if (!['mar', 'lago'].includes(st.tiles[idx(xx, yy)])) land.push([xx, yy]);
     for (let tries = 0; st.cities.length < want && tries < 400 && TOWNS.length; tries++) {
@@ -863,6 +911,27 @@ const Engine = (() => {
     };
     if (st.map !== 'islas') { link('Lima', 'Huancayo'); link('Ayacucho', 'Cusco'); link('Arequipa', 'Puno'); link('Chiclayo', 'Cajamarca'); }
     st.roads = [...new Set(st.roads)];
+    // ríos: nacen en la montaña y bajan serpenteando; cruzarlos cuesta 1 más y deja a la tropa expuesta. Donde pasa una carretera hay puente.
+    st.rivers = [];
+    { const nRiv = st.map === 'cordillera' ? 3 : st.map === 'islas' ? 1 : 2 + (W > 20 ? 1 : 0) + (W > 28 ? 1 : 0);
+      const riverSet = new Set(), isLand = (x, y) => inb(x, y) && !['mar', 'lago'].includes(st.tiles[idx(x, y)]) && !cityAt(st, x, y);
+      for (let r = 0, tries = 0; r < nRiv && tries < 60; tries++) {
+        const springs = []; for (let y = 2; y < H - 2; y++) for (let x = 1; x < W - 1; x++) if (st.tiles[idx(x, y)] === 'montana' && !riverSet.has(idx(x, y)) && !st.cities.some((c) => dist(c.x, c.y, x, y) < 2)) springs.push([x, y]);
+        if (!springs.length) break;
+        let [x, y] = pick(st, springs); const path = []; const dirX = rng(st) < 0.5 ? -1 : 1, len = 5 + Math.floor(rng(st) * 6);
+        for (let i = 0; i < len; i++) {
+          path.push(idx(x, y));
+          const opts = neighbors(x, y).filter(([nx, ny]) => isLand(nx, ny) && !riverSet.has(idx(nx, ny)) && !path.includes(idx(nx, ny)));
+          if (!opts.length) break;
+          opts.sort((a, b) => ((b[0] - x) * dirX + (b[1] - y) * 0.6 + rng(st) * 1.4) - ((a[0] - x) * dirX + (a[1] - y) * 0.6 + rng(st) * 1.4));
+          [x, y] = opts[0];
+          if (st.tiles[idx(x, y)] === 'mar') break;
+        }
+        if (path.length >= 4) { for (const k of path) riverSet.add(k); r++; }
+      }
+      st.rivers = [...riverSet];
+      for (const k of st.rivers) if (st.tiles[k] === 'montana') st.tiles[k] = 'puna';
+    }
     for (const k of st.roads) if (st.tiles[k] === 'montana') st.tiles[k] = 'puna';
     for (const k of st.roads) if (st.tiles[k] === 'mar') st.tiles[k] = 'desierto';
     // trono (Rey de la Colina): la ciudad más cercana al centro
@@ -938,10 +1007,12 @@ const Engine = (() => {
   const hasTech = (st, p, t) => st.players[p].techs.includes(t);
   const RANKS = [{ name: '', hp: 0, atk: 0, def: 0 }, { name: 'Veterano', hp: 5, atk: 0.5, def: 0 }, { name: 'Héroe de guerra', hp: 10, atk: 1, def: 0.5 }];
   const rankOf = (u) => u.rank || (u.vet ? 1 : 0);
-  const maxHp = (u) => UNITS[u.type].hp + RANKS[rankOf(u)].hp + (u.boss ? 20 : 0); // los jefes son más grandes
+  const maxHp = (u) => UNITS[u.type].hp + RANKS[rankOf(u)].hp + (u.boss ? 20 : 0) + (u.gear && GEAR[u.gear].hp || 0); // los jefes son más grandes
   function promote(st, u) { const r = rankOf(u); if (r >= 2) return false; u.rank = r + 1; u.vet = true; u.hp = Math.min(maxHp(u), u.hp + RANKS[u.rank].hp); event(st, { k: 'rank', x: u.x, y: u.y, id: u.id, rank: u.rank, p: u.owner }); return true; }
   const fac = (st, p) => st.players[p].faction;
   const nodeAt = (st, x, y) => st.nodes && st.nodes.find((n) => n.x === x && n.y === y);
+  const riverAt = (st, x, y) => !!(st.rivers && st.rivers.includes(idx(x, y)));
+  const bridgeAt = (st, x, y) => riverAt(st, x, y) && !!(st.roads && st.roads.includes(idx(x, y)));
   const buildAt = (st, x, y) => st.builds && st.builds.find((b) => b.x === x && b.y === y);
   const nearestOwnCity = (st, p, x, y, r = 2) => st.cities.filter((c) => c.owner === p && dist(c.x, c.y, x, y) <= r).sort((a, b) => dist(a.x, a.y, x, y) - dist(b.x, b.y, x, y))[0];
   const alivePlayers = (st) => st.players.map((P, i) => (P.alive && !P.horde ? i : -1)).filter((i) => i >= 0);
@@ -949,7 +1020,8 @@ const Engine = (() => {
   function event(st, e) { st.events.push(e); }
 
   function unitMov(st, u) {
-    let m = UNITS[u.type].mov;
+    let m = UNITS[u.type].mov + (u.gear && GEAR[u.gear].mov || 0);
+    if (fac(st, u.owner) === 'chasquis' && st.roads && st.roads.includes(idx(u.x, u.y))) m += 1;
     if ((u.type === 'rondero' || u.type === 'francotirador') && hasTech(st, u.owner, 'comandos')) m += 1;
     return m;
   }
@@ -982,7 +1054,7 @@ const Engine = (() => {
     let s = 0;
     for (const c of st.cities) if (c.owner === p) s += c.level + (c.capital ? (fac(st, p) === 'lima' ? 2 : 1) : 0) + (hasTech(st, p, 'mercado') ? 1 : 0) + (fac(st, p) === 'selva' && st.tiles[idx(c.x, c.y)] === 'selva' ? 1 : 0) + 0;
     if (fac(st, p) === 'flota' || fac(st, p) === 'callao') s += Math.min(fac(st, p) === 'flota' ? 5 : 3, st.cities.filter((c) => c.owner === p && neighbors(c.x, c.y).some(([nx, ny]) => st.tiles[idx(nx, ny)] === 'mar')).length);
-    for (const b of st.builds || []) if (b.owner === p) s += b.type === 'mina' || b.type === 'puerto' ? 2 : b.type === 'antena' ? 0 : 1;
+    for (const b of st.builds || []) if (b.owner === p) s += (b.type === 'mina' ? (fac(st, p) === 'mineros' ? 3 : 2) : b.type === 'puerto' ? 2 : b.type === 'antena' ? 0 : 1) + (b.type === 'cultivo' && riverAt(st, b.x, b.y) ? 1 : 0);
     if (st.mods && st.mods.escasez) s = Math.ceil(s / 2);
     return s;
   }
@@ -1001,9 +1073,11 @@ const Engine = (() => {
     if (U.amphib) return water ? 1 : (t === 'montana' ? 2 : 1);
     if (water) return t === 'mar' && (fac(st, p) === 'callao' || fac(st, p) === 'flota') ? 2 : 99;
     if (st.roads && st.roads.includes(idx(x, y))) return 0.5;
-    if (t === 'selva' && fac(st, p) === 'selva') return 1;
-    if (t === 'montana' && type === 'tanque') return 3;
-    return TERRAIN[t].cost;
+    const riv = riverAt(st, x, y) ? 1 : 0;
+    if (t === 'selva' && fac(st, p) === 'selva') return 1 + riv * 0.5;
+    if (t === 'montana' && type === 'tanque') return 3 + riv;
+    if (t === 'montana' && (type === 'barrenero' || fac(st, p) === 'mineros')) return 1 + riv;
+    return TERRAIN[t].cost + riv;
   }
   function passable(st, type, p, x, y) { return moveCost(st, type, p, x, y) < 99; }
 
@@ -1028,7 +1102,7 @@ const Engine = (() => {
         const k = idx(nx, ny);
         if (best.has(k) && best.get(k) <= nc) continue;
         best.set(k, nc);
-        const zoc = !UNITS[u.type].fly && neighbors(nx, ny).some(([ex, ey]) => {
+        const zoc = !UNITS[u.type].fly && u.type !== 'chasqui' && neighbors(nx, ny).some(([ex, ey]) => {
           const e = unitAt(st, ex, ey); return e && e.owner !== u.owner && !allied(st, e.owner, u.owner);
         });
         const ec = cityAt(st, nx, ny);
@@ -1044,7 +1118,7 @@ const Engine = (() => {
     bind(st);
     if (u.acted) return [];
     if (UNITS[u.type].noMoveAttack && u.moved) return [];
-    const r = UNITS[u.type].rng;
+    const r = unitRng(u);
     const vis = visibleSet(st, u.owner);
     return st.units.filter((e) => e.owner !== u.owner && !allied(st, e.owner, u.owner)
       && dist(u.x, u.y, e.x, e.y) <= r && vis.has(idx(e.x, e.y)));
@@ -1133,6 +1207,7 @@ const Engine = (() => {
   function defBonus(st, d) {
     const t = st.tiles[idx(d.x, d.y)];
     let b = TERRAIN[t].def;
+    if (riverAt(st, d.x, d.y) && !bridgeAt(st, d.x, d.y) && !UNITS[d.type].naval && !UNITS[d.type].amphib && !UNITS[d.type].fly) b *= 0.8; // con el agua a la cintura
     const f = fac(st, d.owner);
     if (f === 'sierra' && t === 'montana') b += 0.35;
     if (f === 'selva' && t === 'selva') b += 0.6;
@@ -1151,7 +1226,8 @@ const Engine = (() => {
     if (f === 'culto' && neighbors(a.x, a.y).some(([nx, ny]) => { const o = unitAt(st, nx, ny); return o && o.owner === a.owner; })) atk += 0.5;
     if (f === 'selva' && st.tiles[idx(a.x, a.y)] === 'selva') atk += 0.5;
     if (a.type === 'triton' && st.tiles[idx(a.x, a.y)] === 'mar') atk += 1;
-    atk += RANKS[rankOf(a)].atk;
+    if (a.type === 'barrenero' && a._vsCity) atk *= 1.5;
+    atk += RANKS[rankOf(a)].atk + (a.gear && GEAR[a.gear].atk || 0);
     if (st.players[a.owner].moral > 0) atk -= 1;
     atk *= 1 + harvest(st, a.owner);
     if (st.players[a.owner].kind === 'ai' && diffOf(st.players[a.owner]).atkBoost) atk *= 1 + diffOf(st.players[a.owner]).atkBoost;
@@ -1161,14 +1237,16 @@ const Engine = (() => {
   function forecast(st, a, d) {
     bind(st);
     const D = UNITS[d.type];
+    if (a.type === 'barrenero') a._vsCity = !!cityAt(st, d.x, d.y);
     let atk = atkBonus(st, a);
+    delete a._vsCity;
     if (st.players[a.owner].betrayed === d.owner) atk *= 1.5;
     const aF = atk * (a.hp / maxHp(a));
-    const dF = (D.def + RANKS[rankOf(d)].def) * (d.hp / maxHp(d)) * defBonus(st, d);
+    const dF = (D.def + RANKS[rankOf(d)].def + (d.gear && GEAR[d.gear].def || 0)) * (d.hp / maxHp(d)) * defBonus(st, d);
     const tot = aF + dF;
     const dmg = Math.round((aF / tot) * atk * 4.5);
     const left = d.hp - dmg;
-    const canRet = left > 0 && dist(a.x, a.y, d.x, d.y) <= D.rng;
+    const canRet = left > 0 && dist(a.x, a.y, d.x, d.y) <= unitRng(d);
     // contraataque: depende de lo fuerte que pega el defensor y de cuánta vida le queda; nunca pasa del 60% de la vida del atacante
     let ret = canRet ? Math.round(Math.min(dF / tot, 0.75) * Math.max(D.atk, D.def) * 4.5 * 0.75 * (0.6 + 0.4 * left / maxHp(d))) : 0;
     ret = Math.min(ret, Math.floor(maxHp(a) * 0.6));
@@ -1333,8 +1411,58 @@ const Engine = (() => {
   }
 
   // ---------- turnos ----------
+  // ---------- misiones secundarias (encargos cortos con premio, solo para humanos en partida libre u online) ----------
+  const MISSION_KINDS = ['capture', 'kill', 'build', 'node', 'train', 'tech', 'hold'];
+  function missionSnapshot(st, p) { const P = st.players[p]; return { kills: P.kills, captures: P.stats.captures, builds: P.stats.builds || 0, trained: Object.values(P.stats.trained || {}).reduce((a, b) => a + b, 0), techs: P.techs.length }; }
+  function newMission(st, p) {
+    const P = st.players[p];
+    const kinds = MISSION_KINDS.filter((k) => k !== (P.lastMission || ''));
+    for (let tries = 0; tries < 8; tries++) {
+      const kind = pick(st, kinds), snap = missionSnapshot(st, p), due = st.turn + 7;
+      if (kind === 'capture') {
+        const mine = st.cities.filter((c) => c.owner === p); if (!mine.length) continue;
+        const cand = st.cities.filter((c) => c.owner !== p && !(c.owner >= 0 && allied(st, p, c.owner)) && mine.some((m) => dist(m.x, m.y, c.x, c.y) <= 5));
+        if (!cand.length) continue; const c = pick(st, cand);
+        return { kind, text: `Toma ${c.name}`, city: c.id, due, reward: 8 + c.level * 2, snap };
+      }
+      if (kind === 'kill') return { kind, text: 'Destruye 3 unidades enemigas', n: 3, due, reward: 9, snap };
+      if (kind === 'build') return { kind, text: 'Levanta una construcción (cultivo, mina…)', n: 1, due, reward: 6, snap };
+      if (kind === 'node') { if (!(st.nodes || []).length) continue; return { kind, text: 'Termina un turno sobre un nodo del Inti', due, reward: 7, snap }; }
+      if (kind === 'train') return { kind, text: 'Entrena 3 tropas', n: 3, due, reward: 6, snap };
+      if (kind === 'tech') return { kind, text: 'Investiga 2 tecnologías', n: 2, due, reward: 7, snap };
+      if (kind === 'hold') { const mine = st.cities.filter((c) => c.owner === p && !c.capital); if (!mine.length) continue; const c = pick(st, mine); return { kind, text: `Conserva ${c.name} hasta el turno ${due}`, city: c.id, due, reward: 6, snap }; }
+    }
+    return null;
+  }
+  function missionProgress(st, p) {
+    const P = st.players[p], m = P.mission; if (!m) return null;
+    const now = missionSnapshot(st, p);
+    if (m.kind === 'capture') return { cur: st.cities[m.city].owner === p ? 1 : 0, n: 1 };
+    if (m.kind === 'kill') return { cur: Math.min(m.n, now.kills - m.snap.kills), n: m.n };
+    if (m.kind === 'build') return { cur: Math.min(1, now.builds - m.snap.builds), n: 1 };
+    if (m.kind === 'node') return { cur: (st.nodes || []).some((nd) => nd.owner === p && st.units.some((u) => u.owner === p && u.x === nd.x && u.y === nd.y)) ? 1 : 0, n: 1 };
+    if (m.kind === 'train') return { cur: Math.min(m.n, now.trained - m.snap.trained), n: m.n };
+    if (m.kind === 'tech') return { cur: Math.min(m.n, now.techs - m.snap.techs), n: m.n };
+    if (m.kind === 'hold') return { cur: st.turn >= m.due && st.cities[m.city].owner === p ? 1 : 0, n: 1, lost: st.cities[m.city].owner !== p };
+    return null;
+  }
+  function checkMissions(st, p) {
+    const P = st.players[p];
+    if (P.kind !== 'human' || P.horde || st.mode === 'campaign' || st.mode === 'coop' || (st.mods && st.mods.sincartas)) return;
+    if (P.mission) {
+      const pr = missionProgress(st, p);
+      if (pr && pr.cur >= pr.n && !pr.lost) { P.scrap += P.mission.reward; P.stats.missions = (P.stats.missions || 0) + 1; log(st, `Misión cumplida: ${P.mission.text}. +${P.mission.reward} chatarra.`); event(st, { k: 'mission', p, state: 'done', text: P.mission.text, reward: P.mission.reward }); P.lastMission = P.mission.kind; P.mission = null; P.missionCd = 2; }
+      else if (st.turn > P.mission.due || (pr && pr.lost)) { log(st, `Misión fallida: ${P.mission.text}.`); event(st, { k: 'mission', p, state: 'fail', text: P.mission.text }); P.lastMission = P.mission.kind; P.mission = null; P.missionCd = 2; }
+    }
+    if (!P.mission) {
+      if (P.missionCd > 0) { P.missionCd--; return; }
+      if (st.turn < 3) return;
+      const m = newMission(st, p); if (m) { P.mission = m; event(st, { k: 'mission', p, state: 'new', text: m.text, reward: m.reward, due: m.due }); }
+    }
+  }
   function startTurn(st) {
     const p = st.cur, P = st.players[p];
+    checkMissions(st, p);
     P.scrap += income(st, p);
     P.energy = (P.energy || 0) + energyIncome(st, p);
     P.usedPower = false;
@@ -1360,6 +1488,7 @@ const Engine = (() => {
       if (c && c.owner === p && hasTech(st, p, 'bunker')) h += 4;
       if (fac(st, p) === 'selva') h += 2;
       if (harvest(st, p) > 0) h += 1;
+      if (u.gear && GEAR[u.gear].heal) h += GEAR[u.gear].heal;
       if (hasTech(st, p, 'medicina')) h *= 2;
       if (u.type === 'jaguar' && t === 'selva') h = 99;
       if (UNITS[u.type].naval) { const pb = buildAt(st, u.x, u.y); if (pb && pb.type === 'puerto' && pb.owner === p) h += 6; }
@@ -1479,6 +1608,10 @@ const Engine = (() => {
       opts: [{ label: 'Asaltarla', desc: '+9 chatarra · 3 turnos de mala fama', run: (st, p) => { st.players[p].scrap += 9; st.players[p].traitor = Math.max(st.players[p].traitor, 3); } }, { label: 'Cobrar peaje', desc: '+4 chatarra', run: (st, p) => { st.players[p].scrap += 4; } }], ai: 1 },
     { id: 'vision', fac: 'culto', title: 'La visión del Profeta', text: 'El Profeta despierta gritando: ha visto el sol encenderse de nuevo.', who: 'culto',
       opts: [{ label: 'Peregrinación', desc: '2 Fanáticos gratis', run: (st, p) => { freeUnit(st, p, 'fanatico'); freeUnit(st, p, 'fanatico'); } }, { label: 'Meditar', desc: '+3 energía', run: (st, p) => { st.players[p].energy += 3; } }], ai: 0 },
+    { id: 'tambo', fac: 'chasquis', title: 'El tambo olvidado', text: 'Un corredor encuentra un tambo intacto en la Ruta Real: provisiones de antes de la caída.', who: 'chasquis',
+      opts: [{ label: 'Repartir', desc: 'Todas tus tropas recuperan movimiento', run: (st, p) => { for (const u of st.units) if (u.owner === p) u.moved = false; } }, { label: 'Guardar', desc: '+6 chatarra', run: (st, p) => { st.players[p].scrap += 6; } }], ai: 1 },
+    { id: 'veta', fac: 'mineros', title: 'La veta madre', text: 'Los barrenos tocan metal del Inti bajo el Cerro. Brilla. Y tiembla.', who: 'mineros',
+      opts: [{ label: 'Extraerla', desc: '+10 chatarra', run: (st, p) => { st.players[p].scrap += 10; } }, { label: 'Dinamitar la galería', desc: 'Un Barrenero gratis · +2 energía', run: (st, p) => { freeUnit(st, p, 'barrenero'); st.players[p].energy += 2; } }], ai: 0 },
     { id: 'resaca', fac: 'callao', title: 'La resaca del Inti', text: 'La marea baja deja al descubierto un pedazo del satélite entre las rocas.', who: 'callao',
       opts: [{ label: 'Bucear por él', desc: '+3 energía · un Tritón gratis', run: (st, p) => { st.players[p].energy += 3; freeUnit(st, p, 'triton'); } }, { label: 'Venderlo en el muelle', desc: '+8 chatarra', run: (st, p) => { st.players[p].scrap += 8; } }], ai: 0 },
     { id: 'temporal', fac: 'flota', title: 'Temporal en el mar', text: 'Olas de seis metros. Los pecios de la costa quedan al descubierto.', who: 'flota',
@@ -1564,6 +1697,7 @@ const Engine = (() => {
       if (H.act) v.acted = false;
       event(st, { k: 'buff', x: v.x, y: v.y, kind: H.move || H.act ? 'move' : 'heal', v: v.hp - b0 });
     }
+    if (H.blast) for (const e of enemiesNear(st, p, u.x, u.y, 1)) { e.hp -= H.blast; event(st, { k: 'hit', x: e.x, y: e.y, v: H.blast, ax: u.x, ay: u.y, atype: 'mortero', aid: u.id, did: e.id }); if (e.hp <= 0) killUnit(st, e, p); }
     if (H.energy) st.players[p].energy += H.energy;
     if (H.scrap) st.players[p].scrap += H.scrap;
     u.cd = 4; u.acted = true;
@@ -1727,19 +1861,21 @@ const Engine = (() => {
     if (!cap) return false;
     P.lastStand = true;
     const f = P.faction, F = FACTIONS[f];
-    const kinds = { lima: 'protocolo', sierra: 'muralla', selva: 'emboscada', desierto: 'tormenta', culto: 'martirio', flota: 'desembarco', callao: 'marejada' };
+    const kinds = { lima: 'protocolo', sierra: 'muralla', selva: 'emboscada', desierto: 'tormenta', culto: 'martirio', flota: 'desembarco', callao: 'marejada', chasquis: 'relevo', mineros: 'derrumbe' };
     const kind = kinds[f] || 'refuerzos';
     for (const u of st.units) if (u.owner === p) { u.hp = maxHp(u); if (!u.vet) { u.vet = true; u.hp = maxHp(u); } }
     const free = () => [[cap.x, cap.y], ...neighbors(cap.x, cap.y)].filter(([x, y]) => !unitAt(st, x, y) && passable(st, 'rondero', p, x, y));
     const n = f === 'culto' ? 4 : 2;
-    for (let k = 0; k < n; k++) { const sp = free(); if (!sp.length) break; const [x, y] = pick(st, sp); const t = f === 'culto' ? 'fanatico' : f === 'flota' ? 'lancha' : f === 'callao' ? 'triton' : f === 'sierra' ? 'huaracero' : f === 'lima' ? 'vigia' : f === 'selva' ? 'jaguar' : f === 'desierto' ? 'buggy' : 'rondero'; const u = spawn(st, p, t, x, y); u.vet = true; u.hp = maxHp(u); u.moved = false; u.acted = false; }
+    for (let k = 0; k < n; k++) { const sp = free(); if (!sp.length) break; const [x, y] = pick(st, sp); const t = f === 'culto' ? 'fanatico' : f === 'flota' ? 'lancha' : f === 'callao' ? 'triton' : f === 'chasquis' ? 'chasqui' : f === 'mineros' ? 'barrenero' : f === 'sierra' ? 'huaracero' : f === 'lima' ? 'vigia' : f === 'selva' ? 'jaguar' : f === 'desierto' ? 'buggy' : 'rondero'; const u = spawn(st, p, t, x, y); u.vet = true; u.hp = maxHp(u); u.moved = false; u.acted = false; }
     if (f === 'sierra') { if (!P.techs.includes('murallas')) P.techs.push('murallas'); if (!P.techs.includes('bunker')) P.techs.push('bunker'); }
     if (f === 'lima') P.energy = (P.energy || 0) + 4;
     if (f === 'desierto') { for (const e of enemiesNear(st, p, cap.x, cap.y, 2)) { e.hp -= 6; event(st, { k: 'hit', x: e.x, y: e.y, v: 6 }); if (e.hp <= 0) killUnit(st, e, p); } }
     if (f === 'selva') for (const u of st.units) if (u.owner === p) { u.moved = false; u.acted = false; }
     if (f === 'culto') P.betrayed = -1;
+    if (f === 'chasquis') for (const u of st.units) if (u.owner === p) u.moved = false;
+    if (f === 'mineros') { P.scrap += 10; for (const c of st.cities) if (c.owner === p && c.level < 4) c.level++; }
     P.scrap += 6;
-    const msgs = { protocolo: 'abre las puertas del búnker: androides y energía de reserva', muralla: 'levanta murallas de emergencia y refuerza las cumbres', emboscada: 'desata una emboscada: la selva entera se mueve', tormenta: 'detona cargas de chatarra alrededor de su capital', martirio: 'convoca a los últimos peregrinos al martirio', desembarco: 'desembarca su última flota', marejada: 'llama a la marejada: los tritones salen del mar' };
+    const msgs = { protocolo: 'abre las puertas del búnker: androides y energía de reserva', muralla: 'levanta murallas de emergencia y refuerza las cumbres', emboscada: 'desata una emboscada: la selva entera se mueve', tormenta: 'detona cargas de chatarra alrededor de su capital', martirio: 'convoca a los últimos peregrinos al martirio', desembarco: 'desembarca su última flota', marejada: 'llama a la marejada: los tritones salen del mar', relevo: 'manda el último relevo: todos los caminos del norte se llenan de corredores', derrumbe: 'dinamita el socavón: metal para todos y ciudades reforzadas' };
     log(st, `¡ÚLTIMO RECURSO! ${P.name} ${msgs[kind]}.`);
     event(st, { k: 'laststand', p, kind, x: cap.x, y: cap.y });
     return true;
@@ -1903,12 +2039,21 @@ const Engine = (() => {
       if (D.trainSkip && rng(st) < D.trainSkip && !threatened(c)) continue; // fácil: a veces no entrena
       for (let k = 0; k < trainsPerTurn(st, p) + (D.extraTrain || 0); k++) for (const t of order(c)) if (canTrain(st, c.id, t)) { train(st, c.id, t); break; }
     }
+    // equipar tropas que están en una ciudad propia, si sobra chatarra
+    const gearChance = { facil: 0.1, normal: 0.3, dificil: 0.5, locura: 0.7 }[P.diff] ?? 0.3;
+    for (const u of st.units.filter((v) => v.owner === p && !v.gear && !v.hero)) {
+      if (P.scrap < 8 || rng(st) > gearChance) continue;
+      const opts = gearOptions(st, { ...u, acted: false }).filter((o) => o.can); if (!opts.length) continue;
+      const pick1 = UNITS[u.type].rng > 1 ? (opts.find((o) => o.type === 'mira') || opts.find((o) => o.type === 'blindaje')) : UNITS[u.type].def >= 2.5 ? opts.find((o) => o.type === 'blindaje') : rng(st) < 0.5 ? opts.find((o) => o.type === 'cuchillas') : opts.find((o) => o.type === 'botas');
+      const o = pick1 || opts[Math.floor(rng(st) * opts.length)];
+      const was = u.acted; u.acted = false; equip(st, u.id, o.type); u.acted = was;
+    }
   }
 
   function playerView(st, p) { bind(st); return { vis: visibleSet(st, p), seen: st.players[p].seen }; }
 
   return {
-    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
+    get W() { return W; }, get H() { return H; }, bind, cityScale, harvest, TUNE, riverAt, bridgeAt, missionProgress, GEAR, gearOf, gearOptions, equip, unitRng, SIZES, MAPS, HERO, RANKS, rankOf, coastX: (y) => coastX(y), canHeroAbility, heroAbility, BUILDS, buildAt, buildOptions, build, POWERS, MODS, MODES, nodeAt, energyIncome, canPower, usePower, alivePlayers, TERRAIN, UNITS, TECHS, BRANCHES, TIER_COST, FACTIONS, FACTION_KEYS,
     idx, neighbors, dist, newGame, unitAt, cityAt, relation, allied, hasTech, maxHp, unitCost, unitMov, availableUnits, techCost, techReqsMet,
     canResearch, income, cityCap, unitsOfCity, upgradeCost, trainsPerTurn, reachable, targets, canCapture, canAlly, allyCount, visibleSet,
     reveal, move, attack, capture, canTrain, train, upgrade, research, propose, answer, aiAccepts, betray, tribute, endTurn, aiTurn,
@@ -2130,6 +2275,12 @@ const PX = (() => {
       '...kbbk..kbbk...',
       '..kkkkk..kkkkk..',
     ],
+    chasqui: [
+      '................', '.......kkk......', '......kxxxk.....', '.....kssssk.....', '.....kcksck.....', '.....ksssk......', '....kkffffk.....', '...kffffffkk....', '..kflfffffFkk...', '..kkfffffffk.k..', '....kFFFkk.kyk..', '...kbbkFFk.kk...', '..kbbk.kbbk.....', '.kkkk...kbbk....', '.........kkkk...', '................',
+    ],
+    barrenero: [
+      '................', '.....kkkkkk.....', '....kyyyyyyk....', '....kykwkyyk....', '....kkkkkkkk....', '.....kssssk.....', '....kscsscsk....', '.....ksSSsk.....', '....kffffffk....', '...kflfffffFkGk.', '...kffffffffkGGk', '...kFFFFFFFFkkk.', '....kBBkkBBk....', '....kbbk.kbbk...', '...kkkk..kkkk...', '................',
+    ],
     buggy: [
       '................',
       '......kkkkk.....',
@@ -2204,6 +2355,8 @@ const PX = (() => {
     node_off: ['................', '................', '................', '......kkkk......', '.....kGGGGk.....', '......kGGk......', '..kkkkkGGkkkkk..', '.kGGGgkkkkgGGGk.', 'kGGgggGGGGgggGGk', 'kGgGGGGGGGGGGgGk', '.kGGGGGGGGGGGGk.', '..kkkkkkkkkkkk..', '................', '................'],
     crown: ['k..k..k', 'kykykyk', 'kyyyyyk', 'kyYyYyk', 'kkkkkkk'],
     // ---- iconos de tecnologías y protocolos (10x10) ----
+    g_cuchillas: ['.......k..', '......kwk.', '.....kwwk.', '....kwwk..', '...kwwk...', 'k.kwwk....', 'kkkwk.....', '.kkk......', 'kbkk......', 'k..k......'],
+    g_agua: ['..kkkkkk..', '.kbbbbbbk.', 'kkkkkkkkkk', 'kccccccck.', 'kcwcccccck', 'kccccccck.', 'kcwcccccck', 'kccccccck.', 'kkkkkkkkkk', '..........'],
     i_medal: ['..kkkkkk..', '.kxxkkxxk.', '.kxxkkxxk.', '..kkkkkk..', '..kyyyyk..', '.kyywwyyk.', '.kywyyywk.', '.kyywwyyk.', '..kyyyyk..', '...kkkk...'],
     i_boots: ['..kkk.....', '..kbbk....', '..kbbk....', '..kbbkkkk.', '..kbbbbbbk', '.kbbbbbbbk', 'kkkkkkkkkk', '.kGGGGGGk.', '..kkkkkk..', '..........'],
     i_coin: ['...kkkk...', '..kyyyyk..', '.kyYyyYyk.', 'kyyykkyyyk', 'kyykyykyyk', 'kyyykkyyyk', 'kyYyyyyYyk', '.kyyyyyyk.', '..kyyyyk..', '...kkkk...'],
@@ -2285,6 +2438,8 @@ const PX = (() => {
       '.c..c..c..c..c..',
       '................',
     ],
+    em_chasquis: ['.....kk.....', '....kyyk....', '...kyyyyk...', '..kkyyyykk..', '.kwkkyykkwk.', 'kwwk.kk.kwwk', 'kwwwk..kwwwk', '.kwwk..kwwk.', '..kwk..kwk..', '...kwkkwk...', '....kwwk....', '.....kk.....'],
+    em_mineros: ['....kkkk....', '...kyyyyk...', '..kyykwkyyk.', '..kyyyyyyk..', '..kkkkkkkk..', '............', 'kk........kk', 'kwwkk..kkwwk', '.kkwwkkwwkk.', '...kwwwwk...', '....kwwk....', '.....kk.....'],
     em_callao: ['.....kk.....', '....kwwk....', '.k..kwwk..k.', 'kwk.kwwk.kwk', 'kwk.kwwk.kwk', '.kwkkwwkkwk.', '..kwwwwwwk..', '....kwwk....', '....kwwk....', '....kwwk....', '...kwwwwk...', '....kkkk....'],
     scrap: ['..kkkk..', '.kggggk.', 'kgGkkGgk', 'kgk..kgk', 'kgk..kgk', 'kgGkkGgk', '.kggggk.', '..kkkk..'],
     wrench: ['......kkk.', '.....kgggk', '....kgGk.k', '....kgk...', '...kggk...', '..kgGk....', '.kgGk.....', 'kgGk......', 'kGk.......', '.k........'],
@@ -2301,6 +2456,8 @@ const PX = (() => {
     desierto: ['..kkkkkk..', '.kbbbbbbk.', 'kkbkkkkbkk', 'kcckkkkcck', 'kkkkkkkkkk', '.kfffffffk', '..kffkffk.'],
     culto:    ['...kkkk...', '..kFFFFk..', '.kFFFFFFk.', '.kFFkkFFk.', '.kFkxxkFk.', '.kFksskFk.', '.kFFkkFFk.'],
     flota:    ['.kkkkkkkk.', 'kwwwwwwwwk', 'kkkkkkkkkk', '.kssssssk.', '.kscsscsk.', '.kssssssk.', '..kssssk..'],
+    chasquis: ['...kkkk...', '..kyyyyk..', '.kxxxxxxk.', '.kssssssk.', '.kscsscsk.', '.kssssssk.', '..kssssk..'],
+    mineros:  ['..kkkkkk..', '.kyyyyyyk.', 'kyykwwkyyk', 'kkkkkkkkkk', '.kssssssk.', '.kscsscsk.', '..kssssk..'],
     callao:   ['..kkkkkk..', '.kccccccGk', 'kckkkkkkck', 'kckwwkwwck', 'kckkkkkkck', '.kssssssk.', '..kssssk..'],
   };
   const HEAD_ANCHOR = { rondero: [3, 0], explorador: [3, -2], francotirador: [3, 0] };
@@ -2328,6 +2485,10 @@ const PX = (() => {
       '.....kkkkkk.....', '....kFFFFFFk....', '...kFFFFFFFFk...', '..kFFFkkkkFFFk..', '..kFFkssssskFk..', '..kFkssssssskk..',
       '..kkKKKKKKKKkk..', '..ksKKKKKKKKsk..', '..kssssssssssk..', '..kssskkkksssk..', '..kFkssssssskFk.', '..kFFkkkkkkkFFk.',
       '..kFFFFkyykFFFk.', '.kFFFFkyyyykFFFk', '.kFFFFFkyykFFFFk', '.kFFFFFFkkFFFFFk'],
+    chasquis: [ // Capitán Quispe: vincha roja y pluma
+      '.......kk.......', '......kyyk......', '....kkkyykkk....', '...kxxxxxxxxk...', '..kxxxxxxxxxxk..', '..kssssssssssk..', '..kskksssskksk..', '..kscckssskcck..', '..kssssssssssk..', '..ksssskkssssk..', '..kssskkkksssk..', '...kssssssssk...', '....kssssssk....', '...kffffffffk...', '..kfflffffffffk.', '.kffffffffffffk.'],
+    mineros: [ // La Ingeniera Huamán: casco con lámpara y trenzas
+      '....kkkkkkkk....', '...kyyyyyyyyk...', '..kyyykwwkyyyk..', '..kyyyyyyyyyyk..', '..kkkkkkkkkkkk..', '..kssssssssssk..', '..kssssssssssk..', '..kscckssskcck..', '..kssssssssssk..', '..ksssskkssssk..', '..kKsssssssskK..', '...kKssssssKk...', '....kssssssk....', '...kffffffffk...', '..kfflffffffffk.', '.kffffffffffffk.'],
     callao: [ // La Sirena Chalaca: máscara de buceo, pelo de algas
       '..kee.kkkk.eek..', '.keeekccccckeee.', '.keekckkkkkckee.', '..kkckwwkwwkck..', '..kkckkkkkkkck..', '...kksssssskk...',
       '..keksssssskek..', '..keksxssxskek..', '..keksssssskek..', '..keekssssksee..', '...kekkkkkkkek..', '....kssssssk....', '...kffffffffk...', '..kffffffffffk..', '.kffffffffffffk.', '.kffffffffffffk.'],
@@ -2421,6 +2582,19 @@ const PX = (() => {
       let x = 2;
       for (let i = 0; i < n; i++) { const stack = 1 + Math.min(2, Math.floor((level + i) / 2)); for (let s2 = 0; s2 < stack; s2++) { const y = base - 3 * (s2 + 1); P(K, x - 1, y - 1, 7, 4); P(cols[(i + s2 + seed) % 4], x, y, 5, 3); P(K, x + 2, y, 1, 3); } x += 6; if (x + 5 > W - 1) break; }
       P(K, 16, 1, 1, base - 1); P(K, 10, 1, 7, 1); P('#f2b84b', 11, 2, 5, 1); P(K, 12, 3, 1, 3); P(F, 12, 6, 1, 1);
+    } else if (style === 'chasquis') { // tambos de piedra con techo de paja, postes con banderines y camino
+      ground('#6d5a3c'); P('#c9a24a', 1, base + 1, W - 2, 1);
+      let x = 2;
+      for (let i = 0; i < n; i++) { const bw = 5, bh = 3 + Math.floor((level + i) / 2), by = base - bh; P(K, x - 1, by - 2, bw + 2, bh + 2); P('#9a9187', x, by, bw, bh); P('#5a544d', x + 1, by + 1, 1, 1); P('#5a544d', x + 3, by + 1, 1, 1); P('#c58c5c', x, by - 1, bw, 1); P('#8a5a3a', x + 1, by - 2, bw - 2, 1); P(Fd, x + 2, by + bh - 1, 1, 1); x += bw + 1; }
+      P(K, W - 3, 2, 1, base - 2); P(F, W - 2, 3, 2, 2); P(Fl, W - 2, 6, 2, 2); P(F, W - 2, 9, 2, 2);
+      if (capital) { P(K, 2, 1, 1, 5); P('#f2b84b', 3, 2, 3, 2); }
+    } else if (style === 'mineros') { // castillete de mina, galería y vagonetas
+      ground('#3a3530'); P('#5a544d', 1, base + 1, W - 2, 1); P(K, 3, base + 1, 1, 1); P(K, 7, base + 1, 1, 1); P(K, 11, base + 1, 1, 1); P(K, 15, base + 1, 1, 1);
+      let x = 2;
+      for (let i = 0; i < n; i++) { const bw = 4, bh = 3, by = base - bh; P(K, x - 1, by - 1, bw + 2, bh + 1); P('#8a5a3a', x, by, bw, bh); P(K, x + 1, by + 1, 2, 2); P(F, x, by - 1, bw, 1); x += bw + 1; }
+      const tx = 13; P(K, tx, 1, 1, base - 1); P(K, tx + 4, 1, 1, base - 1); P(K, tx, 1, 5, 1); P(K, tx + 1, 4, 3, 1); P(K, tx + 1, 8, 3, 1); P('#9a9187', tx + 1, 2, 3, 2); P(Fl, tx + 2, 2, 1, 1); P('#b0532c', tx + 1, 5, 3, 3);
+      P(K, 2, base - 7, 5, 1); P(K, 2, base - 7, 1, 4); P(K, 6, base - 7, 1, 4); P('#1b1714', 3, base - 6, 3, 3); P('#f2b84b', 4, base - 5, 1, 1);
+      if (capital) P('#f2b84b', tx + 1, 0, 3, 1);
     } else if (style === 'callao') { // muelles sobre pilotes, barco hundido y faro
       ground('#1d3644'); P('#3c6672', 1, base + 1, W - 2, 1);
       let x = 2;
@@ -2946,6 +3120,8 @@ function pickHex(sx, sy) {
 }
 // en pantallas anchas el panel va acoplado a la izquierda (340px): centramos en el espacio libre
 function centerOn(x, y) { const c = $('#map'); const dock = c.clientWidth >= 760 && sel ? 170 : 0; cam.x = c.clientWidth / 2 + dock - hexX(x, y) * cam.z; cam.y = c.clientHeight / 2 - hexY(x, y) * cam.z; clampCam(); }
+// zoom nítido: cada pixel de arte ocupa un número entero de píxeles de pantalla (nada de bordes borrosos)
+function snapZoom(z) { const step = 1 / (P * dpr); const k = Math.max(1, Math.round(z / step)); return Math.max(0.3, Math.min(2.4, k * step)); }
 function clampCam() {
   const c = $('#map'), w = c.clientWidth, h = c.clientHeight;
   cam.z = Math.max(0.3, Math.min(2.4, cam.z));
@@ -2958,7 +3134,7 @@ function clampCam() {
 const cv = $('#map'), ctx = cv.getContext('2d');
 let dpr = 1;
 function resize() {
-  dpr = Math.min(2, window.devicePixelRatio || 1);
+  dpr = Math.min(3, window.devicePixelRatio || 1);
   cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr;
   if (S) clampCam();
 }
@@ -3014,7 +3190,7 @@ function hash(x, y, k = 0) { let h = (x * 374761393 + y * 668265263 + k * 144269
 
 let baseLayer = null, baseKey = '';
 function buildBase() {
-  const key = S.seed + ':' + S.W + 'x' + S.H + ':' + S.tiles.join('').length;
+  const key = S.seed + ':' + S.W + 'x' + S.H + ':' + S.tiles.join('').length + ':' + (S.rivers || []).length;
   if (baseLayer && baseKey === key) return;
   baseKey = key;
   const c = document.createElement('canvas'); c.width = LW; c.height = LH;
@@ -3060,6 +3236,25 @@ function buildBase() {
       const nk = E.idx(nx, ny);
       if (nk > k && roads.has(nk)) line(hexX(x, y) / P, hexY(x, y) / P, hexX(nx, ny) / P, hexY(nx, ny) / P);
     }
+  }
+  // ríos: agua serpenteante entre casillas vecinas; donde hay carretera, puente de tablas
+  const rivers = new Set(S.rivers || []);
+  const water = (x0, y0, x1, y1, seed) => {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let s2 = 0; s2 <= n; s2++) {
+      const t = s2 / n, wob = Math.round(Math.sin(t * Math.PI * 2 + seed) * 1.5);
+      const x = Math.round(x0 + (x1 - x0) * t) + (Math.abs(y1 - y0) > Math.abs(x1 - x0) ? wob : 0), y = Math.round(y0 + (y1 - y0) * t) + (Math.abs(y1 - y0) > Math.abs(x1 - x0) ? 0 : wob);
+      px('#1f4a5a', x - 1, y - 1, 3, 3);
+      px(hash(x, y, 9) < 0.25 ? '#9fe3ef' : '#3f8fa6', x, y);
+    }
+  };
+  for (const k of rivers) {
+    const x = k % E.W, y = Math.floor(k / E.W);
+    let linked = false;
+    for (const [nx, ny] of E.neighbors(x, y)) { const nk = E.idx(nx, ny); if (rivers.has(nk)) { linked = true; if (nk > k) water(hexX(x, y) / P, hexY(x, y) / P, hexX(nx, ny) / P, hexY(nx, ny) / P, k); } else if (S.tiles[nk] === 'mar' || S.tiles[nk] === 'lago') water(hexX(x, y) / P, hexY(x, y) / P, (hexX(x, y) + hexX(nx, ny)) / 2 / P, (hexY(x, y) + hexY(nx, ny)) / 2 / P, k); }
+    const cx = Math.round(hexX(x, y) / P), cy = Math.round(hexY(x, y) / P);
+    if (!linked) { px('#1f4a5a', cx - 2, cy - 2, 5, 5); px('#3f8fa6', cx - 1, cy - 1, 3, 3); }
+    if (roads.has(k)) { px('#5a3d22', cx - 4, cy - 2, 9, 5); for (let i = -4; i <= 4; i += 2) px('#8a5a3a', cx + i, cy - 2, 1, 5); px('#2c2824', cx - 4, cy - 3, 9, 1); px('#2c2824', cx - 4, cy + 3, 9, 1); }
   }
   // detalles por hexágono
   for (let y = 0; y < E.H; y++) for (let x = 0; x < E.W; x++) {
@@ -3151,6 +3346,23 @@ function buildFog(view) {
 
 // resaltados de selección
 let hlLayer = null, tgtLayer = null, hlKey = '';
+let dangerCache = { key: '', set: new Set() };
+function dangerZone() {
+  const key = S.turn + ':' + S.units.map((u) => u.id + u.x + ',' + u.y).join('');
+  if (dangerCache.key === key) return dangerCache.set;
+  const vis = E.visibleSet(S, me), out = new Set();
+  for (const e of S.units) {
+    if (e.owner === me || E.relation(S, me, e.owner) !== 'guerra' || !vis.has(E.idx(e.x, e.y))) continue;
+    const U = E.UNITS[e.type], rng = U.rng || 1;
+    const spots = [[e.x, e.y], ...[...E.reachable(S, { ...e, moved: false, acted: false }).values()]];
+    for (const [sx, sy] of spots) {
+      if (U.noMoveAttack && (sx !== e.x || sy !== e.y)) continue;
+      for (let dy = -rng; dy <= rng; dy++) for (let dx = -rng; dx <= rng; dx++) { const x = sx + dx, y = sy + dy; if (x < 0 || y < 0 || x >= S.W || y >= S.H) continue; if (E.dist(sx, sy, x, y) <= rng) out.add(E.idx(x, y)); }
+    }
+  }
+  dangerCache = { key, set: out };
+  return out;
+}
 function buildHighlight(su) {
   const key = su && isMyTurn() ? su.id + ':' + su.x + ',' + su.y + ':' + su.moved + su.acted + ':' + S.units.length + ':' + S.units.map((u) => u.x + '' + u.y).join('') : 'none';
   if (hlLayer && key === hlKey) return;
@@ -3161,6 +3373,12 @@ function buildHighlight(su) {
   }
   if (!su || !isMyTurn() || su.owner !== me) return;
   const g = hlLayer.getContext('2d'), t = tgtLayer.getContext('2d');
+  // zona de peligro: casillas donde un enemigo visible podría pegarte el próximo turno (rayas rojas)
+  if (store.get('danger', true)) {
+    const danger = dangerZone();
+    g.fillStyle = 'rgba(229,83,61,.5)';
+    for (const k of danger) for (const i of HEXPIX[k]) { const x = i % LW, y = (i / LW) | 0; if ((x - y) % 5 === 0) g.fillRect(x, y, 1, 1); }
+  }
   for (const [k] of E.reachable(S, su)) {
     g.fillStyle = 'rgba(239,230,216,.55)';
     for (const i of HEXPIX[k]) { const x = i % LW, y = (i / LW) | 0; if ((x + y) % 4 === 0) g.fillRect(x, y, 1, 1); }
@@ -3251,7 +3469,7 @@ function render(now) {
   ctx.fillStyle = '#0b0908'; ctx.fillRect(0, 0, cv.clientWidth, cv.clientHeight);
   let shx = 0, shy = 0;
   if (shake) { const p = (now - shake.t0) / shake.dur; if (p >= 1) shake = null; else { const a = shake.amp * (1 - p); shx = Math.round((Math.random() - 0.5) * 2 * a); shy = Math.round((Math.random() - 0.5) * 2 * a); } }
-  ctx.translate(Math.round(cam.x) + shx, Math.round(cam.y) + shy); ctx.scale(cam.z, cam.z);
+  ctx.translate(Math.round(cam.x * dpr) / dpr + shx, Math.round(cam.y * dpr) / dpr + shy); ctx.scale(cam.z, cam.z);
   const view = viewCache || (viewCache = E.playerView(S, me));
   buildBase(); buildFog(view);
   const su = sel && sel.kind === 'unit' ? S.units.find((u) => u.id === sel.id) : null;
@@ -3431,9 +3649,12 @@ function render(now) {
 
 
 const ATTACK_ANIM = { apu: 'stomp', dron: 'dive', jaguar: 'leap', buggy: 'lunge', tanque: 'lunge', rondero: 'lunge', explorador: 'lunge', fanatico: 'lunge', lancha: 'lunge', francotirador: 'recoil', huaracero: 'recoil', vigia: 'recoil', mortero: 'recoil' };
+// repetición online: guardamos lo que pasó en este aparato para que el rival lo vea animado cuando le llegue el turno
+let replayAcc = [], replaySeq = 0, replaying = false;
 function consumeEvents() {
   const now0 = performance.now();
   let seq = 0;
+  if (online && !replaying && S.events.length) { for (const e of S.events) replayAcc.push({ ...e, seq: ++replaySeq }); if (replayAcc.length > 300) replayAcc = replayAcc.slice(-300); }
   for (const e of S.events) {
     const now = now0 + seq;
     if (e.k === 'hit') {
@@ -3472,6 +3693,16 @@ function consumeEvents() {
     if (e.k === 'build') { fx.push({ k: 'ring', x: e.x, y: e.y, c: fcol(e.p), t0: now, dur: 800 }); fx.push({ k: 'dust', x: e.x, y: e.y, t0: now, dur: 500 }); if (e.p === me) beep('buy'); }
     if (e.k === 'pillage') { fx.push({ k: 'boom', x: e.x, y: e.y, t0: now, dur: 600 }); if (S.builds && e.p !== me) toast(S.players[e.p].name + ' saqueó tu ' + E.BUILDS[e.type].name + '.', 'red'); }
     if (e.k === 'capture') { fx.push({ k: 'flagrise', x: e.x, y: e.y, c: fcol(e.p), t0: now, dur: 700 }); fx.push({ k: 'confetti', x: e.x, y: e.y, c: fcol(e.p), t0: now + 150, dur: 1400 }); if (e.p === me) shake = { t0: now, dur: 200, amp: 2 }; }
+    if (e.k === 'capture') { if (e.p === me && e.prev >= 0 && e.prev !== me) setTimeout(() => leaderBubble(e.prev, 'lost'), 900); else if (e.prev === me) setTimeout(() => leaderBubble(e.p, 'took'), 900); }
+    if (e.k === 'mission' && e.p === me) {
+      if (e.state === 'new') { setTimeout(() => { toast('Nueva misión: ' + e.text + ' · +' + e.reward + ' chatarra antes del turno ' + e.due, 'gold'); beep('select'); }, 600); }
+      if (e.state === 'done') { flash('¡MISIÓN CUMPLIDA!', e.text + ' · +' + e.reward + ' chatarra', '#7cc46a'); beep('ach'); const cap = S.cities.find((c) => c.owner === me && c.capital) || S.cities.find((c) => c.owner === me); if (cap) fx.push({ k: 'confetti', x: cap.x, y: cap.y, c: '#7cc46a', t0: now + 200, dur: 1500 }); if (typeof addXp === 'function') addXp(15, 'misión'); }
+      if (e.state === 'fail') toast('Misión fallida: ' + e.text, 'red');
+    }
+    if (e.k === 'herodown' && e.p !== me) setTimeout(() => leaderBubble(e.p, 'hero'), 700);
+    if (e.k === 'betray' && e.a === me) setTimeout(() => leaderBubble(e.b, 'betrayed'), 700);
+    if (e.k === 'ally' && (e.a === me || e.b === me)) setTimeout(() => leaderBubble(e.a === me ? e.b : e.a, 'ally'), 500);
+    if (e.k === 'capture' && e.capital && e.p === me) { flash('¡CAPITAL TOMADA!', e.name + ' cae ante ti', '#ffd45a'); shake = { t0: now, dur: 500, amp: 6 }; }
     if (e.k === 'capture') { fx.push({ k: 'ring', x: e.x, y: e.y, c: fcol(e.p), t0: now, dur: 900 }); beep('capture'); if (e.p === me) toast('Tomaste ' + e.name + '.', 'gold'); else if (online || S.players[e.p].kind === 'ai') { const c = E.cityAt(S, e.x, e.y); if (c && E.visibleSet(S, me).has(E.idx(e.x, e.y))) toast(S.players[e.p].name + ' tomó ' + e.name + '.'); } }
     if (e.k === 'train' || e.k === 'upgrade') { fx.push({ k: 'ring', x: e.x, y: e.y, c: '#f2b84b', t0: now, dur: 600 }); }
     if (e.k === 'ruin' && e.p === me) { toast(e.msg, 'gold'); fx.push({ k: 'ring', x: e.x, y: e.y, c: '#f2b84b', t0: now, dur: 800 }); beep('buy'); }
@@ -3522,10 +3753,10 @@ cv.addEventListener('pointermove', (e) => {
 function up(e) {
   const wasTap = drag && !drag.moved && pointers.size === 1;
   pointers.delete(e.pointerId);
-  if (pointers.size === 0) { if (wasTap) { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } drag = null; }
+  if (pointers.size === 0) { if (wasTap) { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); } else if (drag && drag.pinch) { const z = snapZoom(cam.z), c = $('#map'), mx = c.clientWidth / 2, my = c.clientHeight / 2; cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); } drag = null; }
 }
 cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', (e) => { pointers.delete(e.pointerId); if (!pointers.size) drag = null; });
-cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; const z = Math.max(0.3, Math.min(2.4, cam.z * (e.deltaY < 0 ? 1.12 : 0.89))); cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); }, { passive: false });
+cv.addEventListener('wheel', (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; const z = snapZoom(cam.z * (e.deltaY < 0 ? 1.2 : 0.83)); if (z === cam.z) return; cam.x = mx - (mx - cam.x) * (z / cam.z); cam.y = my - (my - cam.y) * (z / cam.z); cam.z = z; clampCam(); }, { passive: false });
 
 function onTap(sx, sy) {
   if (!S || S.winner >= 0 || endLock) return;
@@ -3610,6 +3841,9 @@ function renderHud() {
   end.textContent = S.winner >= 0 ? 'Partida terminada' : isMyTurn() ? 'Terminar turno' : busy ? 'Jugando…' : 'Esperando…';
   const idle = isMyTurn() && !S.units.some((u) => u.owner === me && (!u.moved || (!u.acted && E.targets(S, u).length))) && !S.cities.some((c) => c.owner === me && E.canTrain(S, c.id, 'rondero'));
   end.classList.toggle('pulse', idle);
+  // misión secundaria
+  const mEl = $('#mission'), M = P.mission;
+  if (mEl) { if (M && S.winner < 0) { const pr = E.missionProgress(S, me) || { cur: 0, n: 1 }; mEl.hidden = false; mEl.innerHTML = `<span class="mk">MISIÓN</span><span>${esc(M.text)}</span><span class="mp">${pr.n > 1 ? pr.cur + '/' + pr.n : 'T' + M.due}</span>`; mEl.onclick = () => { toast(`${M.text}. Premio: +${M.reward} chatarra. Plazo: turno ${M.due}.` + (pr.n > 1 ? ` Llevas ${pr.cur}/${pr.n}.` : ''), 'gold'); beep('tap'); }; } else mEl.hidden = true; }
   const b = $('#banner');
   if (S.winner < 0 && S.cur !== me) {
     b.hidden = false; b.innerHTML = 'Turno de <b>' + esc(S.players[S.cur].name) + '</b>' + (online && S.players[S.cur].kind === 'human' ? ' · te aviso cuando juegue' : '');
@@ -3644,20 +3878,23 @@ function renderSheet() {
     const mh = E.maxHp(u), hpPct = Math.round(u.hp / mh * 100);
     html += `<div class="sheet-head"><span id="uicon"></span><div><div class="title">${u.hero ? esc(u.name || 'Líder') : esc(U.name)}</div>${u.hero ? '<div class="sub vetline">★ LÍDER DE LA FACCIÓN</div>' : ''}<div class="sub">${mine ? 'Tuya' : esc(S.players[u.owner].name)} · ${esc(F.short)}${U.faction ? ' · ÚNICA' : ''}</div>${E.rankOf(u) ? `<div class="sub vetline">${'★'.repeat(E.rankOf(u))} ${esc(E.RANKS[E.rankOf(u)].name.toUpperCase())} · +${E.RANKS[E.rankOf(u)].hp} vida, +${E.RANKS[E.rankOf(u)].atk} ataque${E.RANKS[E.rankOf(u)].def ? ', +' + E.RANKS[E.rankOf(u)].def + ' defensa' : ''}</div>` : `<div class="sub">${u.kills || 0} baja${u.kills === 1 ? '' : 's'} · asciende con ${(E.hasTech(S, u.owner, 'veterania') ? 2 : 3) * (E.rankOf(u) + 1)}</div>`}</div><button class="expand" data-a="expand" aria-label="Más">${sheetOpen ? '▾' : '▸'}</button><button class="x" data-a="close" aria-label="Cerrar">×</button></div>`;
     html += `<div class="hpbar"><span class="hp-l">VIDA</span><span class="hp-t"><i style="width:${hpPct}%;background:${hpPct > 50 ? 'var(--good)' : hpPct > 25 ? 'var(--inti)' : 'var(--bad)'}"></i></span><span class="hp-n">${u.hp}/${mh}</span></div>`;
-    html += `<div class="stats"><span class="stat"><span data-spr="i_medal" data-size="12"></span> Ataque <b>${U.atk}</b></span><span class="stat"><span data-spr="i_wall" data-size="12"></span> Defensa <b>${U.def}</b></span><span class="stat"><span data-spr="i_boots" data-size="12"></span> Mov. <b>${E.unitMov(S, u)}</b></span><span class="stat"><span data-spr="i_eye" data-size="12"></span> Alcance <b>${U.rng}</b></span>${E.harvest(S, u.owner) > 0 ? `<span class="stat harvest"><span data-spr="b_cultivo" data-size="12"></span> Cosecha <b>+${Math.round(E.harvest(S, u.owner) * 100)}%</b></span>` : ''}</div>`;
+    html += `<div class="stats"><span class="stat"><span data-spr="i_medal" data-size="12"></span> Ataque <b>${U.atk}</b></span><span class="stat"><span data-spr="i_wall" data-size="12"></span> Defensa <b>${U.def}</b></span><span class="stat"><span data-spr="i_boots" data-size="12"></span> Mov. <b>${E.unitMov(S, u)}</b></span><span class="stat"><span data-spr="i_eye" data-size="12"></span> Alcance <b>${U.rng}</b></span>${u.gear ? `<span class="stat gear" title="${esc(E.GEAR[u.gear].desc)}"><span data-spr="${GEAR_ICON[u.gear]}" data-size="12"></span> ${esc(E.GEAR[u.gear].name)}</span>` : ''}${E.harvest(S, u.owner) > 0 ? `<span class="stat harvest"><span data-spr="b_cultivo" data-size="12"></span> Cosecha <b>+${Math.round(E.harvest(S, u.owner) * 100)}%</b></span>` : ''}</div>`;
     const road = (S.roads || []).includes(E.idx(u.x, u.y));
-    html += `<div class="terrain-line"><span class="t-sw t-${tk}"></span>${esc(TERRAIN_TIP[tk] || terr)}${road ? ' Carretera: mover cuesta la mitad.' : ''}${E.nodeAt(S, u.x, u.y) ? ' Está sobre un nodo del Inti.' : ''}${E.buildAt(S, u.x, u.y) ? ' Hay ' + E.BUILDS[E.buildAt(S, u.x, u.y).type].name + ' aquí.' : ''}</div>`;
+    html += `<div class="terrain-line"><span class="t-sw t-${tk}"></span>${esc(TERRAIN_TIP[tk] || terr)}${road ? ' Carretera: mover cuesta la mitad.' : ''}${E.riverAt(S, u.x, u.y) ? (E.bridgeAt(S, u.x, u.y) ? ' Sobre un puente.' : ' En el río: −20% defensa.') : ''}${E.nodeAt(S, u.x, u.y) ? ' Está sobre un nodo del Inti.' : ''}${E.buildAt(S, u.x, u.y) ? ' Hay ' + E.BUILDS[E.buildAt(S, u.x, u.y).type].name + ' aquí.' : ''}</div>`;
     if (mine && isMyTurn()) {
       const t = pendingTarget && S.units.find((v) => v.id === pendingTarget);
       const q = [];
       if (E.canCapture(S, u)) q.push(`<button class="act" data-a="capture">Tomar ${esc(E.cityAt(S, u.x, u.y).name)}</button>`);
       if (u.hero && E.canHeroAbility(S, u)) q.push(`<button class="act" data-a="hero">${esc(E.HERO[S.players[me].faction].name)}</button>`);
       const nb = E.buildOptions(S, u).filter((o) => o.can).length; if (nb) q.push(`<button class="act ghost" data-a="expand">Construir (${nb})</button>`);
+      const ng = E.gearOptions(S, u).filter((o) => o.can).length; if (ng) q.push(`<button class="act ghost" data-a="expand">Equipar (${ng})</button>`);
       if (!q.length && !t) q.push(`<span class="chip-s ${u.moved ? 'off' : 'on'}">${u.moved ? (u.acted ? '✓ Actuó' : '✓ Movió') : '→ Puede moverse'}</span>`);
       html += `<div class="quick">${q.join('')}</div>`;
       if (t) { const f = E.forecast(S, u, t); html += `<div class="fore"><div class="ftgt"><span data-spr="${t.hero ? E.FACTIONS[S.players[t.owner].faction].unique : t.type}" data-col="${fcol(t.owner)}" data-size="28"></span><div><b>${esc(t.hero ? t.name || 'Líder' : E.UNITS[t.type].name)}</b><br>de ${esc(S.players[t.owner].name)} · ${t.hp} vida</div></div><div class="fbox ${f.kills ? 'kill' : 'hit'}"><small>Causas</small><b>${f.dmg}${f.kills ? ' ☠' : ''}</b><small>${f.kills ? 'lo destruyes' : 'de daño'}</small></div><div class="fbox ret ${f.ret ? '' : 'none'}"><small>Recibes</small><b>${f.ret}</b><small>${f.ret ? 'de vuelta' : 'nada'}</small></div><div class="fhint">Toca el objetivo otra vez para atacar.</div></div>`; }
       if (u.hero) { const H = E.HERO[S.players[me].faction]; html += `<button class="act ${E.canHeroAbility(S, u) ? '' : 'ghost'}" data-a="hero" ${E.canHeroAbility(S, u) ? '' : 'disabled'}>${esc(H.name)}${u.cd > 0 ? ' · listo en ' + u.cd + ' turno' + (u.cd > 1 ? 's' : '') : ''} <small>${esc(H.desc)} Alcance 2.</small></button>`; }
       if (E.canCapture(S, u)) html += `<button class="act" data-a="capture">Tomar ${esc(E.cityAt(S, u.x, u.y).name)}</button>`;
+      const go = E.gearOptions(S, u);
+      if (go.length) html += `<div class="label">Equipar aquí <small>(una pieza por tropa, para siempre)</small></div><div class="trainer">${go.map((o) => `<button class="tcard" data-a="gear" data-t="${o.type}" ${o.can ? '' : 'disabled'} title="${esc(o.desc)}"><span data-spr="${GEAR_ICON[o.type]}" data-col="var(--fc)" data-size="40"></span><b>${esc(o.name)}</b><span class="cost">${o.cost} chat.</span></button>`).join('')}</div>`;
       const bo = E.buildOptions(S, u);
       if (bo.length) html += `<div class="label">Construir aquí (para ${esc(bo[0].city)})</div><div class="trainer">${bo.map((o) => `<button class="tcard" data-a="build" data-t="${o.type}" ${o.can ? '' : 'disabled'} title="${esc(o.desc)}"><span data-spr="b_${o.type}" data-size="40"></span><b>${esc(o.name)}</b><span class="cost">${o.cost} chat.</span></button>`).join('')}</div>`;
       else if (!t) {
@@ -3676,6 +3913,7 @@ function renderSheet() {
     html += `<div class="sheet-head"><span class="t-sw big t-${tk}" ${bd ? `style="box-shadow:0 0 0 3px ${fcol(bd.owner)}"` : ''}></span><div><div class="title">${bdTitle}</div><div class="sub">${vis ? 'A la vista' : 'Explorado · sin visión ahora'}${near != null ? ' · a ' + near + ' casilla' + (near === 1 ? '' : 's') + ' de tu tropa más cercana' : ''}</div></div><button class="x" data-a="close" aria-label="Cerrar">×</button></div>`;
     const parts = [TERRAIN_TIP[tk] || T.name];
     if (road) parts.push('Carretera: mover cuesta la mitad.');
+    if (E.riverAt(S, x, y)) parts.push(E.bridgeAt(S, x, y) ? 'Puente: cruza el río sin penalización.' : 'Río: entrar cuesta +1 movimiento y quien se queda dentro defiende 20% menos. Un Cultivo aquí da +1 extra.');
     if (ruin) parts.push('Ruinas del Inti: entra para ganar chatarra, planos o refuerzos.');
     if (nd) parts.push(nd.owner >= 0 ? `Nodo del Inti de ${esc(S.players[nd.owner].name)}${nd.blocked ? ' (apagado ' + nd.blocked + ' turnos)' : ''}. Párate encima al terminar tu turno para quitárselo.` : 'Nodo del Inti libre: termina tu turno con una unidad encima y es tuyo (+1 ⚡ por turno).');
     if (bd) parts.push(`${esc(E.BUILDS[bd.type].name)} de ${esc((S.cities[bd.city] || {}).name || '?')} (${bd.owner === me ? 'tuya' : esc(S.players[bd.owner].name)}): ${esc(E.BUILDS[bd.type].desc)}${bd.owner !== me ? ' Si entras, la saqueas (+2 chatarra).' : ''}`);
@@ -3730,6 +3968,7 @@ function renderSheet() {
     if (a.dataset.a === 'expand') { sheetOpen = !sheetOpen; renderSheet(); beep('tap'); return; }
     if (a.dataset.a === 'goto') { const x = +a.dataset.x, y = +a.dataset.y; centerOn(x, y); setSel({ kind: 'tile', x, y }); return; }
     if (a.dataset.a === 'capture') doCapture(sel.id);
+    if (a.dataset.a === 'gear') { const u = S.units.find((v) => v.id === sel.id); const o = E.gearOptions(S, u).find((x) => x.type === a.dataset.t); if (o && !o.can) { toast('Necesitas ' + o.cost + ' de chatarra.', 'red'); beep('error'); return; } if (E.equip(S, u.id, a.dataset.t)) { beep('buy'); fx.push({ k: 'buff', x: u.x, y: u.y, kind: 'gear', t0: performance.now(), dur: 900 }); toast(E.GEAR[a.dataset.t].name + ' equipado.', 'gold'); afterAction(); } return; }
     if (a.dataset.a === 'build') { const o = E.buildOptions(S, S.units.find((v) => v.id === sel.id)).find((x) => x.type === a.dataset.t); if (o && !o.can) { toast(o.desc + ' Necesitas ' + o.cost + ' de chatarra.'); return; } if (E.build(S, sel.id, a.dataset.t)) { clearUndo(); afterAction(); } }
     if (a.dataset.a === 'hero') { if (E.heroAbility(S, sel.id)) { clearUndo(); beep('heal'); flash(E.HERO[S.players[me].faction].name, '', fcol(me)); afterAction(); } }
     if (a.dataset.a === 'upgrade') doUpgrade(sel.id);
@@ -3745,6 +3984,7 @@ function openModal(html, onclick) {
 }
 function closeModal(force) { if (endLock && !force) return; if (!$('#modal').hidden) beep('close'); $('#modal').hidden = true; $('#modal').innerHTML = ''; }
 
+const GEAR_ICON = { blindaje: 'i_wall', cuchillas: 'g_cuchillas', botas: 'i_boots', botiquin: 'i_cross', mira: 'i_eye', tanque_agua: 'g_agua' };
 const TECH_ICON = { armeria: 'francotirador', veterania: 'i_medal', artilleria: 'mortero', comandos: 'i_boots', apu: 'apu', taller: 'tanque', mercado: 'i_coin', drones: 'dron', chatarreria: 'shard', fabrica: 'i_gear', murallas: 'i_wall', medicina: 'i_cross', bunker: 'i_door', radio: 'i_antenna', embajada: 'hands' };
 const POWER_ICON = { tormenta: 'i_storm', marcha: 'i_march', condor: 'i_eye', rescate: 'i_cross', pulso: 'i_pulse' };
 function openProtocols() {
@@ -3877,6 +4117,7 @@ function openPause() {
     <button class="menu-btn box press" data-a="how"><div><b>Cómo jugar</b><small>Reglas en un minuto</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="codex"><div><b>Códice</b><small>Facciones, unidades y tecnologías</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="snd"><div><b>Sonido: ${sound ? 'activado' : 'apagado'}</b><small>Toca para cambiar</small></div><span class="arrow">›</span></button>
+    <button class="menu-btn box press" data-a="danger"><div><b>Zonas de peligro: ${store.get('danger', true) ? 'activadas' : 'apagadas'}</b><small>Rayas rojas donde un enemigo puede atacarte el próximo turno</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="amb"><div><b>Ambiente: ${store.get('ambient', true) ? 'activado' : 'apagado'}</b><small>Olas, viento, pájaros y grillos según dónde estés</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="music"><div><b>Música: ${musicOn ? 'activada' : 'apagada'}</b><small>Suena solo en el menú. En la partida solo oyes el ambiente</small></div><span class="arrow">›</span></button>
     <button class="menu-btn box press" data-a="speed"><div><b>Velocidad de la IA: ${{ normal: 'normal', rapida: 'rápida', instantanea: 'instantánea' }[store.get('aispeed', 'normal')]}</b><small>Cuánto se detiene a mostrar los turnos rivales</small></div><span class="arrow">›</span></button>
@@ -3890,6 +4131,7 @@ function openPause() {
     if (a === 'codex') openModal(codexHtml(true), (x, d) => x === 'cfac' && openModal(codexHtml(true, d.k), (y, e) => y === 'cfac' && openModal(codexHtml(true, e.k))));
     if (a === 'snd') { sound = !sound; store.set('sound', sound); Music.setOn(musicOn && sound); Ambient.setOn(store.get('ambient', true) && sound); openPause(); }
     if (a === 'amb') { const v = !store.get('ambient', true); store.set('ambient', v); Ambient.setOn(v && sound); openPause(); }
+    if (a === 'danger') { store.set('danger', !store.get('danger', true)); hlKey = null; openPause(); }
     if (a === 'music') { musicOn = !musicOn; store.set('music', musicOn); Music.setOn(musicOn); openPause(); }
     if (a === 'speed') { const o = ['normal', 'rapida', 'instantanea']; store.set('aispeed', o[(o.indexOf(store.get('aispeed', 'normal')) + 1) % 3]); openPause(); }
     if (a === 'big') { store.set('big', !store.get('big', false)); applyPrefs(); openPause(); }
@@ -3912,6 +4154,7 @@ function howtoHtml(modal) {
   <h3>Ruinas</h3><p>Los restos dorados del Inti dan chatarra, planos o refuerzos. Cada 4 turnos caen nuevas.</p>
   <h3>Facciones</h3><p>Cada facción empieza con una tecnología, tiene una unidad única desde el inicio y un terreno donde es más fuerte. Mira el Códice para los detalles.</p>
   <h3>Arsenal</h3><p>Tres ramas: Guerra (armas), Industria (economía y vehículos) y Supervivencia (defensa y visión). Cada nivel abre el siguiente. El consejo de la Directora te dice qué conviene ahora.</p>
+  <h3>Ríos, equipo y misiones</h3><p>Los ríos cuestan +1 al cruzar y quien se queda dentro defiende 20% menos; en los puentes (donde pasa la carretera) no hay castigo. Una tropa parada en tu ciudad puede comprar una pieza de equipo para siempre: blindaje, cuchillas, botas, botiquín, mira o tanque de agua. Y desde el turno 3 recibes misiones cortas con premio en chatarra: cumplirlas te mantiene con ritmo.</p>
   <h3>Alianzas y traiciones</h3><p>Puedes tener un solo aliado: no se atacan y comparten visión. Si todos los que quedan son aliados, gana la alianza y lidera quien tenga más puntos. Romper una alianza te da +50% de ataque ese turno, pero quedas marcado como traidor.</p></div>`;
 }
 
@@ -3925,8 +4168,8 @@ async function endTurn() {
   clearUndo(); setSel(null); closeModal();
   lastSeenTurn = S.turn;
   E.endTurn(S);
-  tutCheck('endturn');
-  await runAIs();
+  try { tutCheck('endturn'); } catch (err) { console.error(err); }
+  try { await runAIs(); } catch (err) { console.error(err); busy = false; }
   if (online) await pushState(true);
   else saveLocal();
 }
@@ -3955,9 +4198,26 @@ async function runAIs() {
   } catch (err) { console.error(err); }
   finally { if (myRun === aiRun) busy = false; }
   if (S !== G || !S) return;
-  consumeEvents();
-  if (S.winner < 0 && S.cur === me) startMyTurn();
+  try { consumeEvents(); } catch (err) { console.error(err); S.events = []; }
+  try { if (S.winner < 0 && S.cur === me) startMyTurn(); } catch (err) { console.error(err); }
   renderHud(); renderSheet(); checkEnd();
+}
+// online: si es turno de una IA y nadie la está jugando (el que terminó el turno cerró la app o perdió señal), este aparato la juega
+let aiWatch = null;
+function watchAiTurns() {
+  if (aiWatch) clearInterval(aiWatch);
+  aiWatch = setInterval(async () => {
+    if (!online || !S || S.winner >= 0 || busy || !$('#screen').hidden) return;
+    if (S.players[S.cur].kind !== 'ai') return;
+    const g = online.g; if (!g || !g.updatedAt) return;
+    const wait = g.host === online.uid ? 12000 : 25000; // el anfitrión reacciona antes; si no está, cualquiera
+    if (Date.now() - g.updatedAt < wait) return;
+    const fresh = await Net.get(online.code).catch(() => null);
+    if (!fresh || !fresh.state || fresh.state.cur !== S.cur || fresh.state.turn !== S.turn) return; // alguien ya la jugó
+    toast('Nadie estaba jugando el turno de ' + S.players[S.cur].name + ': lo juego yo.', 'gold');
+    await runAIs();
+    await pushState(true);
+  }, 5000);
 }
 function nextUnit() {
   if (!S || !isMyTurn()) return;
@@ -4054,7 +4314,7 @@ function checkEnd() {
     if (won && ch && ch.n) { const done = store.get('chapters', {}); done[S.chapter] = 1; store.set('chapters', done); store.set('progress', Math.max(store.get('progress', 1), ch.n + 1)); if (CHAPTER_KEYS.every((k) => done[k])) unlock('camp'); }
     if (won && ch && ch.outro) h = (ch.next ? '' : `<div class="brief">Fin de la campaña</div>`) + h + `<p class="muted outro">${esc(ch.outro)}</p>`;
     checkAch('end');
-    if (!online) Net.init().then(() => Net.logStat({ faction: P.faction, winner_faction: S.players[S.winner].faction, game_mode: S.gameMode, mods: Object.keys(S.mods || {}), size: S.size, diff: (S.players.find((q) => q.kind === 'ai') || {}).diff || null, turns: S.turn, players: S.players.length, won })).catch(() => {});
+    Net.init().then(() => Net.logStat({ faction: P.faction, winner_faction: S.players[S.winner].faction, game_mode: S.gameMode, mods: Object.keys(S.mods || {}), size: S.size, diff: (S.players.find((q) => q.kind === 'ai') || {}).diff || null, turns: S.turn, players: S.players.length, won })).catch(() => {});
     if (won && S.mode === 'coop' && S.chapter && COOP[S.chapter]) { const d = store.get('coop', {}); d[S.chapter] = 1; store.set('coop', d); if (COOP[S.chapter].next) h += `<p class="muted">Capítulo superado. El anfitrión puede crear la sala del siguiente desde Historia cooperativa.</p>`; }
     h += `<button class="menu-btn box press" data-a="menu"><div><b>Volver al menú</b></div><span class="arrow">›</span></button>`;
     openModal(h, (a) => { if (a === 'next') { leaveGame(true); showStory(ch.next); } else leaveGame(); });
@@ -4202,7 +4462,7 @@ function drawBg(now) {
   }
 }
 
-function gameUI(on) { for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#banner').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
+function gameUI(on) { for (const id of ['#hud', '#cmd']) $(id).hidden = !on; if (!on) { $('#sheet').hidden = true; $('#banner').hidden = true; $('#mission').hidden = true; $('#coach').hidden = true; $('#chat').hidden = true; } else $('#chat').hidden = !online; }
 
 // tarjeta de menú con miniatura pixel y franja de color
 function card(a, title, sub, thumb, color, extra = '') {
@@ -4279,8 +4539,8 @@ async function showStory(key, after) {
 const MODE_ICON = { clasico: 'em_lima', rey: 'crown', horda: 'i_skull', luz: 'i_fog', fiebre: 'i_coin', nodos: 'node' };
 function factionPick(done, opts = {}) {
   let f = store.get('fac', 'lima'), n = Math.min(opts.maxN || 6, store.get('rivals', 3) + 1), size = store.get('size', 'mediano'), mode = store.get('mode', 'clasico'), mods = new Set(store.get('mods', [])), diff = store.get('diff', 'normal'), mapType = store.get('map', 'peru'), seedCode = '';
-  const maxN = opts.maxN || 6;
-  const capN = () => Math.min(maxN, size === 'pequeno' ? 4 : size === 'mediano' ? 6 : 7);
+  const maxN = opts.maxN || 8;
+  const capN = () => Math.min(maxN, size === 'pequeno' ? 4 : size === 'mediano' ? 6 : 9);
   const draw = () => {
     n = Math.min(n, capN());
     const F = E.FACTIONS[f], U = E.UNITS[F.unique];
@@ -4350,6 +4610,8 @@ function codexHtml(modal, fk) {
     ${Object.entries(E.BRANCHES).map(([bk, bn]) => `<div class="facinfo-row box"><div><b class="${bk}">${bn}</b>${Object.entries(E.TECHS).filter(([, T]) => T.branch === bk).sort((a, b) => a[1].tier - b[1].tier).map(([k, T]) => `<small><b>${'·'.repeat(T.tier)} ${esc(T.name)}</b> (${E.TIER_COST[T.tier]} chat.${T.req ? ', tras ' + E.TECHS[T.req].name : ''}): ${esc(T.desc)}</small>`).join('')}</div></div>`).join('')}
     <div class="label">Construcciones</div>
     ${Object.entries(E.BUILDS).map(([k, B]) => `<div class="facinfo-row box"><span data-spr="b_${k}" data-size="40"></span><div><b>${esc(B.name)} · ${B.cost} chat.</b><small>${esc(B.desc)} Se levanta con una unidad parada a 2 pasos de una ciudad tuya (máx. 3 por ciudad). Si un enemigo pisa la casilla, la saquea.</small></div></div>`).join('')}
+    <div class="label">Equipamiento <small>(una pieza por tropa, se compra en una ciudad propia)</small></div>
+    ${Object.entries(E.GEAR).map(([k, G]) => `<div class="facinfo-row box"><span data-spr="${GEAR_ICON[k]}" data-col="var(--inti)" data-size="40"></span><div><b>${esc(G.name)} · ${G.cost} chat.</b><small>${esc(G.desc)}</small></div></div>`).join('')}
     <div class="label">Terreno</div>
     <div class="facinfo-row box"><div><small><b>Desierto y puna:</b> mueves 1. <b>Montaña:</b> cuesta 2, +50% defensa. <b>Selva:</b> cuesta 2, +25% defensa. <b>Carreteras:</b> cuestan la mitad. <b>Mar y lago:</b> solo drones, lanchas y la Flota.</small></div></div>`;
 }
@@ -4408,8 +4670,34 @@ const LEADER_LINES = {
   desierto: { guerra: '"Todo lo que entra a mi desierto es chatarra."', alianza: '"Tu chatarra y mi camino. Buen negocio."', traidor: '"Los traidores pagan doble."', weak: '"Aún me queda gasolina para una última carrera."' },
   culto:    { guerra: '"El sol te juzgará. Nosotros solo ejecutamos."', alianza: '"Caminemos juntos hacia la luz."', traidor: '"El Inti vio tu traición."', weak: '"Mártires no faltan. Faltan enemigos."' },
   callao:   { guerra: '"Bajo el agua no se oyen tus órdenes."', alianza: '"Nadaremos juntos. Hasta donde llegue tu aire."', traidor: '"El mar devuelve todo. También las traiciones."', weak: '"Todavía nos queda el fondo del mar."' },
+  chasquis: { guerra: '"Mis corredores ya conocen tus caminos. Los tuyos no conocen los míos."', alianza: '"Correremos juntos. Mis caminos son tus caminos."', traidor: '"Un chasqui nunca miente. Tú sí."', weak: '"Aún quedan relevos. Siempre quedan."' },
+  mineros:  { guerra: '"Todo lo que pisas tiene metal debajo. Y el metal es mío."', alianza: '"Trato hecho: tú la superficie, yo el subsuelo."', traidor: '"En el socavón no entra quien rompe su palabra."', weak: '"Siempre hay otra galería por abrir."' },
   flota:    { guerra: '"El mar es nuestro. La costa también."', alianza: '"Puerto seguro para los tuyos."', traidor: '"Ni los piratas rompen un pacto así."', weak: '"Aún no han hundido todos mis barcos."' },
 };
+// reacciones de los líderes en el mapa: aparecen como burbuja con su retrato
+const LEADER_REACT = {
+  lima:     { lost: '"Nos quitan una ciudad. El búnker toma nota."', took: '"Otra calle para la luz. Sigan."', hero: '"La Directora cae… pero el búnker sigue en pie."', betrayed: '"¿Traición? Lo esperábamos. Lo registramos."', ally: '"Hecho. Compartimos luz y radar."', kill3: '"Limpio. Así se hace."' },
+  sierra:   { lost: '"Esa ciudad volverá a ser nuestra. Las piedras tienen memoria."', took: '"La cumbre es nuestra. Siempre lo fue."', hero: '"¡El Apu ha caído! Las montañas lloran."', betrayed: '"Rompiste tu palabra en nuestra tierra. Mal lugar."', ally: '"Mi gente cuida tus espaldas. No lo olvides."', kill3: '"Las hondas no fallan."' },
+  selva:    { lost: '"Entraron a la selva. No saldrán dos veces."', took: '"El río crece. Y se lleva tu ciudad."', hero: '"Yacumama vuelve al río… por ahora."', betrayed: '"La serpiente recuerda cada mordida."', ally: '"La selva te deja pasar. Camina despacio."', kill3: '"Los jaguares comieron hoy."' },
+  desierto: { lost: '"Me cobraré esa ciudad en chatarra. Con intereses."', took: '"Todo lo que brilla en el desierto es mío."', hero: '"La Viuda cae… alguien se queda sin pagar."', betrayed: '"Nadie me traiciona dos veces. Pregunta por ahí."', ally: '"Buen negocio. No lo arruines."', kill3: '"Más chatarra para mi caravana."' },
+  culto:    { lost: '"Un templo menos. El sol lo verá."', took: '"El Inti bendice esta ciudad. Arrodíllense."', hero: '"El Profeta vuelve al sol. Nosotros seguimos."', betrayed: '"Tu traición ya está escrita en las Líneas."', ally: '"Caminemos juntos hacia la luz."', kill3: '"Los mártires no mueren. Se multiplican."' },
+  chasquis: { lost: '"Perdimos un tambo. Los corredores ya avisan al resto."', took: '"Esta ciudad entra en la Ruta Real. Más caminos para nosotros."', hero: '"Quispe cae en la ruta… otro recoge el mensaje."', betrayed: '"Lo que hiciste ya corre por todos los caminos."', ally: '"Correremos juntos. Avisa y llego."', kill3: '"Rápidos. Como debe ser."' },
+  mineros:  { lost: '"Que disfruten la superficie. El socavón sigue siendo mío."', took: '"Otra boca de mina. Empiecen a cavar."', hero: '"La Ingeniera baja al socavón… de ahí volvió una vez."', betrayed: '"Dinamita para quien rompe tratos."', ally: '"Trato hecho: tú arriba, yo abajo."', kill3: '"Taladros limpios. Buen turno."' },
+  flota:    { lost: '"Perdimos un puerto. No perdimos el mar."', took: '"Otra costa para la Flota. Icen la bandera."', hero: '"El Almirante se hunde con honor."', betrayed: '"Ni los piratas hacen lo que hiciste."', ally: '"Puerto seguro para los tuyos."', kill3: '"Cañones calientes. Buena jornada."' },
+  callao:   { lost: '"La marea volverá por esa ciudad."', took: '"El Callao sube. Y no baja."', hero: '"La Sirena vuelve al fondo. A esperar."', betrayed: '"El mar devuelve todo. También esto."', ally: '"Nadaremos juntos hasta donde llegue tu aire."', kill3: '"Los tritones no dejan rastro."' },
+};
+let bubbleT = 0;
+function leaderBubble(q, kind) {
+  if (!S || q == null || q === me || store.get('tips', {}).off) return;
+  const Q = S.players[q]; if (!Q || Q.horde) return;
+  const L = LEADER_REACT[Q.faction]; if (!L || !L[kind]) return;
+  if (performance.now() - bubbleT < 6000) return; bubbleT = performance.now();
+  const c = $('#coach');
+  c.innerHTML = `<span data-por="${Q.faction}" data-size="48"></span><div><span class="who" style="color:${fcol(q)}">${esc(Q.name)}</span><p></p></div><button class="skip" id="tipOk">×</button>`;
+  hydrate(c); c.hidden = false; c.classList.add('talk'); typeInto(c.querySelector('p'), L[kind], c.querySelector('canvas'));
+  $('#tipOk').onclick = () => { c.hidden = true; };
+  setTimeout(() => { if (!tut && $('#tipOk') && !c.hidden) c.hidden = true; }, 7000);
+}
 function leaderLine(q) { const Q = S.players[q]; const L = LEADER_LINES[Q.faction]; if (!L) return ''; if (E.losing(S, q)) return L.weak; if (Q.traitor) return L.traidor; return L[E.relation(S, me, q)] || L.guerra; }
 function applyPrefs() { document.body.classList.toggle('big', !!store.get('big', false)); const m = $('#mini'); if (m) m.hidden = !store.get('mini', true) || !S; }
 // minimapa: terreno + ciudades + unidades + rectángulo de cámara
@@ -4437,7 +4725,7 @@ function loadGame(st, seat) {
   if (!S.W) { S.W = 13; S.H = 19; }
   initGeom();
   hideScreen(); gameUI(true); resize(); playGameMusic();
-  cam.z = Math.min(1.35, Math.max(0.8, cv.clientWidth / 420));
+  cam.z = snapZoom(Math.min(1.35, Math.max(0.8, cv.clientWidth / 420)));
   const cap = S.cities.find((c) => c.owner === me && c.capital) || S.cities.find((c) => c.owner === me) || S.cities[0];
   centerOn(cap.x, cap.y);
   applyPrefs(); undoSnap = null; renderUndo(); renderMini();
@@ -4513,8 +4801,9 @@ const Net = (() => {
     const poll = setInterval(async () => { if (stopped) return; try { const { data } = await sb.from('inti_rooms').select('*').eq('code', code).maybeSingle(); if (data) deliver(data); } catch {} }, 6000);
     return () => { stopped = true; clearInterval(poll); try { sb.removeChannel(ch); } catch {} };
   }
-  async function logStat(row) { if (kind !== 'supabase') return; try { await sb.from('inti_stats').insert(row); } catch {} }
-  return { init, get kind() { return kind; }, uid, get, create, update, mine, subscribe, logStat };
+  async function logStat(row) { if (kind !== 'supabase') return; try { await sb.from('inti_stats').insert({ ...row, uid: uidP, name: playerName(), room: online ? online.code : null, winner_name: S && S.winner >= 0 ? S.players[S.winner].name : null, online: !!online }); } catch {} }
+  async function stats() { if (kind !== 'supabase') return []; const { data } = await sb.from('inti_stats').select('faction,winner_faction,won,players,turns,game_mode,uid,name,room,winner_name,online,created_at').order('created_at', { ascending: false }).limit(400); return data || []; }
+  return { init, get kind() { return kind; }, uid, get, create, update, mine, subscribe, logStat, stats };
 })();
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const newCode = () => Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
@@ -4534,6 +4823,7 @@ async function onlineMenu() {
     <div class="label">Tu nombre en la partida</div><input id="nameIn" maxlength="18" value="${esc(playerName())}" autocomplete="off">
     ${card('create', 'Crear sala', 'Elige facción, modo y rivales; te doy un código', 'th_online', '#7a86e8')}
     ${card('coop', 'Historia cooperativa', 'Tú y tu pareja contra la Horda · 3 capítulos', 'th_camp', '#a8322a')}
+    ${kind === 'supabase' ? card('records', 'Récords', 'Marcador entre jugadores, facciones ganadoras y últimas partidas', 'th_ach', '#f2b84b') : ''}
     <div class="label">Unirme con un código</div><div class="row"><input id="codeIn" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;flex:1" autocomplete="off"><button class="act" data-a="join" style="flex:none">Unirme</button></div>
     ${games.length ? '<div class="label">Mis partidas</div>' + games.map((g) => { const st = g.status === 'lobby' ? 'En sala' : g.status === 'done' ? 'Terminada' : (g.curUid === uid ? '▶ Tu turno' : 'Turno de ' + esc(g.curName || '…')); return `<button class="game-item box press ${g.curUid === uid && g.status === 'playing' ? 'myturn' : ''}" data-a="open" data-code="${esc(g.code)}"><b>${esc(g.code)}</b><span>${esc((g.seats || []).map((s) => s.name || 'IA').join(' · '))}${g.coop ? ' · co-op' : ''}</span><small>${st}</small></button>`; }).join('') : ''}`,
   async (a, d) => {
@@ -4541,18 +4831,38 @@ async function onlineMenu() {
     if (a === 'back') mainMenu();
     if (a === 'create') factionPick((f, n, size, mode, mods, diff, mapOpts) => createRoom({ f, n, size: size === 'grande' || size === 'enorme' ? 'mediano' : size, mode, mods, diff, map: mapOpts.map }), { title: 'Tu facción en la sala', cta: 'Crear sala', back: onlineMenu, maxN: 4 });
     if (a === 'coop') coopMenu();
+    if (a === 'records') recordsScreen();
     if (a === 'join') { const code = ($('#codeIn').value || '').trim().toUpperCase(); if (code.length === 4) joinRoom(code); else toast('Escribe el código de 4 letras.'); }
     if (a === 'open') openRoom(d.code);
   });
 }
 
+async function recordsScreen() {
+  show(`<button class="back" data-a="back">‹ Volver</button><div class="h2">Récords</div><p class="muted">Cargando…</p>`, (a) => a === 'back' && onlineMenu());
+  let rows = []; try { rows = await Net.stats(); } catch (e) { console.error(e); }
+  const uid = Net.uid(), mine = rows.filter((r) => r.uid === uid), onl = rows.filter((r) => r.online && r.room);
+  // marcador cara a cara: por sala, quién ganó (una fila por jugador; usamos winner_name)
+  const h2h = {}; const seenRoom = new Set();
+  for (const r of onl) { if (!r.winner_name || seenRoom.has(r.room)) continue; seenRoom.add(r.room); h2h[r.winner_name] = (h2h[r.winner_name] || 0) + 1; }
+  const names = Object.entries(h2h).sort((a, b) => b[1] - a[1]);
+  const facWins = {}; for (const r of rows) if (r.winner_faction) facWins[r.winner_faction] = (facWins[r.winner_faction] || 0) + 1;
+  const facList = Object.entries(facWins).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const myWins = mine.filter((r) => r.won).length;
+  const last = rows.slice(0, 8);
+  show(`<button class="back" data-a="back">‹ Volver</button><div class="h2">Récords</div>
+    <div class="label">Tú (${esc(playerName())})</div><div class="status-grid">${[['i_trophy', myWins, 'victorias'], ['flag', mine.length, 'partidas'], ['i_medal', mine.length ? Math.round(myWins / mine.length * 100) + '%' : '–', 'de victorias']].map(([ic, v, l]) => `<div class="stile box"><span data-spr="${ic}" data-col="var(--inti)" data-size="22"></span><b>${v}</b><small>${l}</small></div>`).join('')}</div>
+    <div class="label">Marcador online (partidas ganadas)</div>${names.length ? `<div class="scores">${names.map(([n, w], i) => `<div class="scorerow ${n === playerName() ? 'me' : ''}" style="--fc:var(--inti)"><span class="pos">${i + 1}</span><span class="nm">${esc(n)}</span><span class="bar"><i style="width:${Math.round(w / names[0][1] * 100)}%"></i></span><b>${w}</b></div>`).join('')}</div>` : '<p class="muted">Aún no hay partidas online terminadas. La primera que acaben aparece aquí.</p>'}
+    <div class="label">Facciones más ganadoras</div>${facList.length ? `<div class="scores">${facList.map(([f, w], i) => `<div class="scorerow" style="--fc:${E.FACTIONS[f] ? E.FACTIONS[f].color : '#888'}"><span class="pos">${i + 1}</span><span data-por="${f}" data-size="28"></span><span class="nm">${esc(E.FACTIONS[f] ? E.FACTIONS[f].name : f)}</span><span class="bar"><i style="width:${Math.round(w / facList[0][1] * 100)}%"></i></span><b>${w}</b></div>`).join('')}</div>` : '<p class="muted">Sin datos todavía.</p>'}
+    <div class="label">Últimas partidas</div>${last.map((r) => `<div class="game-item box"><b>${esc(r.name || '?')}</b><span>${esc(E.FACTIONS[r.faction] ? E.FACTIONS[r.faction].short : r.faction)} · ${r.players} jugadores · ${r.turns} turnos${r.online ? ' · online' : ''}</span><small style="color:${r.won ? 'var(--good)' : 'var(--bad)'}">${r.won ? 'Victoria' : 'Derrota'}</small></div>`).join('') || '<p class="muted">Nada aún.</p>'}`,
+  (a) => a === 'back' && onlineMenu());
+}
 async function createRoom(o) {
   const uid = Net.uid();
   const facs = o.seatsFacs || [o.f, ...E.FACTION_KEYS.filter((k) => k !== o.f)].slice(0, o.n);
   let code = newCode();
   for (let i = 0; i < 5; i++) { if (!(await Net.get(code))) break; code = newCode(); }
   const doc = { code, status: 'lobby', host: uid, members: [uid], seats: facs.map((k, i) => ({ faction: k, uid: i === 0 ? uid : null, name: i === 0 ? playerName() : null, human: o.humanSeats ? o.humanSeats.includes(i) : true })), state: null, gameMode: o.mode || 'clasico', mods: o.mods || [], size: o.size || 'mediano', diff: o.diff || 'normal', map: o.map || 'peru', coop: !!o.coop, chapter: o.chapter || null, version: 0, chat: [] };
-  try { await Net.create(doc); } catch (e) { console.error(e); toast('No pude crear la sala: ' + (e.code === 'invalid_argument' ? 'necesitas permiso de edición.' : 'inténtalo otra vez.'), 'red'); return; }
+  try { await Net.create(doc); } catch (e) { console.error(e); toast('No pude crear la sala: ' + (e.code === 'invalid_argument' ? 'necesitas permiso de edición.' : (e.message || 'inténtalo otra vez.')), 'red'); return; }
   openRoom(code);
 }
 async function joinRoom(code) {
@@ -4572,7 +4882,7 @@ async function openRoom(code) {
   await Net.init();
   const uid = Net.uid();
   online?.unsub?.();
-  online = { code, uid, last: null }; lobbyPick = null;
+  online = { code, uid, last: null }; lobbyPick = null; watchAiTurns();
   const unsub = Net.subscribe(code, (g) => {
     if (!online || online.code !== code) return;
     if (!g) { toast('La sala ya no existe.', 'red'); mainMenu(); return; }
@@ -4585,8 +4895,18 @@ async function openRoom(code) {
     const seat = g.seats.findIndex((x) => x.uid === uid);
     const st = JSON.parse(json);
     const wasMine = S && S.cur === me;
-    if (!S || $('#screen').hidden === false) loadGame(st, Math.max(0, seat));
-    else { const keepShown = S._shown; S = st; S._shown = keepShown; me = Math.max(0, seat); consumeEvents(); renderHud(); renderSheet(); if (S.cur === me && !wasMine && S.winner < 0) { startMyTurn(); notifyTurn(); } checkEnd(); }
+    if (!S || $('#screen').hidden === false) { loadGame(st, Math.max(0, seat)); online.seen = online.seen || {}; if (st.replay && st.replay.ev && st.replay.ev.length) online.seen[st.replay.by] = st.replay.ev[st.replay.ev.length - 1].seq; }
+    else {
+      const keepShown = S._shown; S = st; S._shown = keepShown; me = Math.max(0, seat);
+      // lo que hizo el rival (y las IAs que él movió) se reproduce aquí con animaciones
+      const rp = st.replay; online.seen = online.seen || {};
+      if (rp && rp.by !== me && rp.ev && rp.ev.length) {
+        const last = online.seen[rp.by] || 0, fresh = rp.ev.filter((e) => e.seq > last);
+        if (fresh.length) { online.seen[rp.by] = fresh[fresh.length - 1].seq; window.__replayN = (window.__replayN || 0) + fresh.length; const vis = E.visibleSet(S, me); const first = fresh.find((e) => e.x != null && vis.has(E.idx(e.x, e.y))); if (first) centerOn(first.x, first.y); S.events = fresh.map((e) => { const c = { ...e }; delete c.seq; return c; }); }
+      }
+      replaying = true; try { consumeEvents(); } finally { replaying = false; }
+      renderHud(); renderSheet(); if (S.cur === me && !wasMine && S.winner < 0) { startMyTurn(); notifyTurn(); } checkEnd();
+    }
     renderChat(g);
   }, () => toast('Se perdió la conexión con la sala.', 'red'));
   online.unsub = unsub;
@@ -4645,7 +4965,7 @@ function lobbyView(g) {
       const ch = g.coop && COOP[g.chapter];
       const cfg = ch ? ch.setup(g) : { mode: 'online', size: g.size || 'mediano', gameMode: g.gameMode || 'clasico', mods: g.mods || [], map: g.map || 'peru', players: g.seats.map((s) => ({ name: s.name || LEADERS[s.faction], faction: s.faction, kind: s.uid ? 'human' : 'ai', uid: s.uid, diff: s.diff || g.diff || 'normal' })) };
       const st = E.newGame(cfg); if (ch) { st.chapter = g.chapter; ch.after && ch.after(st); }
-      try { await Net.update(g.code, { status: 'playing', state: st, curUid: st.players[st.cur].uid || null, curName: st.players[st.cur].name, version: (g.version || 0) + 1 }); } catch (e) { console.error(e); toast('No pude empezar. Inténtalo otra vez.', 'red'); }
+      try { await Net.update(g.code, { status: 'playing', state: st, curUid: st.players[st.cur].uid || null, curName: st.players[st.cur].name, version: (g.version || 0) + 1 }); } catch (e) { console.error(e); toast('No pude empezar: ' + (e.message || 'inténtalo otra vez.'), 'red'); }
     }
   });
 }
@@ -4656,11 +4976,13 @@ async function pushState(final) {
   pushing = true;
   try {
     const copy = { ...S }; delete copy._shown;
+    copy.replay = { by: me, ev: replayAcc.slice(-300) };
+    if (final) replayAcc = [];
     online.last = JSON.stringify(copy);
     const patch = { state: copy, status: S.winner >= 0 ? 'done' : 'playing', curUid: S.players[S.cur].uid || null, curName: S.players[S.cur].name, version: ((online.g && online.g.version) || 0) + 1 };
     try { await Net.update(online.code, patch); } catch (e1) { console.warn('reintento de guardado', e1); await sleep(1500); await Net.update(online.code, patch); }
     if (online.g) online.g.version = ((online.g.version) || 0) + 1;
-    if (S.winner >= 0 && final) Net.logStat({ faction: S.players[me].faction, winner_faction: S.players[S.winner].faction, game_mode: S.gameMode, mods: Object.keys(S.mods || {}), size: S.size, diff: S.players.find((p) => p.kind === 'ai')?.diff || null, turns: S.turn, players: S.players.length, won: S.winner === me });
+    // la estadística la registra cada jugador en checkEnd
   } catch (e) { console.error(e); toast('No se pudo guardar el turno. Revisa tu conexión.', 'red'); }
   pushing = false;
   if (pushAgain) { pushAgain = false; pushState(final); }
